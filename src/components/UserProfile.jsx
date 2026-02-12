@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Container from "react-bootstrap/Container";
 import Card from "react-bootstrap/Card";
@@ -6,10 +6,20 @@ import Form from "react-bootstrap/Form";
 import Button from "react-bootstrap/Button";
 import Alert from "react-bootstrap/Alert";
 import Spinner from "react-bootstrap/Spinner";
+import Modal from "react-bootstrap/Modal";
 import { supabase } from "../api/supabaseClient";
 
 const NAME_MIN = 4;
 const NAME_MAX = 32;
+
+const AVATAR_BUCKET = "avatars";
+const MAX_AVATAR_MB = 5;
+const ALLOWED_IMAGE_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+];
 
 const UserProfile = () => {
   const navigate = useNavigate();
@@ -21,6 +31,8 @@ const UserProfile = () => {
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [saving, setSaving] = useState(false);
 
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
@@ -30,6 +42,23 @@ const UserProfile = () => {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [username, setUsername] = useState("");
+
+  // Delete account
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deletingAccount, setDeletingAccount] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+
+  // We store avatar_url in DB as a PATH like: "<uid>/avatar.png"
+  const avatarPath = useMemo(
+    () => profile?.avatar_url ?? "",
+    [profile?.avatar_url],
+  );
+
+  const avatarUrl = useMemo(() => {
+    if (!avatarPath) return "";
+    const { data } = supabase.storage.from("avatars").getPublicUrl(avatarPath);
+    return data?.publicUrl ?? "";
+  }, [avatarPath]);
 
   useEffect(() => {
     let cancelled = false;
@@ -81,7 +110,9 @@ const UserProfile = () => {
       try {
         const { data, error: profileError } = await supabase
           .from("profiles")
-          .select("id, username, first_name, last_name, is_blocked, reputation")
+          .select(
+            "id, username, first_name, last_name, avatar_url, is_blocked, reputation",
+          )
           .eq("id", user.id)
           .single();
 
@@ -191,7 +222,9 @@ const UserProfile = () => {
           username: newUsername.length ? newUsername : null,
         })
         .eq("id", user.id)
-        .select("id, username, first_name, last_name, is_blocked, reputation")
+        .select(
+          "id, username, first_name, last_name, avatar_url, is_blocked, reputation",
+        )
         .single();
 
       if (updateError) throw updateError;
@@ -203,6 +236,123 @@ const UserProfile = () => {
       setError(e2?.message || "Could not update profile.");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const validateAvatarFile = (file) => {
+    if (!file) return "No file selected.";
+    if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+      return "Please upload a JPG, PNG, WEBP, or GIF image.";
+    }
+    const maxBytes = MAX_AVATAR_MB * 1024 * 1024;
+    if (file.size > maxBytes) {
+      return `Image is too large. Max size is ${MAX_AVATAR_MB}MB.`;
+    }
+    return "";
+  };
+
+  const onAvatarSelected = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+
+    setError("");
+    setSuccess("");
+
+    if (!user?.id) {
+      setError("You must be logged in to upload an avatar.");
+      return;
+    }
+
+    const validationMsg = validateAvatarFile(file);
+    if (validationMsg) {
+      setError(validationMsg);
+      return;
+    }
+
+    setUploadingAvatar(true);
+
+    try {
+      const ext = (file.name.split(".").pop() || "png").toLowerCase();
+      const path = `${user.id}/avatar.${ext}`;
+
+      // Helpful debug: confirm path matches policy: "<uid>/..."
+      // console.log("AUTH UID:", user.id);
+      // console.log("UPLOAD PATH:", path);
+      console.log("AUTH UID:", user.id);
+      console.log("UPLOAD PATH:", path);
+
+      const { error: uploadError } = await supabase.storage
+        .from(AVATAR_BUCKET)
+        .upload(path, file, {
+          upsert: true,
+          cacheControl: "3600",
+          contentType: file.type,
+        });
+
+      if (uploadError) throw uploadError;
+
+      // Store PATH in DB, not full URL
+      const { data: updated, error: updateError } = await supabase
+        .from("profiles")
+        .update({ avatar_url: path })
+        .eq("id", user.id)
+        .select(
+          "id, username, first_name, last_name, avatar_url, is_blocked, reputation",
+        )
+        .single();
+
+      if (updateError) throw updateError;
+
+      setProfile(updated);
+      setSuccess("Profile picture updated.");
+    } catch (e2) {
+      setError(e2?.message || "Could not upload profile picture.");
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
+  const openDeleteModal = () => {
+    setError("");
+    setSuccess("");
+    setDeleteConfirmText("");
+    setShowDeleteModal(true);
+  };
+
+  const closeDeleteModal = () => {
+    if (!deletingAccount) setShowDeleteModal(false);
+  };
+
+  const onDeleteAccount = async () => {
+    setError("");
+    setSuccess("");
+
+    if (!user?.id) {
+      setError("You must be logged in to delete your account.");
+      return;
+    }
+
+    if (deleteConfirmText.trim().toLowerCase() !== "delete") {
+      setError('Type "delete" to confirm.');
+      return;
+    }
+
+    setDeletingAccount(true);
+
+    try {
+      const { error: fnError } = await supabase.functions.invoke("delete-user");
+
+      if (fnError) {
+        throw new Error(fnError.message || "Edge Function failed.");
+      }
+
+      await supabase.auth.signOut();
+      navigate("/");
+    } catch (e2) {
+      setError(e2?.message || "Could not delete account.");
+    } finally {
+      setDeletingAccount(false);
+      setShowDeleteModal(false);
     }
   };
 
@@ -233,9 +383,53 @@ const UserProfile = () => {
       <h2 className="mb-3">Profile</h2>
 
       <Card className="p-4">
-        <p className="mb-3">
-          <strong>Email:</strong> {user.email}
-        </p>
+        <div className="d-flex align-items-center gap-3 mb-3">
+          <div
+            style={{
+              width: 72,
+              height: 72,
+              borderRadius: "50%",
+              overflow: "hidden",
+              background: "#f1f3f5",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              flexShrink: 0,
+            }}
+          >
+            {avatarUrl ? (
+              <img
+                src={avatarUrl}
+                alt="Profile avatar"
+                style={{ width: "100%", height: "100%", objectFit: "cover" }}
+              />
+            ) : (
+              <span style={{ fontSize: 28, opacity: 0.6 }}>👤</span>
+            )}
+          </div>
+
+          <div className="flex-grow-1">
+            <p className="mb-1">
+              <strong>Email:</strong> {user.email}
+            </p>
+
+            <Form.Group controlId="avatarUpload" className="mb-0">
+              <Form.Label className="mb-1">Profile picture</Form.Label>
+              <div className="d-flex align-items-center gap-2">
+                <Form.Control
+                  type="file"
+                  accept="image/*"
+                  onChange={onAvatarSelected}
+                  disabled={uploadingAvatar}
+                />
+                {uploadingAvatar && <Spinner size="sm" />}
+              </div>
+              <Form.Text muted>
+                Max {MAX_AVATAR_MB}MB. JPG/PNG/WEBP/GIF.
+              </Form.Text>
+            </Form.Group>
+          </div>
+        </div>
 
         {loadingProfile ? (
           <div className="d-flex align-items-center gap-2">
@@ -267,15 +461,13 @@ const UserProfile = () => {
               {!isEditing ? (
                 <Button onClick={startEdit}>Edit profile</Button>
               ) : (
-                <>
-                  <Button
-                    variant="secondary"
-                    onClick={cancelEdit}
-                    disabled={saving}
-                  >
-                    Cancel
-                  </Button>
-                </>
+                <Button
+                  variant="secondary"
+                  onClick={cancelEdit}
+                  disabled={saving}
+                >
+                  Cancel
+                </Button>
               )}
             </div>
 
@@ -335,9 +527,69 @@ const UserProfile = () => {
                 </Button>
               </Form>
             )}
+
+            <hr className="my-4" />
+
+            <div>
+              <h5 className="mb-2">Danger zone</h5>
+              <p className="text-muted mb-3">
+                This permanently deletes your account and signs you out.
+              </p>
+              <Button variant="danger" onClick={openDeleteModal}>
+                Delete my account
+              </Button>
+            </div>
           </>
         )}
       </Card>
+
+      <Modal show={showDeleteModal} onHide={closeDeleteModal} centered>
+        <Modal.Header closeButton={!deletingAccount}>
+          <Modal.Title>Delete account</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Alert variant="danger" className="mb-3">
+            This is permanent. Your Supabase auth user and profile will be
+            deleted.
+          </Alert>
+
+          <Form.Group>
+            <Form.Label>
+              Type <strong>delete</strong> to confirm
+            </Form.Label>
+            <Form.Control
+              value={deleteConfirmText}
+              onChange={(e) => setDeleteConfirmText(e.target.value)}
+              disabled={deletingAccount}
+              placeholder="delete"
+              autoFocus
+            />
+          </Form.Group>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button
+            variant="secondary"
+            onClick={closeDeleteModal}
+            disabled={deletingAccount}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="danger"
+            onClick={onDeleteAccount}
+            disabled={deletingAccount}
+          >
+            {deletingAccount ? (
+              <>
+                <Spinner size="sm" className="me-2" />
+                Deleting...
+              </>
+            ) : (
+              "Delete permanently"
+            )}
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </Container>
   );
 };

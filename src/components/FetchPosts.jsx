@@ -1,32 +1,30 @@
-// const [posts, setPosts] = useState([]);
+import { useEffect, useState } from "react";
+import { getNewestPosts } from "../api/posts";
 
-//   useEffect(() => {
-//     async function loadPosts() {
-//       const { data, error } = await supabase
-//         .from('posts')
-//         .select('id, title, created_at, score, comment_count')
-//         .order('created_at', { ascending: false })
-//         .limit(10);
+const FetchPosts = ({ refreshTrigger }) => {
+  const [posts, setPosts] = useState([]);
 
-//       console.log('posts data:', data);
-//       console.log('posts error:', error);
+  useEffect(() => {
+    loadPosts();
+  }, [refreshTrigger]);
 
-//       if (!error) {
-//         setPosts(data);
-//       }
-//     }
+  async function loadPosts() {
+    const data = await getNewestPosts();
+    setPosts(data);
+  }
 
-//     loadPosts();
-//   }, []);
+  return (
+    <div>
+      <h2>Latest Posts</h2>
 
-//   console.log("app running", supabase)
-//   return (
-//     <>
-//       <h1>Newest posts</h1>
-//       {posts.map((post) => (
-//         <div>
-//           {post.title} - score: {post.score} - comments: {post.comment_count}
-//         </div>
-//       ))}
-//     </>
-//   )
+      {posts.map((post) => (
+        <div key={post.id} style={{ border: "1px solid gray", margin: 10, padding: 10 }}>
+          <h3>{post.title}</h3>
+          <p>{post.content}</p>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+export default FetchPosts;

@@ -1,11 +1,11 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useLocation, useNavigate } from "react-router-dom";
 import Form from "react-bootstrap/Form";
-import Button from "react-bootstrap/Button";
-import Alert from "react-bootstrap/Alert";
-import Spinner from "react-bootstrap/Spinner";
-import { supabase } from "../api/supabaseClient";
+import { supabase } from "../../../api/supabaseClient";
+import AuthAlerts from "../shared/AuthAlerts";
+import AuthSubmitRow from "../shared/AuthSubmitRow";
+import useLoginPrefill from "./hooks/useLoginPrefill";
 
 const Login = ({ onSwitchToRegister }) => {
   const navigate = useNavigate();
@@ -15,7 +15,6 @@ const Login = ({ onSwitchToRegister }) => {
   const [loading, setLoading] = useState(false);
   const [infoMessage, setInfoMessage] = useState("");
 
-  // Read values passed from Register
   const prefilledEmail = location.state?.email ?? "";
 
   const {
@@ -31,16 +30,12 @@ const Login = ({ onSwitchToRegister }) => {
     mode: "onBlur",
   });
 
-  // Show success message + prefill email after registration
-  useEffect(() => {
-    if (location.state?.authMessage) {
-      setInfoMessage(location.state.authMessage);
-    }
-
-    if (prefilledEmail) {
-      setValue("email", prefilledEmail);
-    }
-  }, [location.state, prefilledEmail, setValue]);
+  useLoginPrefill({
+    locationState: location.state,
+    setInfoMessage,
+    prefilledEmail,
+    setValue,
+  });
 
   const onSubmit = async (data) => {
     setServerError("");
@@ -60,7 +55,6 @@ const Login = ({ onSwitchToRegister }) => {
         return;
       }
 
-      // Clear message and router state so it doesn't reappear
       setInfoMessage("");
       navigate("/", { replace: true });
     } catch (e) {
@@ -74,17 +68,7 @@ const Login = ({ onSwitchToRegister }) => {
     <Form onSubmit={handleSubmit(onSubmit)}>
       <h2 className="mb-3">Login</h2>
 
-      {infoMessage && (
-        <Alert variant="success" className="mb-3">
-          {infoMessage}
-        </Alert>
-      )}
-
-      {serverError && (
-        <Alert variant="danger" className="mb-3">
-          {serverError}
-        </Alert>
-      )}
+      <AuthAlerts infoMessage={infoMessage} serverError={serverError} />
 
       <Form.Group className="mb-3">
         <Form.Label>Email</Form.Label>
@@ -106,22 +90,13 @@ const Login = ({ onSwitchToRegister }) => {
         )}
       </Form.Group>
 
-      <div className="d-flex gap-2 align-items-center">
-        <Button type="submit" disabled={loading}>
-          {loading ? (
-            <>
-              <Spinner size="sm" className="me-2" />
-              Logging in...
-            </>
-          ) : (
-            "Login"
-          )}
-        </Button>
-
-        <Button variant="link" type="button" onClick={onSwitchToRegister}>
-          Don&apos;t have an account? Register
-        </Button>
-      </div>
+      <AuthSubmitRow
+        loading={loading}
+        submitText="Login"
+        loadingText="Logging in..."
+        secondaryText="Don't have an account? Register"
+        onSecondaryClick={onSwitchToRegister}
+      />
     </Form>
   );
 };

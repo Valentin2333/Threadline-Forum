@@ -50,17 +50,19 @@ const Avatar = ({ url }) => {
 const AppNavbar = () => {
   const [user, setUser] = useState(null);
 
-  // stored in DB as path: "<uid>/avatar.png"
+  // DB stores PATH
   const [avatarPath, setAvatarPath] = useState("");
+  const [avatarVersion, setAvatarVersion] = useState(0);
 
-  // computed public URL
+  const navigate = useNavigate();
+
   const avatarUrl = useMemo(() => {
     if (!avatarPath) return "";
     const { data } = supabase.storage.from(AVATAR_BUCKET).getPublicUrl(avatarPath);
-    return data?.publicUrl ?? "";
-  }, [avatarPath]);
-
-  const navigate = useNavigate();
+    const base = data?.publicUrl ?? "";
+    if (!base) return "";
+    return `${base}?v=${avatarVersion}`;
+  }, [avatarPath, avatarVersion]);
 
   useEffect(() => {
     let cancelled = false;
@@ -72,11 +74,9 @@ const AppNavbar = () => {
 
     setUserFromSession();
 
-    const { data: listener } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        setUser(session?.user ?? null);
-      },
-    );
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
 
     return () => {
       cancelled = true;
@@ -84,12 +84,14 @@ const AppNavbar = () => {
     };
   }, []);
 
+  // Load avatar on login
   useEffect(() => {
     let cancelled = false;
 
     const loadAvatar = async () => {
       if (!user?.id) {
         setAvatarPath("");
+        setAvatarVersion(Date.now());
         return;
       }
 
@@ -100,38 +102,30 @@ const AppNavbar = () => {
         .single();
 
       if (!cancelled) {
-        if (!error) setAvatarPath(data?.avatar_url ?? "");
-        else setAvatarPath("");
+        setAvatarPath(!error ? data?.avatar_url ?? "" : "");
+        setAvatarVersion(Date.now());
       }
     };
 
     loadAvatar();
 
-    // Realtime update so navbar reflects new avatar immediately after upload
-    const channel = user?.id
-      ? supabase
-          .channel(`profiles:${user.id}`)
-          .on(
-            "postgres_changes",
-            {
-              event: "UPDATE",
-              schema: "public",
-              table: "profiles",
-              filter: `id=eq.${user.id}`,
-            },
-            (payload) => {
-              const next = payload?.new?.avatar_url ?? "";
-              setAvatarPath(next);
-            },
-          )
-          .subscribe()
-      : null;
-
     return () => {
       cancelled = true;
-      if (channel) supabase.removeChannel(channel);
     };
   }, [user?.id]);
+
+  // ✅ Listen to local event fired by UserProfile (works without realtime)
+  useEffect(() => {
+    const handler = (evt) => {
+      const nextPath = evt?.detail?.avatarPath ?? "";
+      const nextVersion = evt?.detail?.version ?? Date.now();
+      if (nextPath) setAvatarPath(nextPath);
+      setAvatarVersion(nextVersion);
+    };
+
+    window.addEventListener("profile:avatar-updated", handler);
+    return () => window.removeEventListener("profile:avatar-updated", handler);
+  }, []);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -153,11 +147,7 @@ const AppNavbar = () => {
             </Nav.Link>
 
             {user && (
-              <Nav.Link
-                as={Link}
-                to="/profile"
-                className="d-flex align-items-center"
-              >
+              <Nav.Link as={Link} to="/profile" className="d-flex align-items-center">
                 <Avatar url={avatarUrl} />
                 Profile
               </Nav.Link>
@@ -167,18 +157,10 @@ const AppNavbar = () => {
           <Nav className="ms-auto align-items-lg-center gap-2">
             {!user ? (
               <>
-                <Button
-                  variant="outline-light"
-                  size="sm"
-                  onClick={() => navigate("/login")}
-                >
+                <Button variant="outline-light" size="sm" onClick={() => navigate("/login")}>
                   Login
                 </Button>
-                <Button
-                  variant="light"
-                  size="sm"
-                  onClick={() => navigate("/register")}
-                >
+                <Button variant="light" size="sm" onClick={() => navigate("/register")}>
                   Register
                 </Button>
               </>

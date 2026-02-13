@@ -1,19 +1,11 @@
-// Supabase Edge Function: delete-user
-// Deploy with: supabase functions deploy delete-user
-// Then call from client: supabase.functions.invoke("delete-user")
-//
-// Requires env vars in Supabase project (Functions):
-//   SUPABASE_URL
-//   SUPABASE_ANON_KEY
-//   SUPABASE_SERVICE_ROLE_KEY
+// supabase/functions/delete-user/index.ts
 import { serve } from "https://deno.land/std@0.224.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
 serve(async (req) => {
@@ -21,86 +13,104 @@ serve(async (req) => {
     return new Response("ok", { headers: corsHeaders });
   }
 
-  if (req.method !== "POST") {
-    return new Response(JSON.stringify({ error: "Method not allowed" }), {
-      status: 405,
+  try {
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    if (!supabaseUrl || !serviceRoleKey) {
+      throw new Error("Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY.");
+    }
+
+    // Service role client (bypasses RLS)
+    const admin = createClient(supabaseUrl, serviceRoleKey, {
+      auth: { persistSession: false },
+    });
+
+    // User client (to validate who is calling using the user's JWT)
+    const authHeader = req.headers.get("Authorization") ?? "";
+    const token = authHeader.replace("Bearer ", "");
+
+    const { data: userData, error: userError } = await admin.auth.getUser(token);
+    if (userError || !userData?.user) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const userId = userData.user.id;
+
+    // 1) Read avatar path from profile (if any)
+    const { data: profile, error: profileErr } = await admin
+      .from("profiles")
+      .select("avatar_url")
+      .eq("id", userId)
+      .maybeSingle();
+
+    if (profileErr) {
+      // not fatal; continue deletion anyway
+      console.error("Profile lookup error:", profileErr);
+    }
+
+    // 2) Delete avatar file(s) from storage
+    // avatar_url stores a PATH like "<uid>/avatar.jpg"
+    // We'll delete:
+    // - the exact path if present
+    // - plus any files under "<uid>/" to be safe
+    const pathsToDelete: string[] = [];
+
+    const avatarPath = (profile?.avatar_url ?? "").trim();
+    if (avatarPath) pathsToDelete.push(avatarPath);
+
+    // Also delete any leftover files under the user's folder (covers old unique filenames)
+    // This requires listing first.
+    const { data: listed, error: listErr } = await admin.storage
+      .from("avatars")
+      .list(userId, { limit: 100 });
+
+    if (!listErr && Array.isArray(listed)) {
+      for (const obj of listed) {
+        if (obj?.name) pathsToDelete.push(`${userId}/${obj.name}`);
+      }
+    }
+
+    // Deduplicate
+    const uniquePaths = Array.from(new Set(pathsToDelete));
+
+    if (uniquePaths.length > 0) {
+      const { error: removeErr } = await admin.storage
+        .from("avatars")
+        .remove(uniquePaths);
+
+      if (removeErr) {
+        // not fatal; continue deleting account
+        console.error("Avatar remove error:", removeErr);
+      }
+    }
+
+    // 3) Delete profile row (optional if you have cascade triggers; safe to do)
+    const { error: profDelErr } = await admin.from("profiles").delete().eq("id", userId);
+    if (profDelErr) {
+      // not fatal; still attempt auth delete
+      console.error("Profile delete error:", profDelErr);
+    }
+
+    // 4) Delete auth user (this is the important one)
+    const { error: delErr } = await admin.auth.admin.deleteUser(userId);
+    if (delErr) {
+      throw delErr;
+    }
+
+    return new Response(JSON.stringify({ ok: true }), {
+      status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
-  }
-
-  const supabaseUrl = Deno.env.get("SUPABASE_URL");
-  const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
-  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-
-  if (!supabaseUrl || !anonKey || !serviceRoleKey) {
+  } catch (err) {
     return new Response(
-      JSON.stringify({ error: "Missing environment variables" }),
+      JSON.stringify({ error: (err as Error)?.message ?? "Unknown error" }),
       {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       },
     );
   }
-
-  const authHeader =
-    req.headers.get("authorization") ?? req.headers.get("Authorization") ?? "";
-
-  // 1) Verify caller identity (anon key + JWT)
-  const supabaseAuth = createClient(supabaseUrl, anonKey, {
-    global: { headers: { Authorization: authHeader } },
-    auth: { persistSession: false },
-  });
-
-  const { data: userData, error: userErr } = await supabaseAuth.auth.getUser();
-  if (userErr || !userData?.user) {
-    return new Response(
-      JSON.stringify({
-        error: "Unauthorized",
-        hasAuthHeader: Boolean(authHeader),
-        authHeaderPrefix: authHeader.slice(0, 12), // should start with "Bearer "
-        supabaseError: userErr?.message ?? null,
-      }),
-      {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      },
-    );
-  }
-  
-  const userId = userData.user.id;
-
-  // 2) Admin delete (service role)
-  const supabaseAdmin = createClient(supabaseUrl, serviceRoleKey, {
-    auth: { persistSession: false },
-  });
-
-  // Best-effort cleanup
-  const { error: profileErr } = await supabaseAdmin
-    .from("profiles")
-    .delete()
-    .eq("id", userId);
-
-  const { error: deleteErr } =
-    await supabaseAdmin.auth.admin.deleteUser(userId);
-
-  if (deleteErr) {
-    return new Response(
-      JSON.stringify({
-        error: deleteErr.message,
-        details: { profileDeleted: !profileErr },
-      }),
-      {
-        status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      },
-    );
-  }
-
-  return new Response(
-    JSON.stringify({ ok: true, profileDeleted: !profileErr }),
-    {
-      status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    },
-  );
 });

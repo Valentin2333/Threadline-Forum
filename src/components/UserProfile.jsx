@@ -14,12 +14,7 @@ const NAME_MAX = 32;
 
 const AVATAR_BUCKET = "avatars";
 const MAX_AVATAR_MB = 5;
-const ALLOWED_IMAGE_TYPES = [
-  "image/jpeg",
-  "image/png",
-  "image/webp",
-  "image/gif",
-];
+const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 
 const UserProfile = () => {
   const navigate = useNavigate();
@@ -32,6 +27,7 @@ const UserProfile = () => {
   const [saving, setSaving] = useState(false);
 
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [showAvatarUpload, setShowAvatarUpload] = useState(false);
 
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -43,22 +39,26 @@ const UserProfile = () => {
   const [lastName, setLastName] = useState("");
   const [username, setUsername] = useState("");
 
+  // cache buster so avatar updates instantly
+  const [avatarVersion, setAvatarVersion] = useState(0);
+
   // Delete account
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deletingAccount, setDeletingAccount] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
 
-  // We store avatar_url in DB as a PATH like: "<uid>/avatar.png"
-  const avatarPath = useMemo(
-    () => profile?.avatar_url ?? "",
-    [profile?.avatar_url],
-  );
+  // stored in DB as PATH "<uid>/avatar.png"
+  const avatarPath = useMemo(() => profile?.avatar_url ?? "", [profile?.avatar_url]);
 
   const avatarUrl = useMemo(() => {
     if (!avatarPath) return "";
-    const { data } = supabase.storage.from("avatars").getPublicUrl(avatarPath);
-    return data?.publicUrl ?? "";
-  }, [avatarPath]);
+    const { data } = supabase.storage.from(AVATAR_BUCKET).getPublicUrl(avatarPath);
+    const base = data?.publicUrl ?? "";
+    if (!base) return "";
+    return `${base}?v=${avatarVersion}`;
+  }, [avatarPath, avatarVersion]);
+
+  const hasAvatar = Boolean(avatarPath);
 
   useEffect(() => {
     let cancelled = false;
@@ -81,11 +81,9 @@ const UserProfile = () => {
 
     loadUser();
 
-    const { data: listener } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        setUser(session?.user ?? null);
-      },
-    );
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
 
     return () => {
       cancelled = true;
@@ -110,9 +108,9 @@ const UserProfile = () => {
       try {
         const { data, error: profileError } = await supabase
           .from("profiles")
-          .select(
-            "id, username, first_name, last_name, avatar_url, is_blocked, reputation",
-          )
+          // NOTE: we still fetch is_blocked in case backend needs it,
+          // but we DO NOT display it anywhere in UI.
+          .select("id, username, first_name, last_name, avatar_url, is_blocked, reputation")
           .eq("id", user.id)
           .single();
 
@@ -124,6 +122,8 @@ const UserProfile = () => {
           setLastName(data.last_name ?? "");
           setUsername(data.username ?? "");
           setIsEditing(false);
+          setAvatarVersion(Date.now());
+          setShowAvatarUpload(false);
         }
       } catch (e) {
         if (!cancelled) setError(e?.message || "Could not load profile.");
@@ -136,6 +136,33 @@ const UserProfile = () => {
 
     return () => {
       cancelled = true;
+    };
+  }, [user?.id]);
+
+  // Optional: if profile row changes elsewhere, keep avatar fresh
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const channel = supabase
+      .channel(`profiles:${user.id}:avatar`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "profiles",
+          filter: `id=eq.${user.id}`,
+        },
+        (payload) => {
+          const nextAvatarPath = payload?.new?.avatar_url ?? "";
+          setProfile((prev) => (prev ? { ...prev, avatar_url: nextAvatarPath } : prev));
+          setAvatarVersion(Date.now());
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
     };
   }, [user?.id]);
 
@@ -167,7 +194,6 @@ const UserProfile = () => {
     setSuccess("");
     setIsEditing(false);
 
-    // revert inputs back to saved profile values
     setFirstName(profile?.first_name ?? "");
     setLastName(profile?.last_name ?? "");
     setUsername(profile?.username ?? "");
@@ -196,7 +222,7 @@ const UserProfile = () => {
       const newFirstName = firstName.trim();
       const newLastName = lastName.trim();
 
-      // Optional: username uniqueness check (case-insensitive)
+      // ✅ Username uniqueness check (case-insensitive)
       if (newUsername.length > 0) {
         const { data: existing, error: checkError } = await supabase
           .from("profiles")
@@ -275,35 +301,41 @@ const UserProfile = () => {
       const ext = (file.name.split(".").pop() || "png").toLowerCase();
       const path = `${user.id}/avatar.${ext}`;
 
-      // Helpful debug: confirm path matches policy: "<uid>/..."
-      // console.log("AUTH UID:", user.id);
-      // console.log("UPLOAD PATH:", path);
-      console.log("AUTH UID:", user.id);
-      console.log("UPLOAD PATH:", path);
-
       const { error: uploadError } = await supabase.storage
         .from(AVATAR_BUCKET)
         .upload(path, file, {
           upsert: true,
-          cacheControl: "3600",
+          cacheControl: "0",
           contentType: file.type,
         });
 
       if (uploadError) throw uploadError;
 
-      // Store PATH in DB, not full URL
       const { data: updated, error: updateError } = await supabase
         .from("profiles")
         .update({ avatar_url: path })
         .eq("id", user.id)
-        .select(
-          "id, username, first_name, last_name, avatar_url, is_blocked, reputation",
-        )
+        .select("id, username, first_name, last_name, avatar_url, is_blocked, reputation")
         .single();
 
       if (updateError) throw updateError;
 
       setProfile(updated);
+
+      // cache bust immediately
+      const v = Date.now();
+      setAvatarVersion(v);
+
+      // notify navbar immediately (no refresh)
+      window.dispatchEvent(
+        new CustomEvent("profile:avatar-updated", {
+          detail: { avatarPath: path, version: v },
+        }),
+      );
+
+      // hide the upload UI after success
+      setShowAvatarUpload(false);
+
       setSuccess("Profile picture updated.");
     } catch (e2) {
       setError(e2?.message || "Could not upload profile picture.");
@@ -341,10 +373,7 @@ const UserProfile = () => {
 
     try {
       const { error: fnError } = await supabase.functions.invoke("delete-user");
-
-      if (fnError) {
-        throw new Error(fnError.message || "Edge Function failed.");
-      }
+      if (fnError) throw new Error(fnError.message || "Edge Function failed.");
 
       await supabase.auth.signOut();
       navigate("/");
@@ -383,54 +412,6 @@ const UserProfile = () => {
       <h2 className="mb-3">Profile</h2>
 
       <Card className="p-4">
-        <div className="d-flex align-items-center gap-3 mb-3">
-          <div
-            style={{
-              width: 72,
-              height: 72,
-              borderRadius: "50%",
-              overflow: "hidden",
-              background: "#f1f3f5",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              flexShrink: 0,
-            }}
-          >
-            {avatarUrl ? (
-              <img
-                src={avatarUrl}
-                alt="Profile avatar"
-                style={{ width: "100%", height: "100%", objectFit: "cover" }}
-              />
-            ) : (
-              <span style={{ fontSize: 28, opacity: 0.6 }}>👤</span>
-            )}
-          </div>
-
-          <div className="flex-grow-1">
-            <p className="mb-1">
-              <strong>Email:</strong> {user.email}
-            </p>
-
-            <Form.Group controlId="avatarUpload" className="mb-0">
-              <Form.Label className="mb-1">Profile picture</Form.Label>
-              <div className="d-flex align-items-center gap-2">
-                <Form.Control
-                  type="file"
-                  accept="image/*"
-                  onChange={onAvatarSelected}
-                  disabled={uploadingAvatar}
-                />
-                {uploadingAvatar && <Spinner size="sm" />}
-              </div>
-              <Form.Text muted>
-                Max {MAX_AVATAR_MB}MB. JPG/PNG/WEBP/GIF.
-              </Form.Text>
-            </Form.Group>
-          </div>
-        </div>
-
         {loadingProfile ? (
           <div className="d-flex align-items-center gap-2">
             <Spinner size="sm" />
@@ -442,30 +423,83 @@ const UserProfile = () => {
           </Alert>
         ) : (
           <>
+            {/* Avatar + upload button */}
+            <div className="d-flex flex-column align-items-center text-center mb-3">
+              <div
+                style={{
+                  width: 92,
+                  height: 92,
+                  borderRadius: "50%",
+                  overflow: "hidden",
+                  background: "#f1f3f5",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                {avatarUrl ? (
+                  <img
+                    src={avatarUrl}
+                    alt="Profile avatar"
+                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                  />
+                ) : (
+                  <span style={{ fontSize: 36, opacity: 0.6 }}>👤</span>
+                )}
+              </div>
+
+              <Button
+                variant="link"
+                size="sm"
+                className="mt-2 p-0"
+                onClick={() => {
+                  setError("");
+                  setSuccess("");
+                  setShowAvatarUpload((v) => !v);
+                }}
+                disabled={uploadingAvatar}
+              >
+                {hasAvatar ? "Change profile picture" : "Upload profile picture"}
+              </Button>
+
+              {showAvatarUpload && (
+                <Form.Group controlId="avatarUpload" className="mt-2 w-100" style={{ maxWidth: 360 }}>
+                  <div className="d-flex align-items-center gap-2 justify-content-center">
+                    <Form.Control
+                      type="file"
+                      accept="image/*"
+                      onChange={onAvatarSelected}
+                      disabled={uploadingAvatar}
+                    />
+                    {uploadingAvatar && <Spinner size="sm" />}
+                  </div>
+                  <Form.Text muted>Max {MAX_AVATAR_MB}MB. JPG/PNG/WEBP/GIF.</Form.Text>
+                </Form.Group>
+              )}
+            </div>
+
+            {/* Data below avatar */}
             <div className="mb-3">
+              <p className="mb-1">
+                <strong>Email:</strong> {user.email}
+              </p>
               <p className="mb-1">
                 <strong>Name:</strong> {profile.first_name} {profile.last_name}
               </p>
               <p className="mb-1">
                 <strong>Username:</strong> {profile.username || "—"}
               </p>
-              <p className="mb-1">
+              <p className="mb-0">
                 <strong>Reputation:</strong> {profile.reputation ?? 0}
               </p>
-              <p className="mb-0">
-                <strong>Blocked:</strong> {profile.is_blocked ? "Yes" : "No"}
-              </p>
+              {/* ✅ blocked is intentionally hidden */}
             </div>
 
             <div className="d-flex gap-2 mb-3">
               {!isEditing ? (
                 <Button onClick={startEdit}>Edit profile</Button>
               ) : (
-                <Button
-                  variant="secondary"
-                  onClick={cancelEdit}
-                  disabled={saving}
-                >
+                <Button variant="secondary" onClick={cancelEdit} disabled={saving}>
                   Cancel
                 </Button>
               )}
@@ -549,8 +583,7 @@ const UserProfile = () => {
         </Modal.Header>
         <Modal.Body>
           <Alert variant="danger" className="mb-3">
-            This is permanent. Your Supabase auth user and profile will be
-            deleted.
+            This is permanent. Your Supabase auth user and profile will be deleted.
           </Alert>
 
           <Form.Group>
@@ -567,18 +600,10 @@ const UserProfile = () => {
           </Form.Group>
         </Modal.Body>
         <Modal.Footer>
-          <Button
-            variant="secondary"
-            onClick={closeDeleteModal}
-            disabled={deletingAccount}
-          >
+          <Button variant="secondary" onClick={closeDeleteModal} disabled={deletingAccount}>
             Cancel
           </Button>
-          <Button
-            variant="danger"
-            onClick={onDeleteAccount}
-            disabled={deletingAccount}
-          >
+          <Button variant="danger" onClick={onDeleteAccount} disabled={deletingAccount}>
             {deletingAccount ? (
               <>
                 <Spinner size="sm" className="me-2" />

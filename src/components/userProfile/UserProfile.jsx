@@ -43,11 +43,11 @@ const UserProfile = () => {
     });
 
   useEffect(() => {
-    if (profile) {
-      setIsEditing(false);
-      setAvatarVersion(Date.now());
-    }
-  }, [profile?.id]);
+    if (!profile) return;
+
+    setIsEditing(false);
+    setAvatarVersion(Date.now());
+  }, [profile]);
 
   const avatarPath = useMemo(
     () => profile?.avatar_url ?? "",

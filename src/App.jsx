@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Routes, Route } from "react-router-dom";
-import AppNavbar from "./components/AppNavbar";
-import AuthPage from "./components/AuthPage";
-import UserProfile from "./components/UserProfile";
+import AppNavigation from "./components/navigation/AppNavigation";
+import AuthPage from "./components/auth/shared/AuthPage";
+import UserProfile from "./components/userProfile/UserProfile";
 import CreatePostForm from "./components/CreatePostForm";
 import FetchPosts from "./components/FetchPosts";
 
@@ -15,7 +15,7 @@ function App() {
 
   return (
     <>
-      <AppNavbar />
+      <AppNavigation />
 
       <Routes>
         <Route path="/" element={<div className="p-4">Welcome</div>} />

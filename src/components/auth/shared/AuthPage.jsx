@@ -1,8 +1,8 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import Container from "react-bootstrap/Container";
 import Card from "react-bootstrap/Card";
-import Register from "./Register";
-import Login from "./Login";
+import Register from "../Register/Register";
+import Login from "../Login/Login";
 
 const AuthPage = () => {
   const location = useLocation();

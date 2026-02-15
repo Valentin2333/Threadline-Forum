@@ -1,14 +1,22 @@
-// import { useEffect, useState } from 'react';
-// import './App.css'
-// import { supabase } from './api/supabaseClient';
-import Register from './components/Register';
-
+import { Routes, Route } from "react-router-dom";
+import AppNavigation from "./components/navigation/AppNavigation";
+import AuthPage from "./components/auth/shared/AuthPage";
+import UserProfile from "./components/userProfile/UserProfile";
 
 function App() {
-
   return (
-    <Register/>
-  )
+    <>
+      <AppNavigation />
+
+      <Routes>
+        <Route path="/" element={<div className="p-4">Welcome</div>} />
+        <Route path="/posts" element={<div className="p-4">Posts page</div>} />
+        <Route path="/profile" element={<UserProfile />} />
+        <Route path="/login" element={<AuthPage />} />
+        <Route path="/register" element={<AuthPage />} />
+      </Routes>
+    </>
+  );
 }
 
-export default App
+export default App;

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { getNewestPosts } from "../api/posts";
-import CreateComment from "./CreateComment";
+import { getNewestPosts } from "../../api/posts";
+import CreateComment from "../posting/CreateComment";
 
 const FetchPosts = ({ refreshTrigger }) => {
   const [posts, setPosts] = useState([]);

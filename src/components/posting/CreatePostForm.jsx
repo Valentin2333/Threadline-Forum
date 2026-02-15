@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { supabase } from "../api/supabaseClient";
-import { createPost } from "../api/posts";
+import { supabase } from "../../api/supabaseClient";
+import { createPost } from "../../api/posts";
 
 const CreatePostForm = ({ onPostCreated }) => {
   const [serverError, setServerError] = useState("");

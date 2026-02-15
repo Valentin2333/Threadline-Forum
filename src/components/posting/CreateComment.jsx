@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { supabase } from "../api/supabaseClient";
-import { createComment } from "../api/comments";
+import { supabase } from "../../api/supabaseClient";
+import { createComment } from "../../api/comments";
 
 const CreateComment = ({ postId, onCommentCreated, onCancel }) => {
   const [serverError, setServerError] = useState("");

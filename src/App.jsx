@@ -3,8 +3,8 @@ import { Routes, Route } from "react-router-dom";
 import AppNavigation from "./components/navigation/AppNavigation";
 import AuthPage from "./components/auth/shared/AuthPage";
 import UserProfile from "./components/userProfile/UserProfile";
-import CreatePostForm from "./components/CreatePostForm";
-import FetchPosts from "./components/FetchPosts";
+import CreatePostForm from "./components/posting/CreatePostForm";
+import FetchPosts from "./components/posting/FetchPosts";
 
 function App() {
   const [refreshPosts, setRefreshPosts] = useState(0);

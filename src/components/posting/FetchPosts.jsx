@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { getNewestPosts } from "../../api/posts";
 import CreateComment from "../posting/CreateComment";
+import AvatarFromStorage from "./AvatarFromStorage";
+
 
 const FetchPosts = ({ refreshTrigger }) => {
   const [posts, setPosts] = useState([]);
@@ -40,6 +42,11 @@ const FetchPosts = ({ refreshTrigger }) => {
           }}
         >
           <h3>{post.title}</h3>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+            <AvatarFromStorage pathOrUrl={post.profiles?.avatar_url} />
+            <b>{post.profiles?.username || "Unknown user"}</b>
+          </div>
+
           <p>{post.content}</p>
 
           {/* Add comment button */}
@@ -74,10 +81,19 @@ const FetchPosts = ({ refreshTrigger }) => {
                     marginLeft: 20,
                     borderLeft: "3px solid #ccc",
                     paddingLeft: 10,
-                    marginBottom: 6,
+                    marginBottom: 10,
                   }}
                 >
+                  {/* AUTHOR */}
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <AvatarFromStorage pathOrUrl={post.profiles?.avatar_url} />
+                    <b>{comment.profiles?.username || "Unknown user"}</b>
+                  </div>
+
+                  {/* COMMENT TEXT */}
                   <div>{comment.content}</div>
+
+                  {/* DATE */}
                   <small style={{ color: "#888" }}>
                     {new Date(comment.created_at).toLocaleString()}
                   </small>

@@ -5,13 +5,26 @@ export async function getNewestPosts() {
     .from("posts")
     .select(`
       id, author_id, title, content, created_at, score, comment_count,
-      comments ( id, post_id, author_id, content, created_at, score )
+
+      profiles:profiles!posts_author_id_fkey (
+        username,
+        avatar_url
+      ),
+
+      comments (
+        id, post_id, author_id, content, created_at, score,
+
+        profiles:profiles!comments_author_id_fkey (
+          username,
+          avatar_url
+        )
+      )
     `)
     .order("created_at", { ascending: false })
     .limit(10);
 
   if (error) throw error;
-  return data;
+  return data ?? [];
 }
 
 export async function createPost({ userId, title, content }) {

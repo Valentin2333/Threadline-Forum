@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { getNewestPosts } from "../../api/posts";
 import CreateComment from "../posting/CreateComment";
 import AvatarFromStorage from "./AvatarFromStorage";
+import PostVotes from "./PostVotes";
+
 
 
 const FetchPosts = ({ refreshTrigger }) => {
@@ -48,6 +50,12 @@ const FetchPosts = ({ refreshTrigger }) => {
           </div>
 
           <p>{post.content}</p>
+
+          <div style={{ marginTop: 6 }}>
+            <b>Score:</b> {post.score}
+          </div>
+
+          <PostVotes postId={post.id} onVoted={loadPosts} />
 
           {/* Add comment button */}
           <button onClick={() => toggleCommentForm(post.id)}>

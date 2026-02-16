@@ -43,3 +43,16 @@ export async function createPost({ userId, title, content }) {
   if (error) throw error;
   return data;
 }
+
+
+export async function getTopPosts(limit = 10) {
+  const { data, error } = await supabase
+    .from("posts")
+    .select("id, title, created_at, score, comment_count")
+    .order("score", { ascending: false })
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (error) throw error;
+  return data ?? [];
+}

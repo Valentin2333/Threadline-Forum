@@ -1,10 +1,12 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { supabase } from "../../api/supabaseClient";
 import { createPost } from "../../api/posts";
 
 const CreatePostForm = ({ onPostCreated }) => {
   const [serverError, setServerError] = useState("");
+  const [user, setUser] = useState(null);
+  const [loadingUser, setLoadingUser] = useState(true);
 
   const {
     register,
@@ -18,13 +20,26 @@ const CreatePostForm = ({ onPostCreated }) => {
     },
   });
 
+  useEffect(() => {
+    // initial user
+    supabase.auth.getUser().then(({ data }) => {
+      setUser(data.user ?? null);
+      setLoadingUser(false);
+    });
+
+    // keep in sync on login/logout
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => sub.subscription.unsubscribe();
+  }, []);
+
   const onSubmit = async (data) => {
     setServerError("");
 
-    const { data: userData } = await supabase.auth.getUser();
-    const user = userData.user;
-
     if (!user) {
+      // should not happen because form is hidden, but keeps it safe
       setServerError("You must be logged in to post.");
       return;
     }
@@ -37,15 +52,22 @@ const CreatePostForm = ({ onPostCreated }) => {
       });
 
       reset();
-      onPostCreated(); // refresh posts
+      onPostCreated?.(); // refresh posts
     } catch (err) {
-      if (err.message.includes("row-level security")) {
+      const msg = err?.message || "Unknown error";
+      if (msg.toLowerCase().includes("row-level security")) {
         setServerError("You are blocked and cannot create posts.");
       } else {
-        setServerError(err.message);
+        setServerError(msg);
       }
     }
   };
+
+  // Hide the whole form while auth is loading
+  if (loadingUser) return null;
+
+  // Hide the form completely if not authenticated
+  if (!user) return null;
 
   return (
     <div style={{ marginBottom: 30 }}>

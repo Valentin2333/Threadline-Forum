@@ -6,7 +6,7 @@ export async function getNewestPosts() {
     .select(`
       id, author_id, title, content, created_at, score, comment_count,
 
-      profiles:profiles!posts_author_id_fkey (
+      post_author:profiles!posts_author_id_fkey (
         username,
         avatar_url
       ),
@@ -14,7 +14,7 @@ export async function getNewestPosts() {
       comments (
         id, post_id, author_id, content, created_at, score,
 
-        profiles:profiles!comments_author_id_fkey (
+        comment_author:profiles!comments_author_id_fkey (
           username,
           avatar_url
         )

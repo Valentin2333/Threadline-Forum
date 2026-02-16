@@ -43,8 +43,8 @@ const FetchPosts = ({ refreshTrigger }) => {
         >
           <h3>{post.title}</h3>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-            <AvatarFromStorage pathOrUrl={post.profiles?.avatar_url} />
-            <b>{post.profiles?.username || "Unknown user"}</b>
+            <AvatarFromStorage pathOrUrl={post.post_author?.avatar_url} />
+            <b>{post.post_author?.username || "Unknown user"}</b>
           </div>
 
           <p>{post.content}</p>
@@ -86,8 +86,8 @@ const FetchPosts = ({ refreshTrigger }) => {
                 >
                   {/* AUTHOR */}
                   <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <AvatarFromStorage pathOrUrl={post.profiles?.avatar_url} />
-                    <b>{comment.profiles?.username || "Unknown user"}</b>
+                    <AvatarFromStorage pathOrUrl={comment.comment_author?.avatar_url} />
+                    <b>{comment.comment_author?.username || "Unknown user"}</b>
                   </div>
 
                   {/* COMMENT TEXT */}

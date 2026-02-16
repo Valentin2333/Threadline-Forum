@@ -27,6 +27,33 @@ export async function getNewestPosts() {
   return data ?? [];
 }
 
+export async function getPostById(postId) {
+  const { data, error } = await supabase
+    .from("posts")
+    .select(`
+      id, author_id, title, content, created_at, score, comment_count,
+
+      post_author:profiles!posts_author_id_fkey (
+        username,
+        avatar_url
+      ),
+
+      comments (
+        id, post_id, author_id, content, created_at, score,
+
+        comment_author:profiles!comments_author_id_fkey (
+          username,
+          avatar_url
+        )
+      )
+    `)
+    .eq("id", postId)
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
 export async function createPost({ userId, title, content }) {
   const { data, error } = await supabase
     .from("posts")
@@ -44,6 +71,23 @@ export async function createPost({ userId, title, content }) {
   return data;
 }
 
+export async function updatePost({ postId, title, content }) {
+  const { data, error } = await supabase
+    .from("posts")
+    .update({ title, content })
+    .eq("id", postId)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+export async function deletePost({ postId }) {
+  const { error } = await supabase.from("posts").delete().eq("id", postId);
+  if (error) throw error;
+  return true;
+}
 
 export async function getTopPosts(limit = 10) {
   const { data, error } = await supabase

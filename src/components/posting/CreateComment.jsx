@@ -3,17 +3,33 @@ import { useForm } from "react-hook-form";
 import { supabase } from "../../api/supabaseClient";
 import { createComment } from "../../api/comments";
 
+import Form from "react-bootstrap/Form";
+import Button from "react-bootstrap/Button";
+import Alert from "react-bootstrap/Alert";
+import InputGroup from "react-bootstrap/InputGroup";
+import Spinner from "react-bootstrap/Spinner";
+
+/**
+ * Comment composer:
+ * - textbox + send button
+ * - submit on Enter (Shift+Enter inserts newline)
+ * - no React Hook Form `watch()` (avoids React Compiler incompatible-library warning)
+ */
 const CreateComment = ({ postId, onCommentCreated, onCancel }) => {
   const [serverError, setServerError] = useState("");
+  const [draft, setDraft] = useState("");
 
   const {
     register,
     handleSubmit,
     reset,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm({
     defaultValues: { content: "" },
   });
+
+  const isEmpty = !draft.trim();
 
   const onSubmit = async ({ content }) => {
     setServerError("");
@@ -34,6 +50,7 @@ const CreateComment = ({ postId, onCommentCreated, onCancel }) => {
       });
 
       reset();
+      setDraft("");
       onCommentCreated?.();
       onCancel?.();
     } catch (err) {
@@ -46,32 +63,76 @@ const CreateComment = ({ postId, onCommentCreated, onCancel }) => {
     }
   };
 
+  const reg = register("content", {
+    required: "Comment is required",
+    minLength: { value: 1, message: "Comment cannot be empty" },
+    maxLength: { value: 8192, message: "Max 8192 chars" },
+  });
+
   return (
-    <div style={{ marginTop: 10 }}>
-      {serverError && <p style={{ color: "crimson" }}>{serverError}</p>}
+    <div className="mt-2">
+      {serverError && (
+        <Alert variant="danger" className="py-2 mb-2">
+          {serverError}
+        </Alert>
+      )}
 
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <textarea
-          rows={3}
-          style={{ width: "100%" }}
-          placeholder="Write a comment..."
-          {...register("content", {
-            required: "Comment is required",
-            minLength: { value: 1, message: "Comment cannot be empty" },
-            maxLength: { value: 8192, message: "Max 8192 chars" },
-          })}
-        />
-        {errors.content && <p style={{ color: "crimson" }}>{errors.content.message}</p>}
+      <Form onSubmit={handleSubmit(onSubmit)}>
+        <InputGroup>
+          <Form.Control
+            as="textarea"
+            rows={1}
+            placeholder="Write a comment…"
+            aria-label="Write a comment"
+            value={draft}
+            {...reg}
+            onChange={(e) => {
+              // keep both local UI state + RHF state in sync
+              setDraft(e.target.value);
+              setValue("content", e.target.value, {
+                shouldValidate: true,
+                shouldDirty: true,
+              });
+            }}
+            onKeyDown={(e) => {
+              // Enter submits; Shift+Enter adds newline
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                handleSubmit(onSubmit)();
+              }
+            }}
+          />
 
-        <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-          <button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "Posting..." : "Post comment"}
-          </button>
-          <button type="button" onClick={onCancel}>
-            Cancel
-          </button>
-        </div>
-      </form>
+          <Button
+            type="submit"
+            variant="primary"
+            disabled={isSubmitting || isEmpty}
+            aria-label="Send comment"
+          >
+            {isSubmitting ? (
+              <>
+                <Spinner size="sm" className="me-2" /> Sending…
+              </>
+            ) : (
+              "Send"
+            )}
+          </Button>
+
+          {onCancel && (
+            <Button type="button" variant="outline-secondary" onClick={onCancel}>
+              Cancel
+            </Button>
+          )}
+        </InputGroup>
+
+        {errors.content && (
+          <div className="text-danger small mt-1">{errors.content.message}</div>
+        )}
+      </Form>
+
+      <div className="text-muted small mt-1">
+        Press Enter to send, Shift+Enter for a new line.
+      </div>
     </div>
   );
 };

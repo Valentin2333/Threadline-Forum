@@ -7,6 +7,14 @@ import AvatarFromStorage from "./AvatarFromStorage";
 import useAuthUser from "../navigation/hooks/useAuthUser";
 import PostVotes from "./PostVotes";
 
+import Alert from "react-bootstrap/Alert";
+import Badge from "react-bootstrap/Badge";
+import Button from "react-bootstrap/Button";
+import Card from "react-bootstrap/Card";
+import Dropdown from "react-bootstrap/Dropdown";
+import Form from "react-bootstrap/Form";
+import ListGroup from "react-bootstrap/ListGroup";
+
 const validatePost = ({ title, content }) => {
   const errs = {};
 
@@ -28,8 +36,10 @@ const mapDbErrorToFields = (msg = "") => {
   const m = msg.toLowerCase();
   const errs = {};
 
-  if (m.includes("post_title_length")) errs.title = "Title must be 16–64 characters.";
-  if (m.includes("post_content_length")) errs.content = "Content must be 32–8192 characters.";
+  if (m.includes("post_title_length"))
+    errs.title = "Title must be 16-64 characters.";
+  if (m.includes("post_content_length"))
+    errs.content = "Content must be 32-8192 characters.";
 
   if (!errs.title && m.includes("title")) errs.title = "Invalid title.";
   if (!errs.content && m.includes("content")) errs.content = "Invalid content.";
@@ -37,41 +47,12 @@ const mapDbErrorToFields = (msg = "") => {
   return errs;
 };
 
-const backdropStyle = {
-  position: "fixed",
-  inset: 0,
-  background: "transparent",
-  zIndex: 5,
-};
-
-const menuStyle = {
-  position: "absolute",
-  right: 0,
-  top: "calc(100% + 6px)",
-  border: "1px solid #ddd",
-  background: "white",
-  borderRadius: 8,
-  padding: 6,
-  minWidth: 140,
-  boxShadow: "0 8px 20px rgba(0,0,0,0.08)",
-  zIndex: 10,
-};
-
-const menuItemStyle = {
-  width: "100%",
-  textAlign: "left",
-  padding: 8,
-  border: "none",
-  background: "transparent",
-  cursor: "pointer",
-};
-
 const FetchPosts = ({ refreshTrigger }) => {
   const navigate = useNavigate();
   const user = useAuthUser();
 
   const [posts, setPosts] = useState([]);
-  const [openCommentForPostId, setOpenCommentForPostId] = useState(null);
+  const [expandedCommentsByPostId, setExpandedCommentsByPostId] = useState({});
 
   // "3 dots" menu toggles
   const [openMenuForPostId, setOpenMenuForPostId] = useState(null);
@@ -79,8 +60,14 @@ const FetchPosts = ({ refreshTrigger }) => {
 
   // Editing state
   const [editingPostId, setEditingPostId] = useState(null);
-  const [editingPostDraft, setEditingPostDraft] = useState({ title: "", content: "" });
-  const [postFieldErrors, setPostFieldErrors] = useState({ title: "", content: "" });
+  const [editingPostDraft, setEditingPostDraft] = useState({
+    title: "",
+    content: "",
+  });
+  const [postFieldErrors, setPostFieldErrors] = useState({
+    title: "",
+    content: "",
+  });
 
   const [editingCommentId, setEditingCommentId] = useState(null);
   const [editingCommentDraft, setEditingCommentDraft] = useState("");
@@ -101,15 +88,12 @@ const FetchPosts = ({ refreshTrigger }) => {
   };
 
   useEffect(() => {
+    // eslint-disable-next-line
     loadPosts();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refreshTrigger]);
 
-  const toggleCommentForm = (postId) => {
-    setOpenCommentForPostId((current) => (current === postId ? null : postId));
-  };
-
-  const isOwn = (authorId) => Boolean(userId && authorId && userId === authorId);
+  const isOwn = (authorId) =>
+    Boolean(userId && authorId && userId === authorId);
 
   const startEditPost = (post) => {
     setServerError("");
@@ -117,7 +101,10 @@ const FetchPosts = ({ refreshTrigger }) => {
     setOpenMenuForPostId(null);
 
     setEditingPostId(post.id);
-    setEditingPostDraft({ title: post.title ?? "", content: post.content ?? "" });
+    setEditingPostDraft({
+      title: post.title ?? "",
+      content: post.content ?? "",
+    });
   };
 
   const cancelEditPost = () => {
@@ -235,284 +222,300 @@ const FetchPosts = ({ refreshTrigger }) => {
   };
 
   return (
-    <div>
-      <h2>Latest Posts</h2>
+    <div className="py-3">
+      <div className="d-flex align-items-center justify-content-between mb-3">
+        <h2 className="mb-0">Latest Posts</h2>
+      </div>
 
-      {serverError && <p style={{ color: "red" }}>{serverError}</p>}
-      {posts.length === 0 && <p>No posts yet</p>}
+      {serverError && (
+        <Alert variant="danger" className="py-2">
+          {serverError}
+        </Alert>
+      )}
+
+      {posts.length === 0 && <Alert variant="secondary">No posts yet</Alert>}
 
       {posts.map((post) => {
         const ownPost = isOwn(post.author_id);
 
+        const sortedComments = (post.comments ?? [])
+          .slice()
+          .sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+
+        const isExpanded = !!expandedCommentsByPostId[post.id];
+        const visibleComments =
+          sortedComments.length > 2 && !isExpanded
+            ? sortedComments.slice(0, 2)
+            : sortedComments;
+
         return (
-          <div
-            key={post.id}
-            style={{
-              border: "1px solid gray",
-              margin: 10,
-              padding: 10,
-              borderRadius: 6,
-              position: "relative",
-            }}
-          >
-            {/* Top row: title/score on left, actions on right */}
-            <div
-              style={{
-                display: "flex",
-                alignItems: "flex-start",
-                justifyContent: "space-between",
-                gap: 12,
-              }}
-            >
-              {/* Left column */}
-              <div style={{ flex: 1 }}>
-                <h3
-                  style={{ cursor: "pointer", textDecoration: "underline" }}
-                  onClick={() => navigate(`/posts/${post.id}`)}
-                  title="Open post details"
-                >
-                  {post.title}
-                </h3>
+          <Card key={post.id} className="mb-3 shadow-sm">
+            <Card.Body>
+              <div className="d-flex align-items-start justify-content-between gap-3">
+                <div className="flex-grow-1">
+                  <div className="d-flex align-items-center gap-2">
+                    <Button
+                      variant="link"
+                      className="p-0 text-decoration-none"
+                      onClick={() => navigate(`/posts/${post.id}`)}
+                      title="Open post details"
+                    >
+                      <span className="h5 mb-0 text-decoration-underline">
+                        {post.title}
+                      </span>
+                    </Button>
+                    <Badge bg="secondary">Score: {post.score}</Badge>
+                  </div>
 
-                <div style={{ marginTop: 6 }}>
-                  <b>Score:</b> {post.score}
+                  <div className="mt-2">
+                    <PostVotes postId={post.id} onVoted={loadPosts} />
+                  </div>
                 </div>
 
-                <div style={{ marginTop: 8 }}>
-                  <PostVotes postId={post.id} onVoted={loadPosts} />
-                </div>
-              </div>
-
-              {/* Right column: post menu (only if own post) */}
-              {ownPost && (
-                <div style={{ position: "relative" }}>
-                  <button
-                    type="button"
-                    aria-label="Post actions"
-                    onClick={() => {
-                      // ensure only one menu open at a time
-                      setOpenMenuForCommentId(null);
-                      setOpenMenuForPostId((cur) => (cur === post.id ? null : post.id));
-                    }}
-                    style={{
-                      border: "1px solid #ccc",
-                      background: "white",
-                      borderRadius: 6,
-                      padding: "2px 8px",
-                      cursor: "pointer",
-                      lineHeight: 1.2,
-                    }}
-                    title="Actions"
-                  >
-                    ⋯
-                  </button>
-
-                  {openMenuForPostId === post.id && (
-                    <>
-                      {/* Click-outside backdrop */}
-                      <div style={backdropStyle} onClick={() => setOpenMenuForPostId(null)} />
-
-                      <div style={menuStyle}>
-                        <button type="button" onClick={() => startEditPost(post)} style={menuItemStyle}>
-                          Edit
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => confirmAndDeletePost(post.id)}
-                          style={{ ...menuItemStyle, color: "crimson" }}
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* Post content or edit form */}
-            {editingPostId === post.id ? (
-              <div style={{ marginTop: 8 }}>
-                <div style={{ marginBottom: 8 }}>
-                  <input
-                    value={editingPostDraft.title}
-                    onChange={(e) => {
-                      setEditingPostDraft((d) => ({ ...d, title: e.target.value }));
-                      setPostFieldErrors((fe) => ({ ...fe, title: "" }));
-                    }}
-                    style={{ width: "100%" }}
-                    placeholder="Title"
-                  />
-                  {postFieldErrors.title && (
-                    <p style={{ color: "red", margin: "6px 0 0" }}>{postFieldErrors.title}</p>
-                  )}
-                </div>
-
-                <div style={{ marginBottom: 8 }}>
-                  <textarea
-                    rows={4}
-                    value={editingPostDraft.content}
-                    onChange={(e) => {
-                      setEditingPostDraft((d) => ({ ...d, content: e.target.value }));
-                      setPostFieldErrors((fe) => ({ ...fe, content: "" }));
-                    }}
-                    style={{ width: "100%" }}
-                    placeholder="Content"
-                  />
-                  {postFieldErrors.content && (
-                    <p style={{ color: "red", margin: "6px 0 0" }}>{postFieldErrors.content}</p>
-                  )}
-                </div>
-
-                <div style={{ display: "flex", gap: 8 }}>
-                  <button type="button" onClick={() => saveEditPost(post.id)}>
-                    Save
-                  </button>
-                  <button type="button" onClick={cancelEditPost}>
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <p style={{ marginTop: 8 }}>{post.content}</p>
-            )}
-
-            {/* Comment form toggle + form */}
-            <div style={{ marginTop: 10 }}>
-              <button onClick={() => toggleCommentForm(post.id)}>
-                {openCommentForPostId === post.id ? "Close" : "Add comment"}
-              </button>
-
-              {openCommentForPostId === post.id && (
-                <div style={{ marginTop: 10 }}>
-                  <CreateComment
-                    postId={post.id}
-                    onCommentCreated={loadPosts}
-                    onCancel={() => setOpenCommentForPostId(null)}
-                  />
-                </div>
-              )}
-            </div>
-
-            {/* Comments */}
-            <div style={{ marginTop: 15 }}>
-              <h4>Comments</h4>
-
-              {(post.comments ?? []).length === 0 && <p style={{ color: "#777" }}>No comments yet</p>}
-
-              {(post.comments ?? [])
-                .slice()
-                .sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
-                .map((comment) => {
-                  const ownComment = isOwn(comment.author_id);
-
-                  return (
-                    <div
-                      key={comment.id}
-                      style={{
-                        marginLeft: 20,
-                        borderLeft: "3px solid #ccc",
-                        paddingLeft: 10,
-                        marginBottom: 10,
-                        position: "relative",
+                {ownPost && (
+                  <Dropdown align="end" show={openMenuForPostId === post.id}>
+                    <Dropdown.Toggle
+                      variant="outline-secondary"
+                      size="sm"
+                      bsPrefix="btn"
+                      onClick={() => {
+                        setOpenMenuForCommentId(null);
+                        setOpenMenuForPostId((cur) =>
+                          cur === post.id ? null : post.id,
+                        );
                       }}
                     >
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "flex-start",
-                          justifyContent: "space-between",
-                          gap: 10,
+                      ⋯
+                    </Dropdown.Toggle>
+
+                    <Dropdown.Menu>
+                      <Dropdown.Item
+                        onClick={() => {
+                          setOpenMenuForPostId(null);
+                          startEditPost(post);
                         }}
                       >
-                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                          <AvatarFromStorage pathOrUrl={comment.comment_author?.avatar_url} />
-                          <b>{comment.comment_author?.username || "Unknown user"}</b>
-                        </div>
+                        Edit
+                      </Dropdown.Item>
+                      <Dropdown.Item
+                        className="text-danger"
+                        onClick={() => {
+                          setOpenMenuForPostId(null);
+                          confirmAndDeletePost(post.id);
+                        }}
+                      >
+                        Delete
+                      </Dropdown.Item>
+                    </Dropdown.Menu>
+                  </Dropdown>
+                )}
+              </div>
 
-                        {ownComment && (
-                          <div style={{ position: "relative" }}>
-                            <button
-                              type="button"
-                              aria-label="Comment actions"
-                              onClick={() => {
-                                setOpenMenuForPostId(null);
-                                setOpenMenuForCommentId((cur) => (cur === comment.id ? null : comment.id));
-                              }}
-                              style={{
-                                border: "1px solid #ccc",
-                                background: "white",
-                                borderRadius: 6,
-                                padding: "2px 8px",
-                                cursor: "pointer",
-                                lineHeight: 1.2,
-                              }}
-                              title="Actions"
-                            >
-                              ⋯
-                            </button>
+              {/* Post content or edit form */}
+              {editingPostId === post.id ? (
+                <div className="mt-3">
+                  <Form.Group className="mb-2">
+                    <Form.Label className="small text-muted">Title</Form.Label>
+                    <Form.Control
+                      value={editingPostDraft.title}
+                      onChange={(e) => {
+                        setEditingPostDraft((d) => ({
+                          ...d,
+                          title: e.target.value,
+                        }));
+                        setPostFieldErrors((fe) => ({ ...fe, title: "" }));
+                      }}
+                      placeholder="Title"
+                      isInvalid={!!postFieldErrors.title}
+                    />
+                    <Form.Control.Feedback type="invalid">
+                      {postFieldErrors.title}
+                    </Form.Control.Feedback>
+                  </Form.Group>
 
-                            {openMenuForCommentId === comment.id && (
-                              <>
-                                {/* Click-outside backdrop */}
-                                <div style={backdropStyle} onClick={() => setOpenMenuForCommentId(null)} />
+                  <Form.Group className="mb-2">
+                    <Form.Label className="small text-muted">
+                      Content
+                    </Form.Label>
+                    <Form.Control
+                      as="textarea"
+                      rows={4}
+                      value={editingPostDraft.content}
+                      onChange={(e) => {
+                        setEditingPostDraft((d) => ({
+                          ...d,
+                          content: e.target.value,
+                        }));
+                        setPostFieldErrors((fe) => ({ ...fe, content: "" }));
+                      }}
+                      placeholder="Content"
+                      isInvalid={!!postFieldErrors.content}
+                    />
+                    <Form.Control.Feedback type="invalid">
+                      {postFieldErrors.content}
+                    </Form.Control.Feedback>
+                  </Form.Group>
 
-                                <div style={menuStyle}>
-                                  <button
-                                    type="button"
-                                    onClick={() => startEditComment(comment)}
-                                    style={menuItemStyle}
-                                  >
-                                    Edit
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => confirmAndDeleteComment(comment.id)}
-                                    style={{ ...menuItemStyle, color: "crimson" }}
-                                  >
-                                    Delete
-                                  </button>
+                  <div className="d-flex gap-2">
+                    <Button size="sm" onClick={() => saveEditPost(post.id)}>
+                      Save
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline-secondary"
+                      onClick={cancelEditPost}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <p className="mt-3 mb-0">{post.content}</p>
+              )}
+
+              {/* Add comment composer (always visible) */}
+              <div className="mt-3">
+                <CreateComment postId={post.id} onCommentCreated={loadPosts} />
+              </div>
+
+              {/* Comments */}
+              <div className="mt-4">
+                <div className="d-flex align-items-center justify-content-between mb-2">
+                  <h4 className="h6 mb-0">Comments</h4>
+
+                  {sortedComments.length > 2 && (
+                    <Button
+                      size="sm"
+                      variant="outline-primary"
+                      onClick={() =>
+                        setExpandedCommentsByPostId((m) => ({
+                          ...m,
+                          [post.id]: !isExpanded,
+                        }))
+                      }
+                    >
+                      {isExpanded
+                        ? "Hide"
+                        : `Show all (${sortedComments.length})`}
+                    </Button>
+                  )}
+                </div>
+
+                {sortedComments.length === 0 && (
+                  <div className="text-muted small">No comments yet</div>
+                )}
+
+                <ListGroup variant="flush">
+                  {visibleComments.map((comment) => {
+                    const ownComment = isOwn(comment.author_id);
+
+                    return (
+                      <ListGroup.Item key={comment.id} className="px-0">
+                        <div className="d-flex align-items-start justify-content-between gap-2">
+                          <div className="d-flex align-items-start gap-2">
+                            <AvatarFromStorage
+                              pathOrUrl={comment.comment_author?.avatar_url}
+                            />
+                            <div>
+                              <div className="fw-semibold">
+                                {comment.comment_author?.username ||
+                                  "Unknown user"}
+                              </div>
+
+                              {editingCommentId === comment.id ? (
+                                <div className="mt-2">
+                                  <Form.Control
+                                    as="textarea"
+                                    rows={3}
+                                    value={editingCommentDraft}
+                                    onChange={(e) => {
+                                      setEditingCommentDraft(e.target.value);
+                                      setCommentFieldError("");
+                                    }}
+                                    placeholder="Edit comment"
+                                    isInvalid={!!commentFieldError}
+                                  />
+                                  {commentFieldError && (
+                                    <div className="text-danger small mt-1">
+                                      {commentFieldError}
+                                    </div>
+                                  )}
+                                  <div className="d-flex gap-2 mt-2">
+                                    <Button
+                                      size="sm"
+                                      onClick={() =>
+                                        saveEditComment(comment.id)
+                                      }
+                                    >
+                                      Save
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="outline-secondary"
+                                      onClick={cancelEditComment}
+                                    >
+                                      Cancel
+                                    </Button>
+                                  </div>
                                 </div>
-                              </>
-                            )}
-                          </div>
-                        )}
-                      </div>
+                              ) : (
+                                <div className="mt-1">{comment.content}</div>
+                              )}
 
-                      {editingCommentId === comment.id ? (
-                        <div style={{ marginTop: 8 }}>
-                          <textarea
-                            rows={3}
-                            value={editingCommentDraft}
-                            onChange={(e) => {
-                              setEditingCommentDraft(e.target.value);
-                              setCommentFieldError("");
-                            }}
-                            style={{ width: "100%" }}
-                          />
-                          {commentFieldError && (
-                            <p style={{ color: "red", margin: "6px 0 0" }}>{commentFieldError}</p>
+                              <div className="text-muted small mt-1">
+                                {new Date(comment.created_at).toLocaleString()}
+                              </div>
+                            </div>
+                          </div>
+
+                          {ownComment && (
+                            <Dropdown
+                              align="end"
+                              show={openMenuForCommentId === comment.id}
+                            >
+                              <Dropdown.Toggle
+                                variant="outline-secondary"
+                                size="sm"
+                                bsPrefix="btn"
+                                onClick={() => {
+                                  setOpenMenuForPostId(null);
+                                  setOpenMenuForCommentId((cur) =>
+                                    cur === comment.id ? null : comment.id,
+                                  );
+                                }}
+                              >
+                                ⋯
+                              </Dropdown.Toggle>
+
+                              <Dropdown.Menu>
+                                <Dropdown.Item
+                                  onClick={() => {
+                                    setOpenMenuForCommentId(null);
+                                    startEditComment(comment);
+                                  }}
+                                >
+                                  Edit
+                                </Dropdown.Item>
+                                <Dropdown.Item
+                                  className="text-danger"
+                                  onClick={() => {
+                                    setOpenMenuForCommentId(null);
+                                    confirmAndDeleteComment(comment.id);
+                                  }}
+                                >
+                                  Delete
+                                </Dropdown.Item>
+                              </Dropdown.Menu>
+                            </Dropdown>
                           )}
-
-                          <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-                            <button type="button" onClick={() => saveEditComment(comment.id)}>
-                              Save
-                            </button>
-                            <button type="button" onClick={cancelEditComment}>
-                              Cancel
-                            </button>
-                          </div>
                         </div>
-                      ) : (
-                        <div style={{ marginTop: 6 }}>{comment.content}</div>
-                      )}
-
-                      <small style={{ color: "#888" }}>{new Date(comment.created_at).toLocaleString()}</small>
-                    </div>
-                  );
-                })}
-            </div>
-          </div>
+                      </ListGroup.Item>
+                    );
+                  })}
+                </ListGroup>
+              </div>
+            </Card.Body>
+          </Card>
         );
       })}
     </div>

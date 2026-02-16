@@ -6,6 +6,14 @@ import CreateComment from "./CreateComment";
 import AvatarFromStorage from "./AvatarFromStorage";
 import useAuthUser from "../navigation/hooks/useAuthUser";
 
+import Alert from "react-bootstrap/Alert";
+import Button from "react-bootstrap/Button";
+import Card from "react-bootstrap/Card";
+import Container from "react-bootstrap/Container";
+import Dropdown from "react-bootstrap/Dropdown";
+import Form from "react-bootstrap/Form";
+import ListGroup from "react-bootstrap/ListGroup";
+
 const validatePost = ({ title, content }) => {
   const errs = {};
   const t = (title ?? "").trim();
@@ -26,42 +34,15 @@ const mapDbErrorToFields = (msg = "") => {
   const m = msg.toLowerCase();
   const errs = {};
 
-  if (m.includes("post_title_length")) errs.title = "Title must be 16–64 characters.";
-  if (m.includes("post_content_length")) errs.content = "Content must be 32–8192 characters.";
+  if (m.includes("post_title_length"))
+    errs.title = "Title must be 16–64 characters.";
+  if (m.includes("post_content_length"))
+    errs.content = "Content must be 32–8192 characters.";
 
   if (!errs.title && m.includes("title")) errs.title = "Invalid title.";
   if (!errs.content && m.includes("content")) errs.content = "Invalid content.";
 
   return errs;
-};
-
-const backdropStyle = {
-  position: "fixed",
-  inset: 0,
-  background: "transparent",
-  zIndex: 5,
-};
-
-const menuStyle = {
-  position: "absolute",
-  right: 0,
-  top: "calc(100% + 6px)",
-  border: "1px solid #ddd",
-  background: "white",
-  borderRadius: 8,
-  padding: 6,
-  minWidth: 140,
-  boxShadow: "0 8px 20px rgba(0,0,0,0.08)",
-  zIndex: 10,
-};
-
-const menuItemStyle = {
-  width: "100%",
-  textAlign: "left",
-  padding: 8,
-  border: "none",
-  background: "transparent",
-  cursor: "pointer",
 };
 
 const PostDetails = () => {
@@ -72,8 +53,6 @@ const PostDetails = () => {
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const [openCommentForm, setOpenCommentForm] = useState(false);
-
   // menus
   const [openPostMenu, setOpenPostMenu] = useState(false);
   const [openMenuForCommentId, setOpenMenuForCommentId] = useState(null);
@@ -81,7 +60,10 @@ const PostDetails = () => {
   // editing
   const [editingPost, setEditingPost] = useState(false);
   const [postDraft, setPostDraft] = useState({ title: "", content: "" });
-  const [postFieldErrors, setPostFieldErrors] = useState({ title: "", content: "" });
+  const [postFieldErrors, setPostFieldErrors] = useState({
+    title: "",
+    content: "",
+  });
 
   const [editingCommentId, setEditingCommentId] = useState(null);
   const [commentDraft, setCommentDraft] = useState("");
@@ -90,7 +72,8 @@ const PostDetails = () => {
   const [serverError, setServerError] = useState("");
 
   const userId = useMemo(() => user?.id ?? null, [user]);
-  const isOwn = (authorId) => Boolean(userId && authorId && userId === authorId);
+  const isOwn = (authorId) =>
+    Boolean(userId && authorId && userId === authorId);
 
   const load = async () => {
     try {
@@ -234,223 +217,262 @@ const PostDetails = () => {
 
   if (!post) {
     return (
-      <div className="p-4">
-        <p style={{ color: "crimson" }}>{serverError || "Post not found."}</p>
-        <Link to="/posts">← Back to posts</Link>
-      </div>
+      <Container className="py-3">
+        <Alert variant="danger" className="py-2">
+          {serverError || "Post not found."}
+        </Alert>
+        <Button as={Link} to="/posts" variant="link" className="p-0">
+          ← Back to posts
+        </Button>
+      </Container>
     );
   }
 
   const ownPost = isOwn(post.author_id);
 
   return (
-    <div className="p-4">
-      <div style={{ marginBottom: 12 }}>
-        <Link to="/posts">← Back to posts</Link>
+    <Container className="py-3">
+      <div className="mb-3">
+        <Button as={Link} to="/posts" variant="link" className="p-0">
+          ← Back to posts
+        </Button>
       </div>
 
-      {serverError && <p style={{ color: "red" }}>{serverError}</p>}
+      {serverError && (
+        <Alert variant="danger" className="py-2">
+          {serverError}
+        </Alert>
+      )}
 
-      <div style={{ border: "1px solid #ccc", borderRadius: 8, padding: 12, position: "relative" }}>
-        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
-          <div style={{ flex: 1 }}>
-            <h2 style={{ marginTop: 0 }}>{post.title}</h2>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-              <AvatarFromStorage pathOrUrl={post.post_author?.avatar_url} />
-              <b>{post.post_author?.username || "Unknown user"}</b>
-            </div>
-          </div>
-
-          {ownPost && (
-            <div style={{ position: "relative" }}>
-              <button
-                type="button"
-                aria-label="Post actions"
-                onClick={() => {
-                  setOpenMenuForCommentId(null);
-                  setOpenPostMenu((v) => !v);
-                }}
-                style={{
-                  border: "1px solid #ccc",
-                  background: "white",
-                  borderRadius: 6,
-                  padding: "2px 8px",
-                  cursor: "pointer",
-                  lineHeight: 1.2,
-                }}
-                title="Actions"
-              >
-                ⋯
-              </button>
-
-              {openPostMenu && (
-                <>
-                  <div style={backdropStyle} onClick={() => setOpenPostMenu(false)} />
-
-                  <div style={menuStyle}>
-                    <button type="button" onClick={startEditPost} style={menuItemStyle}>
-                      Edit
-                    </button>
-                    <button
-                      type="button"
-                      onClick={confirmAndDeletePost}
-                      style={{ ...menuItemStyle, color: "crimson" }}
-                    >
-                      Delete
-                    </button>
+      <Card className="shadow-sm">
+        <Card.Body>
+          <div className="d-flex align-items-start justify-content-between gap-3">
+            <div className="flex-grow-1">
+              <div className="d-flex align-items-center gap-2">
+                <AvatarFromStorage pathOrUrl={post.post_author?.avatar_url} />
+                <div>
+                  <div className="fw-semibold">
+                    {post.post_author?.username || "Unknown user"}
                   </div>
-                </>
-              )}
-            </div>
-          )}
-        </div>
-
-        {editingPost ? (
-          <div>
-            <div style={{ marginBottom: 8 }}>
-              <input
-                value={postDraft.title}
-                onChange={(e) => {
-                  setPostDraft((d) => ({ ...d, title: e.target.value }));
-                  setPostFieldErrors((fe) => ({ ...fe, title: "" }));
-                }}
-                style={{ width: "100%" }}
-              />
-              {postFieldErrors.title && <p style={{ color: "red", margin: "6px 0 0" }}>{postFieldErrors.title}</p>}
-            </div>
-
-            <div style={{ marginBottom: 8 }}>
-              <textarea
-                rows={6}
-                value={postDraft.content}
-                onChange={(e) => {
-                  setPostDraft((d) => ({ ...d, content: e.target.value }));
-                  setPostFieldErrors((fe) => ({ ...fe, content: "" }));
-                }}
-                style={{ width: "100%" }}
-              />
-              {postFieldErrors.content && <p style={{ color: "red", margin: "6px 0 0" }}>{postFieldErrors.content}</p>}
-            </div>
-
-            <div style={{ display: "flex", gap: 8 }}>
-              <button type="button" onClick={saveEditPost}>
-                Save
-              </button>
-              <button type="button" onClick={cancelEditPost}>
-                Cancel
-              </button>
-            </div>
-          </div>
-        ) : (
-          <p style={{ whiteSpace: "pre-wrap" }}>{post.content}</p>
-        )}
-
-        <small style={{ color: "#777" }}>{new Date(post.created_at).toLocaleString()}</small>
-      </div>
-
-      <div style={{ marginTop: 18 }}>
-        <h3>Comments</h3>
-
-        <button type="button" onClick={() => setOpenCommentForm((v) => !v)}>
-          {openCommentForm ? "Close" : "Add comment"}
-        </button>
-
-        {openCommentForm && (
-          <CreateComment postId={post.id} onCommentCreated={load} onCancel={() => setOpenCommentForm(false)} />
-        )}
-
-        {(post.comments ?? []).length === 0 && <p style={{ color: "#777" }}>No comments yet</p>}
-
-        {(post.comments ?? [])
-          .slice()
-          .sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
-          .map((comment) => {
-            const ownComment = isOwn(comment.author_id);
-
-            return (
-              <div key={comment.id} style={{ marginTop: 12, borderLeft: "3px solid #ccc", paddingLeft: 10, position: "relative" }}>
-                <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                    <AvatarFromStorage pathOrUrl={comment.comment_author?.avatar_url} />
-                    <b>{comment.comment_author?.username || "Unknown user"}</b>
+                  <div className="text-muted small">
+                    {new Date(post.created_at).toLocaleString()}
                   </div>
-
-                  {ownComment && (
-                    <div style={{ position: "relative" }}>
-                      <button
-                        type="button"
-                        aria-label="Comment actions"
-                        onClick={() => {
-                          setOpenPostMenu(false);
-                          setOpenMenuForCommentId((cur) => (cur === comment.id ? null : comment.id));
-                        }}
-                        style={{
-                          border: "1px solid #ccc",
-                          background: "white",
-                          borderRadius: 6,
-                          padding: "2px 8px",
-                          cursor: "pointer",
-                          lineHeight: 1.2,
-                        }}
-                        title="Actions"
-                      >
-                        ⋯
-                      </button>
-
-                      {openMenuForCommentId === comment.id && (
-                        <>
-                          <div style={backdropStyle} onClick={() => setOpenMenuForCommentId(null)} />
-
-                          <div style={menuStyle}>
-                            <button type="button" onClick={() => startEditComment(comment)} style={menuItemStyle}>
-                              Edit
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => confirmAndDeleteComment(comment.id)}
-                              style={{ ...menuItemStyle, color: "crimson" }}
-                            >
-                              Delete
-                            </button>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  )}
                 </div>
-
-                {editingCommentId === comment.id ? (
-                  <div style={{ marginTop: 8 }}>
-                    <textarea
-                      rows={3}
-                      value={commentDraft}
-                      onChange={(e) => {
-                        setCommentDraft(e.target.value);
-                        setCommentFieldError("");
-                      }}
-                      style={{ width: "100%" }}
-                    />
-                    {commentFieldError && <p style={{ color: "red", margin: "6px 0 0" }}>{commentFieldError}</p>}
-
-                    <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-                      <button type="button" onClick={() => saveEditComment(comment.id)}>
-                        Save
-                      </button>
-                      <button type="button" onClick={cancelEditComment}>
-                        Cancel
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <div style={{ marginTop: 6, whiteSpace: "pre-wrap" }}>{comment.content}</div>
-                )}
-
-                <small style={{ color: "#888" }}>{new Date(comment.created_at).toLocaleString()}</small>
               </div>
-            );
-          })}
-      </div>
-    </div>
+
+              <h2 className="h4 mt-3 mb-0">{post.title}</h2>
+            </div>
+
+            {ownPost && (
+              <Dropdown align="end" show={openPostMenu}>
+                <Dropdown.Toggle
+                  variant="outline-secondary"
+                  size="sm"
+                  bsPrefix="btn"
+                  onClick={() => setOpenPostMenu((v) => !v)}
+                >
+                  ⋯
+                </Dropdown.Toggle>
+
+                <Dropdown.Menu>
+                  <Dropdown.Item
+                    onClick={() => {
+                      setOpenPostMenu(false);
+                      startEditPost();
+                    }}
+                  >
+                    Edit
+                  </Dropdown.Item>
+                  <Dropdown.Item
+                    className="text-danger"
+                    onClick={() => {
+                      setOpenPostMenu(false);
+                      confirmAndDeletePost();
+                    }}
+                  >
+                    Delete
+                  </Dropdown.Item>
+                </Dropdown.Menu>
+              </Dropdown>
+            )}
+          </div>
+
+          {editingPost ? (
+            <div className="mt-3">
+              <Form.Group className="mb-2">
+                <Form.Label className="small text-muted">Title</Form.Label>
+                <Form.Control
+                  value={postDraft.title}
+                  onChange={(e) => {
+                    setPostDraft((d) => ({ ...d, title: e.target.value }));
+                    setPostFieldErrors((fe) => ({ ...fe, title: "" }));
+                  }}
+                  placeholder="Title"
+                  isInvalid={!!postFieldErrors.title}
+                />
+                <Form.Control.Feedback type="invalid">
+                  {postFieldErrors.title}
+                </Form.Control.Feedback>
+              </Form.Group>
+
+              <Form.Group className="mb-2">
+                <Form.Label className="small text-muted">Content</Form.Label>
+                <Form.Control
+                  as="textarea"
+                  rows={5}
+                  value={postDraft.content}
+                  onChange={(e) => {
+                    setPostDraft((d) => ({ ...d, content: e.target.value }));
+                    setPostFieldErrors((fe) => ({ ...fe, content: "" }));
+                  }}
+                  placeholder="Content"
+                  isInvalid={!!postFieldErrors.content}
+                />
+                <Form.Control.Feedback type="invalid">
+                  {postFieldErrors.content}
+                </Form.Control.Feedback>
+              </Form.Group>
+
+              <div className="d-flex gap-2">
+                <Button size="sm" onClick={saveEditPost}>
+                  Save
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline-secondary"
+                  onClick={cancelEditPost}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <p className="mt-3 mb-0">{post.content}</p>
+          )}
+
+          <hr className="my-4" />
+
+          <div>
+            <h3 className="h6 mb-2">Comments</h3>
+
+            <CreateComment postId={post.id} onCommentCreated={load} />
+
+            {(post.comments ?? []).length === 0 && (
+              <div className="text-muted small mt-2">No comments yet</div>
+            )}
+
+            <ListGroup variant="flush" className="mt-2">
+              {(post.comments ?? [])
+                .slice()
+                .sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
+                .map((comment) => {
+                  const ownComment = isOwn(comment.author_id);
+
+                  return (
+                    <ListGroup.Item key={comment.id} className="px-0">
+                      <div className="d-flex align-items-start justify-content-between gap-2">
+                        <div className="d-flex align-items-start gap-2">
+                          <AvatarFromStorage
+                            pathOrUrl={comment.comment_author?.avatar_url}
+                          />
+                          <div>
+                            <div className="fw-semibold">
+                              {comment.comment_author?.username ||
+                                "Unknown user"}
+                            </div>
+
+                            {editingCommentId === comment.id ? (
+                              <div className="mt-2">
+                                <Form.Control
+                                  as="textarea"
+                                  rows={3}
+                                  value={commentDraft}
+                                  onChange={(e) => {
+                                    setCommentDraft(e.target.value);
+                                    setCommentFieldError("");
+                                  }}
+                                  placeholder="Edit comment"
+                                  isInvalid={!!commentFieldError}
+                                />
+                                {commentFieldError && (
+                                  <div className="text-danger small mt-1">
+                                    {commentFieldError}
+                                  </div>
+                                )}
+                                <div className="d-flex gap-2 mt-2">
+                                  <Button
+                                    size="sm"
+                                    onClick={() => saveEditComment(comment.id)}
+                                  >
+                                    Save
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline-secondary"
+                                    onClick={cancelEditComment}
+                                  >
+                                    Cancel
+                                  </Button>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="mt-1">{comment.content}</div>
+                            )}
+
+                            <div className="text-muted small mt-1">
+                              {new Date(comment.created_at).toLocaleString()}
+                            </div>
+                          </div>
+                        </div>
+
+                        {ownComment && (
+                          <Dropdown
+                            align="end"
+                            show={openMenuForCommentId === comment.id}
+                          >
+                            <Dropdown.Toggle
+                              variant="outline-secondary"
+                              size="sm"
+                              bsPrefix="btn"
+                              onClick={() =>
+                                setOpenMenuForCommentId((cur) =>
+                                  cur === comment.id ? null : comment.id,
+                                )
+                              }
+                            >
+                              ⋯
+                            </Dropdown.Toggle>
+
+                            <Dropdown.Menu>
+                              <Dropdown.Item
+                                onClick={() => {
+                                  setOpenMenuForCommentId(null);
+                                  startEditComment(comment);
+                                }}
+                              >
+                                Edit
+                              </Dropdown.Item>
+                              <Dropdown.Item
+                                className="text-danger"
+                                onClick={() => {
+                                  setOpenMenuForCommentId(null);
+                                  confirmAndDeleteComment(comment.id);
+                                }}
+                              >
+                                Delete
+                              </Dropdown.Item>
+                            </Dropdown.Menu>
+                          </Dropdown>
+                        )}
+                      </div>
+                    </ListGroup.Item>
+                  );
+                })}
+            </ListGroup>
+          </div>
+        </Card.Body>
+      </Card>
+    </Container>
   );
 };
 

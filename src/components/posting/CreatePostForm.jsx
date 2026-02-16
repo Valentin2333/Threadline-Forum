@@ -3,6 +3,11 @@ import { useForm } from "react-hook-form";
 import { supabase } from "../../api/supabaseClient";
 import { createPost } from "../../api/posts";
 
+import Card from "react-bootstrap/Card";
+import Form from "react-bootstrap/Form";
+import Button from "react-bootstrap/Button";
+import Alert from "react-bootstrap/Alert";
+
 const CreatePostForm = ({ onPostCreated }) => {
   const [serverError, setServerError] = useState("");
   const [user, setUser] = useState(null);
@@ -12,7 +17,7 @@ const CreatePostForm = ({ onPostCreated }) => {
     register,
     handleSubmit,
     reset,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm({
     defaultValues: {
       title: "",
@@ -70,39 +75,63 @@ const CreatePostForm = ({ onPostCreated }) => {
   if (!user) return null;
 
   return (
-    <div style={{ marginBottom: 30 }}>
-      <h2>Create Post</h2>
+    <Card className="mb-4 shadow-sm">
+      <Card.Body>
+        <Card.Title as="h2" className="h4 mb-3">
+          Create Post
+        </Card.Title>
 
-      {serverError && <p style={{ color: "red" }}>{serverError}</p>}
+        {serverError && (
+          <Alert variant="danger" className="py-2">
+            {serverError}
+          </Alert>
+        )}
 
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <div>
-          <input
-            placeholder="Post title"
-            {...register("title", {
-              required: "Title required",
-              minLength: { value: 16, message: "Min 16 chars" },
-              maxLength: { value: 64, message: "Max 64 chars" },
-            })}
-          />
-          {errors.title && <p>{errors.title.message}</p>}
-        </div>
+        <Form onSubmit={handleSubmit(onSubmit)}>
+          <Form.Group className="mb-3">
+            <Form.Label>Title</Form.Label>
+            <Form.Control
+              placeholder="Post title"
+              {...register("title", {
+                required: "Title required",
+                minLength: { value: 16, message: "Min 16 chars" },
+                maxLength: { value: 64, message: "Max 64 chars" },
+              })}
+              isInvalid={!!errors.title}
+            />
+            <Form.Control.Feedback type="invalid">
+              {errors.title?.message}
+            </Form.Control.Feedback>
+            <Form.Text className="text-muted">16–64 characters.</Form.Text>
+          </Form.Group>
 
-        <div>
-          <textarea
-            placeholder="Post content"
-            {...register("content", {
-              required: "Content required",
-              minLength: { value: 32, message: "Min 32 chars" },
-              maxLength: { value: 8192, message: "Max 8192 chars" },
-            })}
-          />
-          {errors.content && <p>{errors.content.message}</p>}
-        </div>
+          <Form.Group className="mb-3">
+            <Form.Label>Content</Form.Label>
+            <Form.Control
+              as="textarea"
+              rows={5}
+              placeholder="Post content"
+              {...register("content", {
+                required: "Content required",
+                minLength: { value: 32, message: "Min 32 chars" },
+                maxLength: { value: 8192, message: "Max 8192 chars" },
+              })}
+              isInvalid={!!errors.content}
+            />
+            <Form.Control.Feedback type="invalid">
+              {errors.content?.message}
+            </Form.Control.Feedback>
+            <Form.Text className="text-muted">32–8192 characters.</Form.Text>
+          </Form.Group>
 
-        <button type="submit">Create Post</button>
-      </form>
-    </div>
+          <div className="d-flex justify-content-end">
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? "Creating…" : "Create Post"}
+            </Button>
+          </div>
+        </Form>
+      </Card.Body>
+    </Card>
   );
 };
 

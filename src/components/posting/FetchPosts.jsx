@@ -5,6 +5,7 @@ import { updateComment, deleteComment } from "../../api/comments";
 import CreateComment from "../posting/CreateComment";
 import AvatarFromStorage from "./AvatarFromStorage";
 import useAuthUser from "../navigation/hooks/useAuthUser";
+import PostVotes from "./PostVotes";
 
 const validatePost = ({ title, content }) => {
   const errs = {};
@@ -254,7 +255,16 @@ const FetchPosts = ({ refreshTrigger }) => {
               position: "relative",
             }}
           >
-            <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
+            {/* Top row: title/score on left, actions on right */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "flex-start",
+                justifyContent: "space-between",
+                gap: 12,
+              }}
+            >
+              {/* Left column */}
               <div style={{ flex: 1 }}>
                 <h3
                   style={{ cursor: "pointer", textDecoration: "underline" }}
@@ -264,12 +274,16 @@ const FetchPosts = ({ refreshTrigger }) => {
                   {post.title}
                 </h3>
 
-                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-                  <AvatarFromStorage pathOrUrl={post.post_author?.avatar_url} />
-                  <b>{post.post_author?.username || "Unknown user"}</b>
+                <div style={{ marginTop: 6 }}>
+                  <b>Score:</b> {post.score}
+                </div>
+
+                <div style={{ marginTop: 8 }}>
+                  <PostVotes postId={post.id} onVoted={loadPosts} />
                 </div>
               </div>
 
+              {/* Right column: post menu (only if own post) */}
               {ownPost && (
                 <div style={{ position: "relative" }}>
                   <button
@@ -316,6 +330,7 @@ const FetchPosts = ({ refreshTrigger }) => {
               )}
             </div>
 
+            {/* Post content or edit form */}
             {editingPostId === post.id ? (
               <div style={{ marginTop: 8 }}>
                 <div style={{ marginBottom: 8 }}>
@@ -328,7 +343,9 @@ const FetchPosts = ({ refreshTrigger }) => {
                     style={{ width: "100%" }}
                     placeholder="Title"
                   />
-                  {postFieldErrors.title && <p style={{ color: "red", margin: "6px 0 0" }}>{postFieldErrors.title}</p>}
+                  {postFieldErrors.title && (
+                    <p style={{ color: "red", margin: "6px 0 0" }}>{postFieldErrors.title}</p>
+                  )}
                 </div>
 
                 <div style={{ marginBottom: 8 }}>
@@ -342,7 +359,9 @@ const FetchPosts = ({ refreshTrigger }) => {
                     style={{ width: "100%" }}
                     placeholder="Content"
                   />
-                  {postFieldErrors.content && <p style={{ color: "red", margin: "6px 0 0" }}>{postFieldErrors.content}</p>}
+                  {postFieldErrors.content && (
+                    <p style={{ color: "red", margin: "6px 0 0" }}>{postFieldErrors.content}</p>
+                  )}
                 </div>
 
                 <div style={{ display: "flex", gap: 8 }}>
@@ -355,21 +374,27 @@ const FetchPosts = ({ refreshTrigger }) => {
                 </div>
               </div>
             ) : (
-              <p>{post.content}</p>
+              <p style={{ marginTop: 8 }}>{post.content}</p>
             )}
 
-            <button onClick={() => toggleCommentForm(post.id)}>
-              {openCommentForPostId === post.id ? "Close" : "Add comment"}
-            </button>
+            {/* Comment form toggle + form */}
+            <div style={{ marginTop: 10 }}>
+              <button onClick={() => toggleCommentForm(post.id)}>
+                {openCommentForPostId === post.id ? "Close" : "Add comment"}
+              </button>
 
-            {openCommentForPostId === post.id && (
-              <CreateComment
-                postId={post.id}
-                onCommentCreated={loadPosts}
-                onCancel={() => setOpenCommentForPostId(null)}
-              />
-            )}
+              {openCommentForPostId === post.id && (
+                <div style={{ marginTop: 10 }}>
+                  <CreateComment
+                    postId={post.id}
+                    onCommentCreated={loadPosts}
+                    onCancel={() => setOpenCommentForPostId(null)}
+                  />
+                </div>
+              )}
+            </div>
 
+            {/* Comments */}
             <div style={{ marginTop: 15 }}>
               <h4>Comments</h4>
 
@@ -392,7 +417,14 @@ const FetchPosts = ({ refreshTrigger }) => {
                         position: "relative",
                       }}
                     >
-                      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10 }}>
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "flex-start",
+                          justifyContent: "space-between",
+                          gap: 10,
+                        }}
+                      >
                         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                           <AvatarFromStorage pathOrUrl={comment.comment_author?.avatar_url} />
                           <b>{comment.comment_author?.username || "Unknown user"}</b>
@@ -426,7 +458,11 @@ const FetchPosts = ({ refreshTrigger }) => {
                                 <div style={backdropStyle} onClick={() => setOpenMenuForCommentId(null)} />
 
                                 <div style={menuStyle}>
-                                  <button type="button" onClick={() => startEditComment(comment)} style={menuItemStyle}>
+                                  <button
+                                    type="button"
+                                    onClick={() => startEditComment(comment)}
+                                    style={menuItemStyle}
+                                  >
                                     Edit
                                   </button>
                                   <button
@@ -454,7 +490,9 @@ const FetchPosts = ({ refreshTrigger }) => {
                             }}
                             style={{ width: "100%" }}
                           />
-                          {commentFieldError && <p style={{ color: "red", margin: "6px 0 0" }}>{commentFieldError}</p>}
+                          {commentFieldError && (
+                            <p style={{ color: "red", margin: "6px 0 0" }}>{commentFieldError}</p>
+                          )}
 
                           <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
                             <button type="button" onClick={() => saveEditComment(comment.id)}>

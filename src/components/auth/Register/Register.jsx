@@ -33,7 +33,7 @@ const Register = ({ onSwitchToLogin }) => {
 
   return (
     <Form autoComplete="on" onSubmit={handleSubmit(onSubmit)}>
-      <h2 className="mb-3">Register</h2>;
+      <h2 className="mb-3">Register</h2>
       <AuthAlerts infoMessage="" serverError={serverError} />
       <RegisterFields register={register} errors={errors} rules={rules} />
       <AuthSubmitRow

@@ -9,8 +9,8 @@ const AuthSubmitRow = ({
   onSecondaryClick,
 }) => {
   return (
-    <div className="d-flex gap-2 align-items-center">
-      <Button type="submit" disabled={loading}>
+    <div className="d-flex flex-column flex-sm-row gap-2 align-items-start align-items-sm-center mt-1">
+      <Button type="submit" disabled={loading} className="px-4">
         {loading ? (
           <>
             <Spinner size="sm" className="me-2" />
@@ -21,7 +21,13 @@ const AuthSubmitRow = ({
         )}
       </Button>
 
-      <Button variant="link" type="button" onClick={onSecondaryClick}>
+      <Button
+        variant="link"
+        type="button"
+        onClick={onSecondaryClick}
+        className="p-0"
+        style={{ fontSize: "0.875rem" }}
+      >
         {secondaryText}
       </Button>
     </div>

@@ -16,21 +16,24 @@ const MobileSidebar = ({ show, onClose, user, onLogout }) => {
       className="bg-dark text-light"
     >
       <Offcanvas.Header closeButton closeVariant="white">
-        <Offcanvas.Title>Menu</Offcanvas.Title>
+        <Offcanvas.Title>
+          <i className="fa-solid fa-comments me-2" style={{ fontSize: 16 }} />
+          Forum
+        </Offcanvas.Title>
       </Offcanvas.Header>
 
       <Offcanvas.Body className="d-flex flex-column">
-        <Nav className="flex-column">
-          {user && (
-            <Nav.Link
-              as={NavLink}
-              to="/profile"
-              style={navItemStyles}
-              onClick={onClose}
-            >
-              Your Profile
-            </Nav.Link>
-          )}
+        <Nav className="flex-column gap-1">
+          <Nav.Link
+            as={NavLink}
+            to="/"
+            end
+            style={navItemStyles}
+            onClick={onClose}
+          >
+            <i className="fa-solid fa-house me-2" style={{ fontSize: 13 }} />
+            Home
+          </Nav.Link>
 
           <Nav.Link
             as={NavLink}
@@ -38,8 +41,21 @@ const MobileSidebar = ({ show, onClose, user, onLogout }) => {
             style={navItemStyles}
             onClick={onClose}
           >
+            <i className="fa-solid fa-newspaper me-2" style={{ fontSize: 13 }} />
             Posts
           </Nav.Link>
+
+          {user && (
+            <Nav.Link
+              as={NavLink}
+              to="/profile"
+              style={navItemStyles}
+              onClick={onClose}
+            >
+              <i className="fa-solid fa-user me-2" style={{ fontSize: 13 }} />
+              Your Profile
+            </Nav.Link>
+          )}
         </Nav>
 
         <div className="flex-grow-1" />
@@ -70,6 +86,7 @@ const MobileSidebar = ({ show, onClose, user, onLogout }) => {
             </>
           ) : (
             <Button variant="outline-light" size="sm" onClick={onLogout}>
+              <i className="fa-solid fa-right-from-bracket me-1" style={{ fontSize: 12 }} />
               Logout
             </Button>
           )}

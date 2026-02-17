@@ -15,10 +15,14 @@ const DeleteAccountModal = ({
   return (
     <Modal show={show} onHide={onHide} centered>
       <Modal.Header closeButton={!deleting}>
-        <Modal.Title>Delete account</Modal.Title>
+        <Modal.Title>
+          <i className="fa-solid fa-triangle-exclamation me-2" style={{ color: "var(--fs-danger)" }} />
+          Delete account
+        </Modal.Title>
       </Modal.Header>
       <Modal.Body>
         <Alert variant="danger" className="mb-3">
+          <i className="fa-solid fa-circle-exclamation me-2" />
           This is permanent. Your profile will be deleted forever.
         </Alert>
 
@@ -36,7 +40,7 @@ const DeleteAccountModal = ({
         </Form.Group>
       </Modal.Body>
       <Modal.Footer>
-        <Button variant="secondary" onClick={onHide} disabled={deleting}>
+        <Button variant="outline-secondary" onClick={onHide} disabled={deleting}>
           Cancel
         </Button>
         <Button variant="danger" onClick={onDelete} disabled={deleting}>
@@ -46,7 +50,10 @@ const DeleteAccountModal = ({
               Deleting...
             </>
           ) : (
-            "Delete permanently"
+            <>
+              <i className="fa-solid fa-trash me-2" style={{ fontSize: 12 }} />
+              Delete permanently
+            </>
           )}
         </Button>
       </Modal.Footer>

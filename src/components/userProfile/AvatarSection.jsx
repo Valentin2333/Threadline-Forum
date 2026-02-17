@@ -12,38 +12,28 @@ const AvatarSection = ({
   maxAvatarMb,
 }) => {
   return (
-    <div className="d-flex flex-column align-items-center text-center mb-3">
-      <div
-        style={{
-          width: 92,
-          height: 92,
-          borderRadius: "50%",
-          overflow: "hidden",
-          background: "#f1f3f5",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
+    <div className="d-flex flex-column align-items-center text-center mb-4">
+      <div className="fs-avatar fs-avatar-lg mb-2">
         {avatarUrl ? (
           <img
             src={avatarUrl}
             alt="Profile avatar"
-            style={{ width: "100%", height: "100%", objectFit: "cover" }}
           />
         ) : (
-          <span style={{ fontSize: 36, opacity: 0.6 }}>👤</span>
+          <i className="fa-solid fa-user" style={{ fontSize: 32, color: "var(--fs-text-muted)" }} />
         )}
       </div>
 
       <Button
         variant="link"
         size="sm"
-        className="mt-2 p-0"
+        className="p-0"
         onClick={onToggleUpload}
         disabled={uploadingAvatar}
+        style={{ fontSize: "0.8125rem" }}
       >
-        {hasAvatar ? "Change profile picture" : "Upload profile picture"}
+        <i className="fa-solid fa-camera me-1" style={{ fontSize: 12 }} />
+        {hasAvatar ? "Change picture" : "Upload picture"}
       </Button>
 
       {showAvatarUpload && (
@@ -58,6 +48,7 @@ const AvatarSection = ({
               accept="image/*"
               onChange={onAvatarSelected}
               disabled={uploadingAvatar}
+              size="sm"
             />
             {uploadingAvatar && <Spinner size="sm" />}
           </div>

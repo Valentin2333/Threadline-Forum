@@ -3,20 +3,33 @@ import { useForm } from "react-hook-form";
 import { supabase } from "../../api/supabaseClient";
 import { createComment } from "../../api/comments";
 
-const CreateComment = ({ postId, onCommentCreated, onCancel }) => {
+import Form from "react-bootstrap/Form";
+import Button from "react-bootstrap/Button";
+import Alert from "react-bootstrap/Alert";
+import InputGroup from "react-bootstrap/InputGroup";
+import Spinner from "react-bootstrap/Spinner";
+
+const CreateComment = ({ postId, onCommentCreated }) => {
   const [serverError, setServerError] = useState("");
+  const [draft, setDraft] = useState("");
 
   const {
     register,
     handleSubmit,
     reset,
-    formState: { errors, isSubmitting },
+    setValue,
+    formState: { isSubmitting },
   } = useForm({
     defaultValues: { content: "" },
   });
 
+  const isEmpty = !draft.trim();
+
   const onSubmit = async ({ content }) => {
     setServerError("");
+
+    const trimmed = (content ?? "").trim();
+    if (!trimmed) return;
 
     const { data: userData } = await supabase.auth.getUser();
     const user = userData.user;
@@ -30,12 +43,12 @@ const CreateComment = ({ postId, onCommentCreated, onCancel }) => {
       await createComment({
         userId: user.id,
         postId,
-        content,
+        content: trimmed,
       });
 
       reset();
+      setDraft("");
       onCommentCreated?.();
-      onCancel?.();
     } catch (err) {
       const msg = err?.message || "Unknown error";
       if (msg.toLowerCase().includes("row-level security")) {
@@ -46,32 +59,63 @@ const CreateComment = ({ postId, onCommentCreated, onCancel }) => {
     }
   };
 
+  const reg = register("content", {
+    setValueAs: (v) => (typeof v === "string" ? v.trim() : v),
+    maxLength: { value: 8192, message: "Max 8192 chars" },
+  });
+
   return (
-    <div style={{ marginTop: 10 }}>
-      {serverError && <p style={{ color: "crimson" }}>{serverError}</p>}
+    <div className="mt-2 fs-comment-input">
+      {serverError && (
+        <Alert variant="danger" className="py-2 mb-2">
+          {serverError}
+        </Alert>
+      )}
 
-      <form onSubmit={handleSubmit(onSubmit)}>
-        <textarea
-          rows={3}
-          style={{ width: "100%" }}
-          placeholder="Write a comment..."
-          {...register("content", {
-            required: "Comment is required",
-            minLength: { value: 1, message: "Comment cannot be empty" },
-            maxLength: { value: 8192, message: "Max 8192 chars" },
-          })}
-        />
-        {errors.content && <p style={{ color: "crimson" }}>{errors.content.message}</p>}
+      <Form onSubmit={handleSubmit(onSubmit)}>
+        <InputGroup>
+          <Form.Control
+            as="textarea"
+            rows={1}
+            placeholder="Write a comment…"
+            aria-label="Write a comment"
+            value={draft}
+            {...reg}
+            onChange={(e) => {
+              const v = e.target.value;
+              setDraft(v);
+              setValue("content", v, {
+                shouldValidate: false,
+                shouldDirty: true,
+              });
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                const val = e.currentTarget.value ?? "";
+                if (!val.trim()) {
+                  e.preventDefault();
+                  return;
+                }
+                e.preventDefault();
+                handleSubmit(onSubmit)();
+              }
+            }}
+          />
 
-        <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-          <button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "Posting..." : "Post comment"}
-          </button>
-          <button type="button" onClick={onCancel}>
-            Cancel
-          </button>
-        </div>
-      </form>
+          <Button
+            type="submit"
+            variant="primary"
+            disabled={isSubmitting || isEmpty}
+            aria-label="Send comment"
+          >
+            {isSubmitting ? (
+              <Spinner size="sm" />
+            ) : (
+              <i className="fa-solid fa-paper-plane" style={{ fontSize: 13 }} />
+            )}
+          </Button>
+        </InputGroup>
+      </Form>
     </div>
   );
 };

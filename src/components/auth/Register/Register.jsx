@@ -33,9 +33,16 @@ const Register = ({ onSwitchToLogin }) => {
 
   return (
     <Form autoComplete="on" onSubmit={handleSubmit(onSubmit)}>
-      <h2 className="mb-3">Register</h2>
+      <div className="mb-4">
+        <h2 className="fs-page-title mb-1">Create account</h2>
+        <p className="text-muted mb-0" style={{ fontSize: "0.875rem" }}>
+          Join the community and start posting
+        </p>
+      </div>
+
       <AuthAlerts infoMessage="" serverError={serverError} />
       <RegisterFields register={register} errors={errors} rules={rules} />
+
       <AuthSubmitRow
         loading={loading}
         submitText="Register"

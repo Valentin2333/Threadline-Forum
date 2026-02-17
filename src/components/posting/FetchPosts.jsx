@@ -7,6 +7,18 @@ import AvatarFromStorage from "./AvatarFromStorage";
 import useAuthUser from "../navigation/hooks/useAuthUser";
 import PostVotes from "./PostVotes";
 
+import Alert from "react-bootstrap/Alert";
+import Badge from "react-bootstrap/Badge";
+import Button from "react-bootstrap/Button";
+import Card from "react-bootstrap/Card";
+import Dropdown from "react-bootstrap/Dropdown";
+import Form from "react-bootstrap/Form";
+import ListGroup from "react-bootstrap/ListGroup";
+import Row from "react-bootstrap/Row";
+import Col from "react-bootstrap/Col";
+import { Container } from "react-bootstrap";
+import Collapse from "react-bootstrap/Collapse";
+
 const validatePost = ({ title, content }) => {
   const errs = {};
 
@@ -28,8 +40,10 @@ const mapDbErrorToFields = (msg = "") => {
   const m = msg.toLowerCase();
   const errs = {};
 
-  if (m.includes("post_title_length")) errs.title = "Title must be 16–64 characters.";
-  if (m.includes("post_content_length")) errs.content = "Content must be 32–8192 characters.";
+  if (m.includes("post_title_length"))
+    errs.title = "Title must be 16-64 characters.";
+  if (m.includes("post_content_length"))
+    errs.content = "Content must be 32-8192 characters.";
 
   if (!errs.title && m.includes("title")) errs.title = "Invalid title.";
   if (!errs.content && m.includes("content")) errs.content = "Invalid content.";
@@ -37,50 +51,27 @@ const mapDbErrorToFields = (msg = "") => {
   return errs;
 };
 
-const backdropStyle = {
-  position: "fixed",
-  inset: 0,
-  background: "transparent",
-  zIndex: 5,
-};
-
-const menuStyle = {
-  position: "absolute",
-  right: 0,
-  top: "calc(100% + 6px)",
-  border: "1px solid #ddd",
-  background: "white",
-  borderRadius: 8,
-  padding: 6,
-  minWidth: 140,
-  boxShadow: "0 8px 20px rgba(0,0,0,0.08)",
-  zIndex: 10,
-};
-
-const menuItemStyle = {
-  width: "100%",
-  textAlign: "left",
-  padding: 8,
-  border: "none",
-  background: "transparent",
-  cursor: "pointer",
-};
+const normalize = (s) => (s ?? "").toString().toLowerCase().trim();
 
 const FetchPosts = ({ refreshTrigger }) => {
   const navigate = useNavigate();
   const user = useAuthUser();
 
   const [posts, setPosts] = useState([]);
-  const [openCommentForPostId, setOpenCommentForPostId] = useState(null);
+  const [expandedCommentsByPostId, setExpandedCommentsByPostId] = useState({});
 
-  // "3 dots" menu toggles
   const [openMenuForPostId, setOpenMenuForPostId] = useState(null);
   const [openMenuForCommentId, setOpenMenuForCommentId] = useState(null);
 
-  // Editing state
   const [editingPostId, setEditingPostId] = useState(null);
-  const [editingPostDraft, setEditingPostDraft] = useState({ title: "", content: "" });
-  const [postFieldErrors, setPostFieldErrors] = useState({ title: "", content: "" });
+  const [editingPostDraft, setEditingPostDraft] = useState({
+    title: "",
+    content: "",
+  });
+  const [postFieldErrors, setPostFieldErrors] = useState({
+    title: "",
+    content: "",
+  });
 
   const [editingCommentId, setEditingCommentId] = useState(null);
   const [editingCommentDraft, setEditingCommentDraft] = useState("");
@@ -88,7 +79,17 @@ const FetchPosts = ({ refreshTrigger }) => {
 
   const [serverError, setServerError] = useState("");
 
+  const [sortBy, setSortBy] = useState("newest");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [authorFilter, setAuthorFilter] = useState("all");
+  const [scoreFilter, setScoreFilter] = useState("any");
+
+  const [showSearch, setShowSearch] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
+
   const userId = useMemo(() => user?.id ?? null, [user]);
+  const isOwn = (authorId) =>
+    Boolean(userId && authorId && userId === authorId);
 
   const loadPosts = async () => {
     try {
@@ -101,15 +102,9 @@ const FetchPosts = ({ refreshTrigger }) => {
   };
 
   useEffect(() => {
+    // eslint-disable-next-line
     loadPosts();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refreshTrigger]);
-
-  const toggleCommentForm = (postId) => {
-    setOpenCommentForPostId((current) => (current === postId ? null : postId));
-  };
-
-  const isOwn = (authorId) => Boolean(userId && authorId && userId === authorId);
 
   const startEditPost = (post) => {
     setServerError("");
@@ -117,7 +112,10 @@ const FetchPosts = ({ refreshTrigger }) => {
     setOpenMenuForPostId(null);
 
     setEditingPostId(post.id);
-    setEditingPostDraft({ title: post.title ?? "", content: post.content ?? "" });
+    setEditingPostDraft({
+      title: post.title ?? "",
+      content: post.content ?? "",
+    });
   };
 
   const cancelEditPost = () => {
@@ -172,7 +170,6 @@ const FetchPosts = ({ refreshTrigger }) => {
     try {
       await deletePost({ postId });
 
-      // If you were editing this post, reset edit state
       if (editingPostId === postId) cancelEditPost();
 
       await loadPosts();
@@ -234,288 +231,565 @@ const FetchPosts = ({ refreshTrigger }) => {
     }
   };
 
+  const displayedPosts = useMemo(() => {
+    const q = normalize(searchQuery);
+
+    let list = (posts ?? []).slice();
+
+    if (authorFilter === "mine") {
+      list = list.filter((p) => Boolean(userId && p.author_id === userId));
+    }
+
+    if (scoreFilter !== "any") {
+      const score = (p) => Number(p?.score ?? 0);
+      const threshold =
+        scoreFilter === "gte1"
+          ? 1
+          : scoreFilter === "gte10"
+            ? 10
+            : scoreFilter === "gte100"
+              ? 100
+              : 0;
+      list = list.filter((p) => score(p) >= threshold);
+    }
+
+    if (q) {
+      list = list.filter((p) => {
+        const title = normalize(p.title);
+        const content = normalize(p.content);
+        const author = normalize(p.post_author?.username);
+        return title.includes(q) || content.includes(q) || author.includes(q);
+      });
+    }
+
+    const createdAt = (p) => new Date(p?.created_at ?? 0).getTime();
+    const score = (p) => Number(p?.score ?? 0);
+    const commentsCount = (p) => (p.comments ?? []).length;
+
+    list.sort((a, b) => {
+      if (sortBy === "newest") return createdAt(b) - createdAt(a);
+      if (sortBy === "oldest") return createdAt(a) - createdAt(b);
+      if (sortBy === "score") {
+        const d = score(b) - score(a);
+        return d !== 0 ? d : createdAt(b) - createdAt(a);
+      }
+      if (sortBy === "comments") {
+        const d = commentsCount(b) - commentsCount(a);
+        return d !== 0 ? d : createdAt(b) - createdAt(a);
+      }
+      return createdAt(b) - createdAt(a);
+    });
+
+    return list;
+  }, [posts, searchQuery, sortBy, authorFilter, scoreFilter, userId]);
+
+  const clearControls = () => {
+    setSortBy("newest");
+    setSearchQuery("");
+    setAuthorFilter("all");
+    setScoreFilter("any");
+  };
+
+  const hasActiveSearch = !!searchQuery.trim();
+  const hasActiveFilters =
+    sortBy !== "newest" || authorFilter !== "all" || scoreFilter !== "any";
+
   return (
-    <div>
-      <h2>Latest Posts</h2>
+    <Container className="py-3">
+      <div className="d-flex align-items-center justify-content-between mb-3">
+        <h2 className="fs-page-title mb-0">Posts</h2>
 
-      {serverError && <p style={{ color: "red" }}>{serverError}</p>}
-      {posts.length === 0 && <p>No posts yet</p>}
+        <div className="d-flex gap-2">
+          <Button
+            size="sm"
+            variant={
+              showSearch || hasActiveSearch ? "primary" : "outline-primary"
+            }
+            onClick={() => setShowSearch((v) => !v)}
+          >
+            <i className="fa-solid fa-magnifying-glass me-2" />
+            Search
+          </Button>
 
-      {posts.map((post) => {
+          <Button
+            size="sm"
+            variant={
+              showFilters || hasActiveFilters ? "primary" : "outline-primary"
+            }
+            onClick={() => setShowFilters((v) => !v)}
+          >
+            <i className="fa-solid fa-sliders me-2" />
+            Filter & Sort
+          </Button>
+        </div>
+      </div>
+
+      {/* Search panel */}
+      <Collapse in={showSearch}>
+        <div className="mb-3">
+          <Card>
+            <Card.Body className="py-3">
+              <Row className="g-2 align-items-end">
+                <Col xs={12} md={10}>
+                  <Form.Group>
+                    <Form.Label className="small text-muted">Search</Form.Label>
+                    <Form.Control
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Search title, content, author…"
+                      autoFocus
+                    />
+                  </Form.Group>
+                </Col>
+
+                <Col xs={12} md={2} className="d-flex justify-content-end">
+                  <Button
+                    variant="outline-secondary"
+                    size="sm"
+                    onClick={() => setSearchQuery("")}
+                    disabled={!searchQuery}
+                  >
+                    Clear
+                  </Button>
+                </Col>
+              </Row>
+            </Card.Body>
+          </Card>
+        </div>
+      </Collapse>
+
+      {/* Filters/sort panel */}
+      <Collapse in={showFilters}>
+        <div className="mb-3">
+          <Card>
+            <Card.Body className="py-3">
+              <Row className="g-2 align-items-end">
+                <Col xs={12} sm={6} md={4}>
+                  <Form.Group>
+                    <Form.Label className="small text-muted">Sort</Form.Label>
+                    <Form.Select
+                      value={sortBy}
+                      onChange={(e) => setSortBy(e.target.value)}
+                    >
+                      <option value="newest">Newest</option>
+                      <option value="oldest">Oldest</option>
+                      <option value="score">Highest score</option>
+                      <option value="comments">Most comments</option>
+                    </Form.Select>
+                  </Form.Group>
+                </Col>
+
+                <Col xs={12} sm={6} md={4}>
+                  <Form.Group>
+                    <Form.Label className="small text-muted">Author</Form.Label>
+                    <Form.Select
+                      value={authorFilter}
+                      onChange={(e) => setAuthorFilter(e.target.value)}
+                      disabled={!userId}
+                    >
+                      <option value="all">All</option>
+                      <option value="mine">Mine</option>
+                    </Form.Select>
+                  </Form.Group>
+                </Col>
+
+                <Col xs={12} sm={6} md={4}>
+                  <Form.Group>
+                    <Form.Label className="small text-muted">Score</Form.Label>
+                    <Form.Select
+                      value={scoreFilter}
+                      onChange={(e) => setScoreFilter(e.target.value)}
+                    >
+                      <option value="any">Any</option>
+                      <option value="gte1">≥ 1</option>
+                      <option value="gte10">≥ 10</option>
+                      <option value="gte100">≥ 100</option>
+                    </Form.Select>
+                  </Form.Group>
+                </Col>
+
+                <Col xs={12} className="d-flex justify-content-end gap-2 mt-2">
+                  <Button
+                    variant="outline-secondary"
+                    onClick={clearControls}
+                    size="sm"
+                  >
+                    Reset
+                  </Button>
+                  <Button
+                    variant="outline-primary"
+                    onClick={loadPosts}
+                    size="sm"
+                  >
+                    <i
+                      className="fa-solid fa-rotate-right me-1"
+                      style={{ fontSize: 11 }}
+                    />
+                    Refresh
+                  </Button>
+                </Col>
+              </Row>
+            </Card.Body>
+          </Card>
+        </div>
+      </Collapse>
+
+      {serverError && (
+        <Alert variant="danger" className="py-2">
+          {serverError}
+        </Alert>
+      )}
+
+      {displayedPosts.length === 0 && (
+        <Alert variant="secondary">
+          <i className="fa-solid fa-inbox me-2" />
+          No posts match your filters.
+        </Alert>
+      )}
+
+      {displayedPosts.map((post) => {
         const ownPost = isOwn(post.author_id);
 
+        const sortedComments = (post.comments ?? [])
+          .slice()
+          .sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+
+        const isExpanded = !!expandedCommentsByPostId[post.id];
+        const visibleComments =
+          sortedComments.length > 2 && !isExpanded
+            ? sortedComments.slice(0, 2)
+            : sortedComments;
+
         return (
-          <div
-            key={post.id}
-            style={{
-              border: "1px solid gray",
-              margin: 10,
-              padding: 10,
-              borderRadius: 6,
-              position: "relative",
-            }}
-          >
-            {/* Top row: title/score on left, actions on right */}
-            <div
-              style={{
-                display: "flex",
-                alignItems: "flex-start",
-                justifyContent: "space-between",
-                gap: 12,
-              }}
-            >
-              {/* Left column */}
-              <div style={{ flex: 1 }}>
-                <h3
-                  style={{ cursor: "pointer", textDecoration: "underline" }}
+          <Card key={post.id} className="mb-3 fs-post-card">
+            <Card.Body className="p-4">
+              <div className="d-flex align-items-start justify-content-between gap-3">
+                <div className="flex-grow-1">
+                  <div className="d-flex align-items-center gap-2">
+                    <AvatarFromStorage
+                      pathOrUrl={post.post_author?.avatar_url}
+                    />
+                    <div>
+                      <div className="fs-author-name">
+                        {post.post_author?.username || "Unknown user"}
+                      </div>
+                      <div className="fs-timestamp">
+                        {new Date(post.created_at).toLocaleString()}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {ownPost && (
+                  <Dropdown
+                    align="end"
+                    show={openMenuForPostId === post.id}
+                    onToggle={(nextShow) => {
+                      if (nextShow) setOpenMenuForCommentId(null);
+                      setOpenMenuForPostId(nextShow ? post.id : null);
+                    }}
+                  >
+                    <Dropdown.Toggle
+                      variant="outline-secondary"
+                      size="sm"
+                      bsPrefix="btn"
+                      className="fs-menu-toggle"
+                    >
+                      <i
+                        className="fa-solid fa-ellipsis-vertical"
+                        style={{ fontSize: 13 }}
+                      />
+                    </Dropdown.Toggle>
+
+                    <Dropdown.Menu>
+                      <Dropdown.Item onClick={() => startEditPost(post)}>
+                        <i
+                          className="fa-solid fa-pen me-2"
+                          style={{ fontSize: 12 }}
+                        />
+                        Edit
+                      </Dropdown.Item>
+                      <Dropdown.Item
+                        className="text-danger"
+                        onClick={() => confirmAndDeletePost(post.id)}
+                      >
+                        <i
+                          className="fa-solid fa-trash me-2"
+                          style={{ fontSize: 12 }}
+                        />
+                        Delete
+                      </Dropdown.Item>
+                    </Dropdown.Menu>
+                  </Dropdown>
+                )}
+              </div>
+
+              <div className="mt-3">
+                <Button
+                  variant="link"
+                  className="p-0 fs-post-title"
                   onClick={() => navigate(`/posts/${post.id}`)}
                   title="Open post details"
                 >
-                  {post.title}
-                </h3>
-
-                <div style={{ marginTop: 6 }}>
-                  <b>Score:</b> {post.score}
-                </div>
-
-                <div style={{ marginTop: 8 }}>
-                  <PostVotes postId={post.id} onVoted={loadPosts} />
-                </div>
+                  <span className="h5 mb-0">{post.title}</span>
+                </Button>
               </div>
 
-              {/* Right column: post menu (only if own post) */}
-              {ownPost && (
-                <div style={{ position: "relative" }}>
-                  <button
-                    type="button"
-                    aria-label="Post actions"
-                    onClick={() => {
-                      // ensure only one menu open at a time
-                      setOpenMenuForCommentId(null);
-                      setOpenMenuForPostId((cur) => (cur === post.id ? null : post.id));
-                    }}
-                    style={{
-                      border: "1px solid #ccc",
-                      background: "white",
-                      borderRadius: 6,
-                      padding: "2px 8px",
-                      cursor: "pointer",
-                      lineHeight: 1.2,
-                    }}
-                    title="Actions"
-                  >
-                    ⋯
-                  </button>
-
-                  {openMenuForPostId === post.id && (
-                    <>
-                      {/* Click-outside backdrop */}
-                      <div style={backdropStyle} onClick={() => setOpenMenuForPostId(null)} />
-
-                      <div style={menuStyle}>
-                        <button type="button" onClick={() => startEditPost(post)} style={menuItemStyle}>
-                          Edit
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => confirmAndDeletePost(post.id)}
-                          style={{ ...menuItemStyle, color: "crimson" }}
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* Post content or edit form */}
-            {editingPostId === post.id ? (
-              <div style={{ marginTop: 8 }}>
-                <div style={{ marginBottom: 8 }}>
-                  <input
-                    value={editingPostDraft.title}
-                    onChange={(e) => {
-                      setEditingPostDraft((d) => ({ ...d, title: e.target.value }));
-                      setPostFieldErrors((fe) => ({ ...fe, title: "" }));
-                    }}
-                    style={{ width: "100%" }}
-                    placeholder="Title"
-                  />
-                  {postFieldErrors.title && (
-                    <p style={{ color: "red", margin: "6px 0 0" }}>{postFieldErrors.title}</p>
-                  )}
-                </div>
-
-                <div style={{ marginBottom: 8 }}>
-                  <textarea
-                    rows={4}
-                    value={editingPostDraft.content}
-                    onChange={(e) => {
-                      setEditingPostDraft((d) => ({ ...d, content: e.target.value }));
-                      setPostFieldErrors((fe) => ({ ...fe, content: "" }));
-                    }}
-                    style={{ width: "100%" }}
-                    placeholder="Content"
-                  />
-                  {postFieldErrors.content && (
-                    <p style={{ color: "red", margin: "6px 0 0" }}>{postFieldErrors.content}</p>
-                  )}
-                </div>
-
-                <div style={{ display: "flex", gap: 8 }}>
-                  <button type="button" onClick={() => saveEditPost(post.id)}>
-                    Save
-                  </button>
-                  <button type="button" onClick={cancelEditPost}>
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <p style={{ marginTop: 8 }}>{post.content}</p>
-            )}
-
-            {/* Comment form toggle + form */}
-            <div style={{ marginTop: 10 }}>
-              <button onClick={() => toggleCommentForm(post.id)}>
-                {openCommentForPostId === post.id ? "Close" : "Add comment"}
-              </button>
-
-              {openCommentForPostId === post.id && (
-                <div style={{ marginTop: 10 }}>
-                  <CreateComment
-                    postId={post.id}
-                    onCommentCreated={loadPosts}
-                    onCancel={() => setOpenCommentForPostId(null)}
-                  />
-                </div>
-              )}
-            </div>
-
-            {/* Comments */}
-            <div style={{ marginTop: 15 }}>
-              <h4>Comments</h4>
-
-              {(post.comments ?? []).length === 0 && <p style={{ color: "#777" }}>No comments yet</p>}
-
-              {(post.comments ?? [])
-                .slice()
-                .sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
-                .map((comment) => {
-                  const ownComment = isOwn(comment.author_id);
-
-                  return (
-                    <div
-                      key={comment.id}
-                      style={{
-                        marginLeft: 20,
-                        borderLeft: "3px solid #ccc",
-                        paddingLeft: 10,
-                        marginBottom: 10,
-                        position: "relative",
+              {editingPostId === post.id ? (
+                <div className="mt-3">
+                  <Form.Group className="mb-2">
+                    <Form.Label className="small text-muted">Title</Form.Label>
+                    <Form.Control
+                      value={editingPostDraft.title}
+                      onChange={(e) => {
+                        setEditingPostDraft((d) => ({
+                          ...d,
+                          title: e.target.value,
+                        }));
+                        setPostFieldErrors((fe) => ({ ...fe, title: "" }));
                       }}
+                      placeholder="Title"
+                      isInvalid={!!postFieldErrors.title}
+                    />
+                    <Form.Control.Feedback type="invalid">
+                      {postFieldErrors.title}
+                    </Form.Control.Feedback>
+                  </Form.Group>
+
+                  <Form.Group className="mb-2">
+                    <Form.Label className="small text-muted">
+                      Content
+                    </Form.Label>
+                    <Form.Control
+                      as="textarea"
+                      rows={4}
+                      value={editingPostDraft.content}
+                      onChange={(e) => {
+                        setEditingPostDraft((d) => ({
+                          ...d,
+                          content: e.target.value,
+                        }));
+                        setPostFieldErrors((fe) => ({ ...fe, content: "" }));
+                      }}
+                      placeholder="Content"
+                      isInvalid={!!postFieldErrors.content}
+                    />
+                    <Form.Control.Feedback type="invalid">
+                      {postFieldErrors.content}
+                    </Form.Control.Feedback>
+                  </Form.Group>
+
+                  <div className="d-flex gap-2">
+                    <Button size="sm" onClick={() => saveEditPost(post.id)}>
+                      Save
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline-secondary"
+                      onClick={cancelEditPost}
                     >
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "flex-start",
-                          justifyContent: "space-between",
-                          gap: 10,
-                        }}
-                      >
-                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                          <AvatarFromStorage pathOrUrl={comment.comment_author?.avatar_url} />
-                          <b>{comment.comment_author?.username || "Unknown user"}</b>
-                        </div>
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <p
+                  className="mt-2 mb-0"
+                  style={{ color: "var(--fs-text-secondary)", lineHeight: 1.6 }}
+                >
+                  {post.content}
+                </p>
+              )}
 
-                        {ownComment && (
-                          <div style={{ position: "relative" }}>
-                            <button
-                              type="button"
-                              aria-label="Comment actions"
-                              onClick={() => {
-                                setOpenMenuForPostId(null);
-                                setOpenMenuForCommentId((cur) => (cur === comment.id ? null : comment.id));
-                              }}
-                              style={{
-                                border: "1px solid #ccc",
-                                background: "white",
-                                borderRadius: 6,
-                                padding: "2px 8px",
-                                cursor: "pointer",
-                                lineHeight: 1.2,
-                              }}
-                              title="Actions"
-                            >
-                              ⋯
-                            </button>
+              <div className="mt-3">
+                <PostVotes postId={post.id} onVoted={loadPosts} />
+              </div>
 
-                            {openMenuForCommentId === comment.id && (
-                              <>
-                                {/* Click-outside backdrop */}
-                                <div style={backdropStyle} onClick={() => setOpenMenuForCommentId(null)} />
+              <div className="mt-3 d-flex align-items-center justify-content-between">
+                <Badge className="fs-score-badge">
+                  <i
+                    className="fa-solid fa-arrow-up me-1"
+                    style={{ fontSize: 10 }}
+                  />
+                  {Number(post.score ?? 0)} points
+                </Badge>
+                <span className="text-muted" style={{ fontSize: "0.8125rem" }}>
+                  <i className="fa-regular fa-comment me-1" />
+                  {post.comments?.length ?? 0} comments
+                </span>
+              </div>
 
-                                <div style={menuStyle}>
-                                  <button
-                                    type="button"
-                                    onClick={() => startEditComment(comment)}
-                                    style={menuItemStyle}
-                                  >
-                                    Edit
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => confirmAndDeleteComment(comment.id)}
-                                    style={{ ...menuItemStyle, color: "crimson" }}
-                                  >
-                                    Delete
-                                  </button>
+              <div className="mt-3">
+                <CreateComment postId={post.id} onCommentCreated={loadPosts} />
+              </div>
+
+              <div className="mt-4">
+                <div className="d-flex align-items-center justify-content-between mb-2">
+                  <h4
+                    className="h6 mb-0"
+                    style={{ color: "var(--fs-text-secondary)" }}
+                  >
+                    <i
+                      className="fa-regular fa-comments me-2"
+                      style={{ fontSize: 14 }}
+                    />
+                    Comments
+                  </h4>
+
+                  {sortedComments.length > 2 && (
+                    <Button
+                      size="sm"
+                      variant="outline-primary"
+                      onClick={() =>
+                        setExpandedCommentsByPostId((m) => ({
+                          ...m,
+                          [post.id]: !isExpanded,
+                        }))
+                      }
+                    >
+                      {isExpanded
+                        ? "Hide"
+                        : `Show all (${sortedComments.length})`}
+                    </Button>
+                  )}
+                </div>
+
+                {sortedComments.length === 0 && (
+                  <div className="text-muted" style={{ fontSize: "0.8125rem" }}>
+                    No comments yet
+                  </div>
+                )}
+
+                <ListGroup variant="flush">
+                  {visibleComments.map((comment) => {
+                    const ownComment = isOwn(comment.author_id);
+
+                    return (
+                      <ListGroup.Item key={comment.id} className="px-0">
+                        <div className="d-flex align-items-start justify-content-between gap-2">
+                          <div className="d-flex align-items-start gap-2">
+                            <AvatarFromStorage
+                              pathOrUrl={comment.comment_author?.avatar_url}
+                            />
+                            <div>
+                              <div className="fs-author-name">
+                                {comment.comment_author?.username ||
+                                  "Unknown user"}
+                              </div>
+
+                              {editingCommentId === comment.id ? (
+                                <div className="mt-2">
+                                  <Form.Control
+                                    as="textarea"
+                                    rows={3}
+                                    value={editingCommentDraft}
+                                    onChange={(e) => {
+                                      setEditingCommentDraft(e.target.value);
+                                      setCommentFieldError("");
+                                    }}
+                                    placeholder="Edit comment"
+                                    isInvalid={!!commentFieldError}
+                                  />
+                                  {commentFieldError && (
+                                    <div className="text-danger small mt-1">
+                                      {commentFieldError}
+                                    </div>
+                                  )}
+                                  <div className="d-flex gap-2 mt-2">
+                                    <Button
+                                      size="sm"
+                                      onClick={() =>
+                                        saveEditComment(comment.id)
+                                      }
+                                    >
+                                      Save
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="outline-secondary"
+                                      onClick={cancelEditComment}
+                                    >
+                                      Cancel
+                                    </Button>
+                                  </div>
                                 </div>
-                              </>
-                            )}
-                          </div>
-                        )}
-                      </div>
+                              ) : (
+                                <div
+                                  className="mt-1"
+                                  style={{
+                                    color: "var(--fs-text-secondary)",
+                                    fontSize: "0.9375rem",
+                                  }}
+                                >
+                                  {comment.content}
+                                </div>
+                              )}
 
-                      {editingCommentId === comment.id ? (
-                        <div style={{ marginTop: 8 }}>
-                          <textarea
-                            rows={3}
-                            value={editingCommentDraft}
-                            onChange={(e) => {
-                              setEditingCommentDraft(e.target.value);
-                              setCommentFieldError("");
-                            }}
-                            style={{ width: "100%" }}
-                          />
-                          {commentFieldError && (
-                            <p style={{ color: "red", margin: "6px 0 0" }}>{commentFieldError}</p>
+                              <div className="fs-timestamp mt-1">
+                                {new Date(comment.created_at).toLocaleString()}
+                              </div>
+                            </div>
+                          </div>
+
+                          {ownComment && (
+                            <Dropdown
+                              align="end"
+                              show={openMenuForCommentId === comment.id}
+                              onToggle={(nextShow) => {
+                                if (nextShow) setOpenMenuForPostId(null);
+                                setOpenMenuForCommentId(
+                                  nextShow ? comment.id : null,
+                                );
+                              }}
+                            >
+                              <Dropdown.Toggle
+                                variant="outline-secondary"
+                                size="sm"
+                                bsPrefix="btn"
+                                className="fs-menu-toggle"
+                              >
+                                <i
+                                  className="fa-solid fa-ellipsis-vertical"
+                                  style={{ fontSize: 13 }}
+                                />
+                              </Dropdown.Toggle>
+
+                              <Dropdown.Menu>
+                                <Dropdown.Item
+                                  onClick={() => startEditComment(comment)}
+                                >
+                                  <i
+                                    className="fa-solid fa-pen me-2"
+                                    style={{ fontSize: 12 }}
+                                  />
+                                  Edit
+                                </Dropdown.Item>
+                                <Dropdown.Item
+                                  className="text-danger"
+                                  onClick={() =>
+                                    confirmAndDeleteComment(comment.id)
+                                  }
+                                >
+                                  <i
+                                    className="fa-solid fa-trash me-2"
+                                    style={{ fontSize: 12 }}
+                                  />
+                                  Delete
+                                </Dropdown.Item>
+                              </Dropdown.Menu>
+                            </Dropdown>
                           )}
-
-                          <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-                            <button type="button" onClick={() => saveEditComment(comment.id)}>
-                              Save
-                            </button>
-                            <button type="button" onClick={cancelEditComment}>
-                              Cancel
-                            </button>
-                          </div>
                         </div>
-                      ) : (
-                        <div style={{ marginTop: 6 }}>{comment.content}</div>
-                      )}
-
-                      <small style={{ color: "#888" }}>{new Date(comment.created_at).toLocaleString()}</small>
-                    </div>
-                  );
-                })}
-            </div>
-          </div>
+                      </ListGroup.Item>
+                    );
+                  })}
+                </ListGroup>
+              </div>
+            </Card.Body>
+          </Card>
         );
       })}
-    </div>
+    </Container>
   );
 };
 

@@ -1,39 +1,26 @@
-const Avatar = ({ url }) => {
+const Avatar = ({ url, size = "default" }) => {
+  const sizeClass =
+    size === "sm" ? "fs-avatar fs-avatar-sm" :
+    size === "lg" ? "fs-avatar fs-avatar-lg" :
+    "fs-avatar";
+
   if (!url) {
     return (
-      <span
-        aria-hidden="true"
-        style={{
-          width: 24,
-          height: 24,
-          borderRadius: "50%",
-          display: "inline-flex",
-          alignItems: "center",
-          justifyContent: "center",
-          background: "rgba(255,255,255,0.15)",
-          marginRight: 8,
-          fontSize: 14,
-        }}
-      >
-        👤
+      <span className={sizeClass} aria-hidden="true">
+        <i className="fa-solid fa-user" style={{ fontSize: size === "lg" ? 32 : 12, color: "var(--fs-text-muted)" }} />
       </span>
     );
   }
 
   return (
-    <img
-      src={url}
-      alt=""
-      style={{
-        width: 24,
-        height: 24,
-        borderRadius: "50%",
-        objectFit: "cover",
-        marginRight: 8,
-      }}
-      loading="lazy"
-      referrerPolicy="no-referrer"
-    />
+    <span className={sizeClass}>
+      <img
+        src={url}
+        alt=""
+        loading="lazy"
+        referrerPolicy="no-referrer"
+      />
+    </span>
   );
 };
 

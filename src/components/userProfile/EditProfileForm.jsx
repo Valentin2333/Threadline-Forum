@@ -91,17 +91,23 @@ const EditProfileForm = ({
       <Form.Group className="mb-3">
         <Form.Label>Username</Form.Label>
         <Form.Control type="text" placeholder="Username" disabled {...register("username")} />
-        <Form.Text muted>Username cannot be changed.</Form.Text>
+        <Form.Text muted>
+          <i className="fa-solid fa-lock me-1" style={{ fontSize: 10 }} />
+          Username cannot be changed.
+        </Form.Text>
       </Form.Group>
 
-      <Button type="submit" disabled={saving || !isDirty || !isValid}>
+      <Button type="submit" disabled={saving || !isDirty || !isValid} className="px-4">
         {saving ? (
           <>
             <Spinner size="sm" className="me-2" />
             Saving...
           </>
         ) : (
-          "Save changes"
+          <>
+            <i className="fa-solid fa-check me-2" style={{ fontSize: 12 }} />
+            Save changes
+          </>
         )}
       </Button>
     </Form>

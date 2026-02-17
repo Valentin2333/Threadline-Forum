@@ -2,9 +2,15 @@ import { useEffect, useState } from "react";
 import { supabase } from "../../api/supabaseClient";
 import { deleteVote, getMyVote, upsertVote } from "../../api/votes";
 
+import Button from "react-bootstrap/Button";
+import ButtonGroup from "react-bootstrap/ButtonGroup";
+
 const PostVotes = ({ postId, onVoted }) => {
   const [user, setUser] = useState(null);
-  const [myVote, setMyVote] = useState(0); // -1, 0, 1
+  const [myVote, setMyVote] = useState(0);
+
+  const [animateUp, setAnimateUp] = useState(false);
+  const [animateDown, setAnimateDown] = useState(false);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUser(data.user ?? null));
@@ -27,44 +33,82 @@ const PostVotes = ({ postId, onVoted }) => {
     loadVote();
   }, [user, postId]);
 
-  const handleVote = async (value) => {
-  if (!user) return;
-
-  try {
-    if (myVote === value) {
-      await deleteVote({ userId: user.id, targetId: postId });
-      setMyVote(0);
-    } else {
-      await upsertVote({ userId: user.id, targetId: postId, value });
-      setMyVote(value);
+  const triggerAnim = (value) => {
+    if (value === 1) {
+      setAnimateUp(false);
+      window.requestAnimationFrame(() => {
+        setAnimateUp(true);
+        window.setTimeout(() => setAnimateUp(false), 450);
+      });
+    } else if (value === -1) {
+      setAnimateDown(false);
+      window.requestAnimationFrame(() => {
+        setAnimateDown(true);
+        window.setTimeout(() => setAnimateDown(false), 550);
+      });
     }
+  };
 
-    onVoted?.();
-  } catch (e) {
-    console.error("VOTE ERROR:", e);
-    alert(e?.message || "Vote failed");
-  }
-};
+  const handleVote = async (value) => {
+    if (!user) return;
 
+    triggerAnim(value);
 
-  if (!user) return null; // hide for logged-out users
+    try {
+      if (myVote === value) {
+        await deleteVote({ userId: user.id, targetId: postId });
+        setMyVote(0);
+      } else {
+        await upsertVote({ userId: user.id, targetId: postId, value });
+        setMyVote(value);
+      }
+
+      onVoted?.();
+    } catch (e) {
+      console.error("VOTE ERROR:", e);
+      alert(e?.message || "Vote failed");
+    }
+  };
+
+  if (!user) return null;
+
+  const upActive = myVote === 1;
+  const downActive = myVote === -1;
 
   return (
-    <div style={{ display: "flex", gap: 10, marginTop: 8 }}>
-      <button
+    <ButtonGroup className="fs-vote-group" aria-label="Vote controls">
+      <Button
+        size="sm"
+        variant={upActive ? "success" : "outline-success"}
+        className={`d-inline-flex align-items-center justify-content-center ${
+          upActive ? "fw-semibold" : ""
+        }`}
         onClick={() => handleVote(1)}
-        style={{ fontWeight: myVote === 1 ? "bold" : "normal" }}
+        aria-label="Upvote"
+        title={upActive ? "Remove upvote" : "Upvote"}
       >
-        ▲ Upvote
-      </button>
+        <i
+          className={`fa-solid fa-thumbs-up me-2 ${animateUp ? "bump" : ""} ${
+            upActive ? "vote-active" : ""
+          }`}
+        />
+        <span className="small">{upActive ? "Upvoted" : "Upvote"}</span>
+      </Button>
 
-      <button
+      <Button
+        size="sm"
+        variant={downActive ? "danger" : "outline-danger"}
+        className={`d-inline-flex align-items-center justify-content-center ${
+          downActive ? "fw-semibold" : ""
+        }`}
         onClick={() => handleVote(-1)}
-        style={{ fontWeight: myVote === -1 ? "bold" : "normal" }}
+        aria-label="Downvote"
+        title={downActive ? "Remove downvote" : "Downvote"}
       >
-        ▼ Downvote
-      </button>
-    </div>
+        <i className={`fa-solid fa-thumbs-down me-2 ${animateDown ? "shake" : ""}`} />
+        <span className="small">{downActive ? "Downvoted" : "Downvote"}</span>
+      </Button>
+    </ButtonGroup>
   );
 };
 

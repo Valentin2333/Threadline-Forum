@@ -27,14 +27,14 @@ const AppNavigation = () => {
   return (
     <Navbar bg="dark" variant="dark" expand="lg" expanded={false}>
       <Container>
-        <Navbar.Brand as={NavLink} to="/" end onClick={closeSidebar}>
-          Forum
-        </Navbar.Brand>
-
         <Navbar.Toggle
           aria-controls="main-offcanvas"
           onClick={() => setShowSidebar(true)}
         />
+
+        <Navbar.Brand as={NavLink} to="/" end onClick={closeSidebar}>
+          Forum
+        </Navbar.Brand>
 
         <DesktopNav user={user} avatarUrl={avatarUrl} onLogout={handleLogout} />
 

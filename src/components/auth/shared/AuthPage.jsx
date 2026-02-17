@@ -14,13 +14,15 @@ const AuthPage = () => {
   const goRegister = () => navigate("/register");
 
   return (
-    <Container className="py-5" style={{ maxWidth: 520 }}>
-      <Card className="p-4">
-        {mode === "login" ? (
-          <Login onSwitchToRegister={goRegister} />
-        ) : (
-          <Register onSwitchToLogin={goLogin} />
-        )}
+    <Container className="py-5" style={{ maxWidth: 480 }}>
+      <Card className="fs-auth-card">
+        <Card.Body className="p-4 pt-4">
+          {mode === "login" ? (
+            <Login onSwitchToRegister={goRegister} />
+          ) : (
+            <Register onSwitchToLogin={goLogin} />
+          )}
+        </Card.Body>
       </Card>
     </Container>
   );

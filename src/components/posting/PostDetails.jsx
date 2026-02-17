@@ -191,7 +191,7 @@ const PostDetails = () => {
     try {
       await updateComment({ commentId, content: trimmed });
       cancelEditComment();
-      await load({ silent: true }); // ✅ no page flash
+      await load({ silent: true });
     } catch (e) {
       setServerError(e?.message || "Failed to update comment.");
     }
@@ -215,11 +215,20 @@ const PostDetails = () => {
     }
   };
 
-  if (initialLoading) return <div className="p-4">Loading…</div>;
+  if (initialLoading) {
+    return (
+      <Container className="py-4" style={{ maxWidth: 800 }}>
+        <div className="d-flex align-items-center gap-2 text-muted">
+          <div className="spinner-border spinner-border-sm" />
+          <span>Loading…</span>
+        </div>
+      </Container>
+    );
+  }
 
   if (!post) {
     return (
-      <Container className="py-3">
+      <Container className="py-3" style={{ maxWidth: 800 }}>
         <Alert variant="danger" className="py-2">
           {serverError || "Post not found."}
         </Alert>
@@ -230,7 +239,7 @@ const PostDetails = () => {
           size="sm"
           className="d-inline-flex align-items-center gap-2"
         >
-          <i className="fa-solid fa-circle-arrow-left" aria-hidden="true" />
+          <i className="fa-solid fa-arrow-left" aria-hidden="true" />
           <span>Back to posts</span>
         </Button>
       </Container>
@@ -240,7 +249,7 @@ const PostDetails = () => {
   const ownPost = isOwn(post.author_id);
 
   return (
-    <Container className="py-3">
+    <Container className="py-3" style={{ maxWidth: 800 }}>
       <div className="mb-3">
         <Button
           as={Link}
@@ -249,7 +258,7 @@ const PostDetails = () => {
           size="sm"
           className="d-inline-flex align-items-center gap-2"
         >
-          <i className="fa-solid fa-circle-arrow-left" aria-hidden="true" />
+          <i className="fa-solid fa-arrow-left" aria-hidden="true" />
           <span>Back to posts</span>
         </Button>
       </div>
@@ -260,17 +269,17 @@ const PostDetails = () => {
         </Alert>
       )}
 
-      <Card className="shadow-sm">
-        <Card.Body>
+      <Card>
+        <Card.Body className="p-4">
           <div className="d-flex align-items-start justify-content-between gap-3">
             <div className="flex-grow-1">
               <div className="d-flex align-items-center gap-2">
                 <AvatarFromStorage pathOrUrl={post.post_author?.avatar_url} />
                 <div>
-                  <div className="fw-semibold">
+                  <div className="fs-author-name">
                     {post.post_author?.username || "Unknown user"}
                   </div>
-                  <div className="text-muted small">
+                  <div className="fs-timestamp">
                     {new Date(post.created_at).toLocaleString()}
                   </div>
                 </div>
@@ -294,24 +303,24 @@ const PostDetails = () => {
                   variant="outline-secondary"
                   size="sm"
                   bsPrefix="btn"
+                  className="fs-menu-toggle"
                 >
                   <i
-                    className="fa-solid fa-angle-down"
-                    style={{
-                      transition: "transform 0.25s ease",
-                      transform: openPostMenu
-                        ? "rotate(180deg)"
-                        : "rotate(0deg)",
-                    }}
+                    className="fa-solid fa-ellipsis-vertical"
+                    style={{ fontSize: 13 }}
                   />
                 </Dropdown.Toggle>
 
                 <Dropdown.Menu>
-                  <Dropdown.Item onClick={startEditPost}>Edit</Dropdown.Item>
+                  <Dropdown.Item onClick={startEditPost}>
+                    <i className="fa-solid fa-pen me-2" style={{ fontSize: 12 }} />
+                    Edit
+                  </Dropdown.Item>
                   <Dropdown.Item
                     className="text-danger"
                     onClick={confirmAndDeletePost}
                   >
+                    <i className="fa-solid fa-trash me-2" style={{ fontSize: 12 }} />
                     Delete
                   </Dropdown.Item>
                 </Dropdown.Menu>
@@ -369,26 +378,35 @@ const PostDetails = () => {
               </div>
             </div>
           ) : (
-            <p className="mt-3 mb-0">{post.content}</p>
+            <p className="mt-3 mb-0" style={{ color: "var(--fs-text-secondary)", lineHeight: 1.7 }}>
+              {post.content}
+            </p>
           )}
 
-          <div className="mt-2">
+          <div className="mt-3">
             <PostVotes
               postId={post.id}
               onVoted={() => load({ silent: true })}
             />
           </div>
 
-          <div className="mt-2 d-flex align-items-center justify-content-between">
-            <Badge bg="secondary">Score: {Number(post.score ?? 0)}</Badge>
-            <span className="text-muted small">
+          <div className="mt-3 d-flex align-items-center justify-content-between">
+            <Badge className="fs-score-badge">
+              <i className="fa-solid fa-arrow-up me-1" style={{ fontSize: 10 }} />
+              {Number(post.score ?? 0)} points
+            </Badge>
+            <span className="text-muted" style={{ fontSize: "0.8125rem" }}>
+              <i className="fa-regular fa-comment me-1" />
               {post.comments?.length ?? 0} comments
             </span>
           </div>
           <hr className="my-4" />
 
           <div>
-            <h3 className="h6 mb-2">Comments</h3>
+            <h3 className="h6 mb-3" style={{ color: "var(--fs-text-secondary)" }}>
+              <i className="fa-regular fa-comments me-2" style={{ fontSize: 14 }} />
+              Comments
+            </h3>
 
             <CreateComment
               postId={post.id}
@@ -396,7 +414,7 @@ const PostDetails = () => {
             />
 
             {(post.comments ?? []).length === 0 && (
-              <div className="text-muted small mt-2">No comments yet</div>
+              <div className="text-muted mt-2" style={{ fontSize: "0.8125rem" }}>No comments yet</div>
             )}
 
             <ListGroup variant="flush" className="mt-2">
@@ -414,7 +432,7 @@ const PostDetails = () => {
                             pathOrUrl={comment.comment_author?.avatar_url}
                           />
                           <div>
-                            <div className="fw-semibold">
+                            <div className="fs-author-name">
                               {comment.comment_author?.username ||
                                 "Unknown user"}
                             </div>
@@ -454,10 +472,12 @@ const PostDetails = () => {
                                 </div>
                               </div>
                             ) : (
-                              <div className="mt-1">{comment.content}</div>
+                              <div className="mt-1" style={{ color: "var(--fs-text-secondary)", fontSize: "0.9375rem" }}>
+                                {comment.content}
+                              </div>
                             )}
 
-                            <div className="text-muted small mt-1">
+                            <div className="fs-timestamp mt-1">
                               {new Date(comment.created_at).toLocaleString(
                                 "en-GB",
                               )}
@@ -480,16 +500,11 @@ const PostDetails = () => {
                               variant="outline-secondary"
                               size="sm"
                               bsPrefix="btn"
+                              className="fs-menu-toggle"
                             >
                               <i
-                                className="fa-solid fa-angle-down"
-                                style={{
-                                  transition: "transform 0.25s ease",
-                                  transform:
-                                    openMenuForCommentId === comment.id
-                                      ? "rotate(180deg)"
-                                      : "rotate(0deg)",
-                                }}
+                                className="fa-solid fa-ellipsis-vertical"
+                                style={{ fontSize: 13 }}
                               />
                             </Dropdown.Toggle>
 
@@ -497,6 +512,7 @@ const PostDetails = () => {
                               <Dropdown.Item
                                 onClick={() => startEditComment(comment)}
                               >
+                                <i className="fa-solid fa-pen me-2" style={{ fontSize: 12 }} />
                                 Edit
                               </Dropdown.Item>
                               <Dropdown.Item
@@ -505,6 +521,7 @@ const PostDetails = () => {
                                   confirmAndDeleteComment(comment.id)
                                 }
                               >
+                                <i className="fa-solid fa-trash me-2" style={{ fontSize: 12 }} />
                                 Delete
                               </Dropdown.Item>
                             </Dropdown.Menu>

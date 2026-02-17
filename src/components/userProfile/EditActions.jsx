@@ -4,9 +4,12 @@ const EditActions = ({ isEditing, saving, onStartEdit, onCancelEdit }) => {
   return (
     <div className="d-flex gap-2 mb-3">
       {!isEditing ? (
-        <Button onClick={onStartEdit}>Edit profile</Button>
+        <Button onClick={onStartEdit}>
+          <i className="fa-solid fa-pen me-2" style={{ fontSize: 12 }} />
+          Edit profile
+        </Button>
       ) : (
-        <Button variant="secondary" onClick={onCancelEdit} disabled={saving}>
+        <Button variant="outline-secondary" onClick={onCancelEdit} disabled={saving}>
           Cancel
         </Button>
       )}

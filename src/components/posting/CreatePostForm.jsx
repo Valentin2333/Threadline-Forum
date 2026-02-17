@@ -50,7 +50,6 @@ const CreatePostForm = ({ onPostCreated }) => {
       return;
     }
 
-    // Defensive: data is already trimmed by setValueAs, but keep it safe.
     const title = (data.title ?? "").trim();
     const content = (data.content ?? "").trim();
 
@@ -62,7 +61,7 @@ const CreatePostForm = ({ onPostCreated }) => {
       });
 
       reset();
-      setOpen(false); // optionally collapse after creating
+      setOpen(false);
       onPostCreated?.();
     } catch (err) {
       const msg = err?.message || "Unknown error";
@@ -81,20 +80,32 @@ const CreatePostForm = ({ onPostCreated }) => {
     <Container>
       <div className="d-flex justify-content-end mb-3">
         <Button
-          variant={open ? "secondary" : "primary"}
+          variant={open ? "outline-secondary" : "primary"}
           onClick={() => setOpen((v) => !v)}
           aria-controls="create-post-collapse"
           aria-expanded={open}
+          className="px-4"
         >
-          {open ? "Hide form" : "New post"}
+          {open ? (
+            <>
+              <i className="fa-solid fa-xmark me-2" style={{ fontSize: 13 }} />
+              Hide form
+            </>
+          ) : (
+            <>
+              <i className="fa-solid fa-plus me-2" style={{ fontSize: 13 }} />
+              New post
+            </>
+          )}
         </Button>
       </div>
 
       <Collapse in={open}>
         <div id="create-post-collapse">
-          <Card className="mb-4 shadow-sm">
-            <Card.Body>
-              <Card.Title as="h2" className="h4 mb-3">
+          <Card className="mb-4">
+            <Card.Body className="p-4">
+              <Card.Title as="h2" className="h5 mb-3 d-flex align-items-center gap-2">
+                <i className="fa-solid fa-pen-to-square" style={{ color: "var(--fs-primary)", fontSize: 18 }} />
                 Create Post
               </Card.Title>
 
@@ -108,9 +119,8 @@ const CreatePostForm = ({ onPostCreated }) => {
                 <Form.Group className="mb-3">
                   <Form.Label>Title</Form.Label>
                   <Form.Control
-                    placeholder="Post title"
+                    placeholder="Give your post a title..."
                     {...register("title", {
-                      // TRIM BEFORE VALIDATION:
                       setValueAs: (v) => (typeof v === "string" ? v.trim() : v),
                       required: "Title required",
                       minLength: { value: 16, message: "Min 16 chars" },
@@ -131,9 +141,8 @@ const CreatePostForm = ({ onPostCreated }) => {
                   <Form.Control
                     as="textarea"
                     rows={5}
-                    placeholder="Post content"
+                    placeholder="What's on your mind?"
                     {...register("content", {
-                      // TRIM BEFORE VALIDATION:
                       setValueAs: (v) => (typeof v === "string" ? v.trim() : v),
                       required: "Content required",
                       minLength: { value: 32, message: "Min 32 chars" },
@@ -163,7 +172,7 @@ const CreatePostForm = ({ onPostCreated }) => {
                     Cancel
                   </Button>
 
-                  <Button type="submit" disabled={isSubmitting}>
+                  <Button type="submit" disabled={isSubmitting} className="px-4">
                     {isSubmitting ? "Creating…" : "Create Post"}
                   </Button>
                 </div>

@@ -60,11 +60,9 @@ const FetchPosts = ({ refreshTrigger }) => {
   const [posts, setPosts] = useState([]);
   const [expandedCommentsByPostId, setExpandedCommentsByPostId] = useState({});
 
-  // "3 dots" menu state
   const [openMenuForPostId, setOpenMenuForPostId] = useState(null);
   const [openMenuForCommentId, setOpenMenuForCommentId] = useState(null);
 
-  // Editing state
   const [editingPostId, setEditingPostId] = useState(null);
   const [editingPostDraft, setEditingPostDraft] = useState({
     title: "",
@@ -81,13 +79,11 @@ const FetchPosts = ({ refreshTrigger }) => {
 
   const [serverError, setServerError] = useState("");
 
-  // ✅ Sort / Filter / Search controls
-  const [sortBy, setSortBy] = useState("newest"); // newest | oldest | score | comments
+  const [sortBy, setSortBy] = useState("newest");
   const [searchQuery, setSearchQuery] = useState("");
-  const [authorFilter, setAuthorFilter] = useState("all"); // all | mine
-  const [scoreFilter, setScoreFilter] = useState("any"); // any | gte1 | gte5 | gte10
+  const [authorFilter, setAuthorFilter] = useState("all");
+  const [scoreFilter, setScoreFilter] = useState("any");
 
-  // ✅ toggles: separate buttons for search + filters/sort
   const [showSearch, setShowSearch] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
 
@@ -301,12 +297,14 @@ const FetchPosts = ({ refreshTrigger }) => {
   return (
     <Container className="py-3">
       <div className="d-flex align-items-center justify-content-between mb-3">
-        <h2 className="mb-0">Posts</h2>
+        <h2 className="fs-page-title mb-0">Posts</h2>
 
         <div className="d-flex gap-2">
           <Button
             size="sm"
-            variant={showSearch || hasActiveSearch ? "primary" : "outline-primary"}
+            variant={
+              showSearch || hasActiveSearch ? "primary" : "outline-primary"
+            }
             onClick={() => setShowSearch((v) => !v)}
           >
             <i className="fa-solid fa-magnifying-glass me-2" />
@@ -316,9 +314,7 @@ const FetchPosts = ({ refreshTrigger }) => {
           <Button
             size="sm"
             variant={
-              showFilters || hasActiveFilters
-                ? "primary"
-                : "outline-primary"
+              showFilters || hasActiveFilters ? "primary" : "outline-primary"
             }
             onClick={() => setShowFilters((v) => !v)}
           >
@@ -328,11 +324,11 @@ const FetchPosts = ({ refreshTrigger }) => {
         </div>
       </div>
 
-      {/* ✅ Search panel (separate) */}
+      {/* Search panel */}
       <Collapse in={showSearch}>
         <div className="mb-3">
-          <Card className="shadow-sm">
-            <Card.Body>
+          <Card>
+            <Card.Body className="py-3">
               <Row className="g-2 align-items-end">
                 <Col xs={12} md={10}>
                   <Form.Group>
@@ -362,11 +358,11 @@ const FetchPosts = ({ refreshTrigger }) => {
         </div>
       </Collapse>
 
-      {/* ✅ Filters/sort panel (separate) */}
+      {/* Filters/sort panel */}
       <Collapse in={showFilters}>
         <div className="mb-3">
-          <Card className="shadow-sm">
-            <Card.Body>
+          <Card>
+            <Card.Body className="py-3">
               <Row className="g-2 align-items-end">
                 <Col xs={12} sm={6} md={4}>
                   <Form.Group>
@@ -425,6 +421,10 @@ const FetchPosts = ({ refreshTrigger }) => {
                     onClick={loadPosts}
                     size="sm"
                   >
+                    <i
+                      className="fa-solid fa-rotate-right me-1"
+                      style={{ fontSize: 11 }}
+                    />
                     Refresh
                   </Button>
                 </Col>
@@ -441,7 +441,10 @@ const FetchPosts = ({ refreshTrigger }) => {
       )}
 
       {displayedPosts.length === 0 && (
-        <Alert variant="secondary">No posts match your filters.</Alert>
+        <Alert variant="secondary">
+          <i className="fa-solid fa-inbox me-2" />
+          No posts match your filters.
+        </Alert>
       )}
 
       {displayedPosts.map((post) => {
@@ -458,8 +461,8 @@ const FetchPosts = ({ refreshTrigger }) => {
             : sortedComments;
 
         return (
-          <Card key={post.id} className="mb-3 shadow-sm">
-            <Card.Body>
+          <Card key={post.id} className="mb-3 fs-post-card">
+            <Card.Body className="p-4">
               <div className="d-flex align-items-start justify-content-between gap-3">
                 <div className="flex-grow-1">
                   <div className="d-flex align-items-center gap-2">
@@ -467,10 +470,10 @@ const FetchPosts = ({ refreshTrigger }) => {
                       pathOrUrl={post.post_author?.avatar_url}
                     />
                     <div>
-                      <div className="fw-semibold">
+                      <div className="fs-author-name">
                         {post.post_author?.username || "Unknown user"}
                       </div>
-                      <div className="text-muted small">
+                      <div className="fs-timestamp">
                         {new Date(post.created_at).toLocaleString()}
                       </div>
                     </div>
@@ -490,27 +493,30 @@ const FetchPosts = ({ refreshTrigger }) => {
                       variant="outline-secondary"
                       size="sm"
                       bsPrefix="btn"
+                      className="fs-menu-toggle"
                     >
                       <i
-                        className="fa-solid fa-angle-down"
-                        style={{
-                          transition: "transform 0.25s ease",
-                          transform:
-                            openMenuForPostId === post.id
-                              ? "rotate(180deg)"
-                              : "rotate(0deg)",
-                        }}
+                        className="fa-solid fa-ellipsis-vertical"
+                        style={{ fontSize: 13 }}
                       />
                     </Dropdown.Toggle>
 
                     <Dropdown.Menu>
                       <Dropdown.Item onClick={() => startEditPost(post)}>
+                        <i
+                          className="fa-solid fa-pen me-2"
+                          style={{ fontSize: 12 }}
+                        />
                         Edit
                       </Dropdown.Item>
                       <Dropdown.Item
                         className="text-danger"
                         onClick={() => confirmAndDeletePost(post.id)}
                       >
+                        <i
+                          className="fa-solid fa-trash me-2"
+                          style={{ fontSize: 12 }}
+                        />
                         Delete
                       </Dropdown.Item>
                     </Dropdown.Menu>
@@ -518,16 +524,14 @@ const FetchPosts = ({ refreshTrigger }) => {
                 )}
               </div>
 
-              <div className="mt-2">
+              <div className="mt-3">
                 <Button
                   variant="link"
-                  className="p-0 text-decoration-none"
+                  className="p-0 fs-post-title"
                   onClick={() => navigate(`/posts/${post.id}`)}
                   title="Open post details"
                 >
-                  <span className="h5 mb-0 text-decoration-underline">
-                    {post.title}
-                  </span>
+                  <span className="h5 mb-0">{post.title}</span>
                 </Button>
               </div>
 
@@ -589,16 +593,28 @@ const FetchPosts = ({ refreshTrigger }) => {
                   </div>
                 </div>
               ) : (
-                <p className="mt-2 mb-0">{post.content}</p>
+                <p
+                  className="mt-2 mb-0"
+                  style={{ color: "var(--fs-text-secondary)", lineHeight: 1.6 }}
+                >
+                  {post.content}
+                </p>
               )}
 
               <div className="mt-3">
                 <PostVotes postId={post.id} onVoted={loadPosts} />
               </div>
 
-              <div className="mt-2 d-flex align-items-center justify-content-between">
-                <Badge bg="secondary">Score: {Number(post.score ?? 0)}</Badge>
-                <span className="text-muted small">
+              <div className="mt-3 d-flex align-items-center justify-content-between">
+                <Badge className="fs-score-badge">
+                  <i
+                    className="fa-solid fa-arrow-up me-1"
+                    style={{ fontSize: 10 }}
+                  />
+                  {Number(post.score ?? 0)} points
+                </Badge>
+                <span className="text-muted" style={{ fontSize: "0.8125rem" }}>
+                  <i className="fa-regular fa-comment me-1" />
                   {post.comments?.length ?? 0} comments
                 </span>
               </div>
@@ -609,7 +625,16 @@ const FetchPosts = ({ refreshTrigger }) => {
 
               <div className="mt-4">
                 <div className="d-flex align-items-center justify-content-between mb-2">
-                  <h4 className="h6 mb-0">Comments</h4>
+                  <h4
+                    className="h6 mb-0"
+                    style={{ color: "var(--fs-text-secondary)" }}
+                  >
+                    <i
+                      className="fa-regular fa-comments me-2"
+                      style={{ fontSize: 14 }}
+                    />
+                    Comments
+                  </h4>
 
                   {sortedComments.length > 2 && (
                     <Button
@@ -630,7 +655,9 @@ const FetchPosts = ({ refreshTrigger }) => {
                 </div>
 
                 {sortedComments.length === 0 && (
-                  <div className="text-muted small">No comments yet</div>
+                  <div className="text-muted" style={{ fontSize: "0.8125rem" }}>
+                    No comments yet
+                  </div>
                 )}
 
                 <ListGroup variant="flush">
@@ -645,7 +672,7 @@ const FetchPosts = ({ refreshTrigger }) => {
                               pathOrUrl={comment.comment_author?.avatar_url}
                             />
                             <div>
-                              <div className="fw-semibold">
+                              <div className="fs-author-name">
                                 {comment.comment_author?.username ||
                                   "Unknown user"}
                               </div>
@@ -687,10 +714,18 @@ const FetchPosts = ({ refreshTrigger }) => {
                                   </div>
                                 </div>
                               ) : (
-                                <div className="mt-1">{comment.content}</div>
+                                <div
+                                  className="mt-1"
+                                  style={{
+                                    color: "var(--fs-text-secondary)",
+                                    fontSize: "0.9375rem",
+                                  }}
+                                >
+                                  {comment.content}
+                                </div>
                               )}
 
-                              <div className="text-muted small mt-1">
+                              <div className="fs-timestamp mt-1">
                                 {new Date(comment.created_at).toLocaleString()}
                               </div>
                             </div>
@@ -703,7 +738,7 @@ const FetchPosts = ({ refreshTrigger }) => {
                               onToggle={(nextShow) => {
                                 if (nextShow) setOpenMenuForPostId(null);
                                 setOpenMenuForCommentId(
-                                  nextShow ? comment.id : null
+                                  nextShow ? comment.id : null,
                                 );
                               }}
                             >
@@ -711,16 +746,11 @@ const FetchPosts = ({ refreshTrigger }) => {
                                 variant="outline-secondary"
                                 size="sm"
                                 bsPrefix="btn"
+                                className="fs-menu-toggle"
                               >
                                 <i
-                                  className="fa-solid fa-angle-down"
-                                  style={{
-                                    transition: "transform 0.25s ease",
-                                    transform:
-                                      openMenuForCommentId === comment.id
-                                        ? "rotate(180deg)"
-                                        : "rotate(0deg)",
-                                  }}
+                                  className="fa-solid fa-ellipsis-vertical"
+                                  style={{ fontSize: 13 }}
                                 />
                               </Dropdown.Toggle>
 
@@ -728,6 +758,10 @@ const FetchPosts = ({ refreshTrigger }) => {
                                 <Dropdown.Item
                                   onClick={() => startEditComment(comment)}
                                 >
+                                  <i
+                                    className="fa-solid fa-pen me-2"
+                                    style={{ fontSize: 12 }}
+                                  />
                                   Edit
                                 </Dropdown.Item>
                                 <Dropdown.Item
@@ -736,6 +770,10 @@ const FetchPosts = ({ refreshTrigger }) => {
                                     confirmAndDeleteComment(comment.id)
                                   }
                                 >
+                                  <i
+                                    className="fa-solid fa-trash me-2"
+                                    style={{ fontSize: 12 }}
+                                  />
                                   Delete
                                 </Dropdown.Item>
                               </Dropdown.Menu>

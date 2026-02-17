@@ -29,7 +29,7 @@ const CreateComment = ({ postId, onCommentCreated }) => {
     setServerError("");
 
     const trimmed = (content ?? "").trim();
-    if (!trimmed) return; 
+    if (!trimmed) return;
 
     const { data: userData } = await supabase.auth.getUser();
     const user = userData.user;
@@ -43,7 +43,7 @@ const CreateComment = ({ postId, onCommentCreated }) => {
       await createComment({
         userId: user.id,
         postId,
-        content: trimmed, 
+        content: trimmed,
       });
 
       reset();
@@ -65,7 +65,7 @@ const CreateComment = ({ postId, onCommentCreated }) => {
   });
 
   return (
-    <div className="mt-2">
+    <div className="mt-2 fs-comment-input">
       {serverError && (
         <Alert variant="danger" className="py-2 mb-2">
           {serverError}
@@ -93,7 +93,7 @@ const CreateComment = ({ postId, onCommentCreated }) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 const val = e.currentTarget.value ?? "";
                 if (!val.trim()) {
-                  e.preventDefault(); 
+                  e.preventDefault();
                   return;
                 }
                 e.preventDefault();
@@ -109,14 +109,12 @@ const CreateComment = ({ postId, onCommentCreated }) => {
             aria-label="Send comment"
           >
             {isSubmitting ? (
-              <Spinner size="sm" className="me-2" />
+              <Spinner size="sm" />
             ) : (
-              <i className="fa-solid fa-comment" />
+              <i className="fa-solid fa-paper-plane" style={{ fontSize: 13 }} />
             )}
           </Button>
         </InputGroup>
-
-        {/* ✅ Removed the "Comment is required" error UI entirely */}
       </Form>
     </div>
   );

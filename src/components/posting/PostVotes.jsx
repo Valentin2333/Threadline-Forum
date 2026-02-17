@@ -7,9 +7,8 @@ import ButtonGroup from "react-bootstrap/ButtonGroup";
 
 const PostVotes = ({ postId, onVoted }) => {
   const [user, setUser] = useState(null);
-  const [myVote, setMyVote] = useState(0); // -1, 0, 1
+  const [myVote, setMyVote] = useState(0);
 
-  // icon animations
   const [animateUp, setAnimateUp] = useState(false);
   const [animateDown, setAnimateDown] = useState(false);
 
@@ -37,7 +36,6 @@ const PostVotes = ({ postId, onVoted }) => {
   const triggerAnim = (value) => {
     if (value === 1) {
       setAnimateUp(false);
-      // allow retrigger even if user clicks fast
       window.requestAnimationFrame(() => {
         setAnimateUp(true);
         window.setTimeout(() => setAnimateUp(false), 450);
@@ -54,7 +52,6 @@ const PostVotes = ({ postId, onVoted }) => {
   const handleVote = async (value) => {
     if (!user) return;
 
-    // animate immediately on click
     triggerAnim(value);
 
     try {
@@ -73,17 +70,17 @@ const PostVotes = ({ postId, onVoted }) => {
     }
   };
 
-  if (!user) return null; // hide for logged-out users
+  if (!user) return null;
 
   const upActive = myVote === 1;
   const downActive = myVote === -1;
 
   return (
-    <ButtonGroup className="mt-2 shadow-sm" aria-label="Vote controls">
+    <ButtonGroup className="fs-vote-group" aria-label="Vote controls">
       <Button
         size="sm"
         variant={upActive ? "success" : "outline-success"}
-        className={`d-inline-flex align-items-center justify-content-center px-3 ${
+        className={`d-inline-flex align-items-center justify-content-center ${
           upActive ? "fw-semibold" : ""
         }`}
         onClick={() => handleVote(1)}
@@ -101,7 +98,7 @@ const PostVotes = ({ postId, onVoted }) => {
       <Button
         size="sm"
         variant={downActive ? "danger" : "outline-danger"}
-        className={`d-inline-flex align-items-center justify-content-center px-3 ${
+        className={`d-inline-flex align-items-center justify-content-center ${
           downActive ? "fw-semibold" : ""
         }`}
         onClick={() => handleVote(-1)}

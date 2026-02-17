@@ -158,7 +158,10 @@ const UserProfile = () => {
       authError={authError}
       onGoLogin={() => navigate("/login")}
     >
-      <h2 className="mb-3">Your Profile</h2>
+      <h2 className="fs-page-title mb-3">
+        <i className="fa-solid fa-user-circle me-2" style={{ color: "var(--fs-primary)" }} />
+        Your Profile
+      </h2>
 
       <ProfileCard loadingProfile={loadingProfile} profile={profile}>
         <AvatarSection

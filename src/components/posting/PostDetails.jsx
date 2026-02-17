@@ -7,12 +7,14 @@ import AvatarFromStorage from "./AvatarFromStorage";
 import useAuthUser from "../navigation/hooks/useAuthUser";
 
 import Alert from "react-bootstrap/Alert";
+import Badge from "react-bootstrap/Badge";
 import Button from "react-bootstrap/Button";
 import Card from "react-bootstrap/Card";
 import Container from "react-bootstrap/Container";
 import Dropdown from "react-bootstrap/Dropdown";
 import Form from "react-bootstrap/Form";
 import ListGroup from "react-bootstrap/ListGroup";
+import PostVotes from "./PostVotes";
 
 const validatePost = ({ title, content }) => {
   const errs = {};
@@ -51,13 +53,12 @@ const PostDetails = () => {
   const user = useAuthUser();
 
   const [post, setPost] = useState(null);
-  const [loading, setLoading] = useState(true);
 
-  // menus
+  const [initialLoading, setInitialLoading] = useState(true);
+
   const [openPostMenu, setOpenPostMenu] = useState(false);
   const [openMenuForCommentId, setOpenMenuForCommentId] = useState(null);
 
-  // editing
   const [editingPost, setEditingPost] = useState(false);
   const [postDraft, setPostDraft] = useState({ title: "", content: "" });
   const [postFieldErrors, setPostFieldErrors] = useState({
@@ -75,22 +76,23 @@ const PostDetails = () => {
   const isOwn = (authorId) =>
     Boolean(userId && authorId && userId === authorId);
 
-  const load = async () => {
+  const load = async ({ silent = false } = {}) => {
     try {
       setServerError("");
-      setLoading(true);
+      if (!silent) setInitialLoading(true);
+
       const data = await getPostById(postId);
       setPost(data);
     } catch (e) {
       setServerError(e?.message || "Failed to load post.");
       setPost(null);
     } finally {
-      setLoading(false);
+      if (!silent) setInitialLoading(false);
     }
   };
 
   useEffect(() => {
-    load();
+    load({ silent: false });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [postId]);
 
@@ -130,7 +132,7 @@ const PostDetails = () => {
       });
 
       cancelEditPost();
-      await load();
+      await load({ silent: true });
     } catch (e) {
       const msg = e?.message || "Failed to update post.";
       const dbErrs = mapDbErrorToFields(msg);
@@ -189,7 +191,7 @@ const PostDetails = () => {
     try {
       await updateComment({ commentId, content: trimmed });
       cancelEditComment();
-      await load();
+      await load({ silent: true }); // ✅ no page flash
     } catch (e) {
       setServerError(e?.message || "Failed to update comment.");
     }
@@ -207,13 +209,13 @@ const PostDetails = () => {
 
       if (editingCommentId === commentId) cancelEditComment();
 
-      await load();
+      await load({ silent: true });
     } catch (e) {
       setServerError(e?.message || "Failed to delete comment.");
     }
   };
 
-  if (loading) return <div className="p-4">Loading…</div>;
+  if (initialLoading) return <div className="p-4">Loading…</div>;
 
   if (!post) {
     return (
@@ -221,8 +223,15 @@ const PostDetails = () => {
         <Alert variant="danger" className="py-2">
           {serverError || "Post not found."}
         </Alert>
-        <Button as={Link} to="/posts" variant="link" className="p-0">
-          ← Back to posts
+        <Button
+          as={Link}
+          to="/posts"
+          variant="outline-secondary"
+          size="sm"
+          className="d-inline-flex align-items-center gap-2"
+        >
+          <i className="fa-solid fa-circle-arrow-left" aria-hidden="true" />
+          <span>Back to posts</span>
         </Button>
       </Container>
     );
@@ -233,8 +242,15 @@ const PostDetails = () => {
   return (
     <Container className="py-3">
       <div className="mb-3">
-        <Button as={Link} to="/posts" variant="link" className="p-0">
-          ← Back to posts
+        <Button
+          as={Link}
+          to="/posts"
+          variant="outline-secondary"
+          size="sm"
+          className="d-inline-flex align-items-center gap-2"
+        >
+          <i className="fa-solid fa-circle-arrow-left" aria-hidden="true" />
+          <span>Back to posts</span>
         </Button>
       </div>
 
@@ -260,35 +276,41 @@ const PostDetails = () => {
                 </div>
               </div>
 
-              <h2 className="h4 mt-3 mb-0">{post.title}</h2>
+              <div className="d-flex align-items-center gap-2 mt-3">
+                <h2 className="h4 mb-0">{post.title}</h2>
+              </div>
             </div>
 
             {ownPost && (
-              <Dropdown align="end" show={openPostMenu}>
+              <Dropdown
+                align="end"
+                show={openPostMenu}
+                onToggle={(nextShow) => {
+                  if (nextShow) setOpenMenuForCommentId(null);
+                  setOpenPostMenu(nextShow);
+                }}
+              >
                 <Dropdown.Toggle
                   variant="outline-secondary"
                   size="sm"
                   bsPrefix="btn"
-                  onClick={() => setOpenPostMenu((v) => !v)}
                 >
-                  ⋯
+                  <i
+                    className="fa-solid fa-angle-down"
+                    style={{
+                      transition: "transform 0.25s ease",
+                      transform: openPostMenu
+                        ? "rotate(180deg)"
+                        : "rotate(0deg)",
+                    }}
+                  />
                 </Dropdown.Toggle>
 
                 <Dropdown.Menu>
-                  <Dropdown.Item
-                    onClick={() => {
-                      setOpenPostMenu(false);
-                      startEditPost();
-                    }}
-                  >
-                    Edit
-                  </Dropdown.Item>
+                  <Dropdown.Item onClick={startEditPost}>Edit</Dropdown.Item>
                   <Dropdown.Item
                     className="text-danger"
-                    onClick={() => {
-                      setOpenPostMenu(false);
-                      confirmAndDeletePost();
-                    }}
+                    onClick={confirmAndDeletePost}
                   >
                     Delete
                   </Dropdown.Item>
@@ -350,12 +372,28 @@ const PostDetails = () => {
             <p className="mt-3 mb-0">{post.content}</p>
           )}
 
+          <div className="mt-2">
+            <PostVotes
+              postId={post.id}
+              onVoted={() => load({ silent: true })}
+            />
+          </div>
+
+          <div className="mt-2 d-flex align-items-center justify-content-between">
+            <Badge bg="secondary">Score: {Number(post.score ?? 0)}</Badge>
+            <span className="text-muted small">
+              {post.comments?.length ?? 0} comments
+            </span>
+          </div>
           <hr className="my-4" />
 
           <div>
             <h3 className="h6 mb-2">Comments</h3>
 
-            <CreateComment postId={post.id} onCommentCreated={load} />
+            <CreateComment
+              postId={post.id}
+              onCommentCreated={() => load({ silent: true })}
+            />
 
             {(post.comments ?? []).length === 0 && (
               <div className="text-muted small mt-2">No comments yet</div>
@@ -420,7 +458,9 @@ const PostDetails = () => {
                             )}
 
                             <div className="text-muted small mt-1">
-                              {new Date(comment.created_at).toLocaleString()}
+                              {new Date(comment.created_at).toLocaleString(
+                                "en-GB",
+                              )}
                             </div>
                           </div>
                         </div>
@@ -429,35 +469,41 @@ const PostDetails = () => {
                           <Dropdown
                             align="end"
                             show={openMenuForCommentId === comment.id}
+                            onToggle={(nextShow) => {
+                              if (nextShow) setOpenPostMenu(false);
+                              setOpenMenuForCommentId(
+                                nextShow ? comment.id : null,
+                              );
+                            }}
                           >
                             <Dropdown.Toggle
                               variant="outline-secondary"
                               size="sm"
                               bsPrefix="btn"
-                              onClick={() =>
-                                setOpenMenuForCommentId((cur) =>
-                                  cur === comment.id ? null : comment.id,
-                                )
-                              }
                             >
-                              ⋯
+                              <i
+                                className="fa-solid fa-angle-down"
+                                style={{
+                                  transition: "transform 0.25s ease",
+                                  transform:
+                                    openMenuForCommentId === comment.id
+                                      ? "rotate(180deg)"
+                                      : "rotate(0deg)",
+                                }}
+                              />
                             </Dropdown.Toggle>
 
                             <Dropdown.Menu>
                               <Dropdown.Item
-                                onClick={() => {
-                                  setOpenMenuForCommentId(null);
-                                  startEditComment(comment);
-                                }}
+                                onClick={() => startEditComment(comment)}
                               >
                                 Edit
                               </Dropdown.Item>
                               <Dropdown.Item
                                 className="text-danger"
-                                onClick={() => {
-                                  setOpenMenuForCommentId(null);
-                                  confirmAndDeleteComment(comment.id);
-                                }}
+                                onClick={() =>
+                                  confirmAndDeleteComment(comment.id)
+                                }
                               >
                                 Delete
                               </Dropdown.Item>

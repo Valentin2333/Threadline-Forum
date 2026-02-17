@@ -9,13 +9,7 @@ import Alert from "react-bootstrap/Alert";
 import InputGroup from "react-bootstrap/InputGroup";
 import Spinner from "react-bootstrap/Spinner";
 
-/**
- * Comment composer:
- * - textbox + send button
- * - submit on Enter (Shift+Enter inserts newline)
- * - no React Hook Form `watch()` (avoids React Compiler incompatible-library warning)
- */
-const CreateComment = ({ postId, onCommentCreated, onCancel }) => {
+const CreateComment = ({ postId, onCommentCreated }) => {
   const [serverError, setServerError] = useState("");
   const [draft, setDraft] = useState("");
 
@@ -24,7 +18,7 @@ const CreateComment = ({ postId, onCommentCreated, onCancel }) => {
     handleSubmit,
     reset,
     setValue,
-    formState: { errors, isSubmitting },
+    formState: { isSubmitting },
   } = useForm({
     defaultValues: { content: "" },
   });
@@ -33,6 +27,9 @@ const CreateComment = ({ postId, onCommentCreated, onCancel }) => {
 
   const onSubmit = async ({ content }) => {
     setServerError("");
+
+    const trimmed = (content ?? "").trim();
+    if (!trimmed) return; 
 
     const { data: userData } = await supabase.auth.getUser();
     const user = userData.user;
@@ -46,13 +43,12 @@ const CreateComment = ({ postId, onCommentCreated, onCancel }) => {
       await createComment({
         userId: user.id,
         postId,
-        content,
+        content: trimmed, 
       });
 
       reset();
       setDraft("");
       onCommentCreated?.();
-      onCancel?.();
     } catch (err) {
       const msg = err?.message || "Unknown error";
       if (msg.toLowerCase().includes("row-level security")) {
@@ -64,8 +60,7 @@ const CreateComment = ({ postId, onCommentCreated, onCancel }) => {
   };
 
   const reg = register("content", {
-    required: "Comment is required",
-    minLength: { value: 1, message: "Comment cannot be empty" },
+    setValueAs: (v) => (typeof v === "string" ? v.trim() : v),
     maxLength: { value: 8192, message: "Max 8192 chars" },
   });
 
@@ -87,16 +82,20 @@ const CreateComment = ({ postId, onCommentCreated, onCancel }) => {
             value={draft}
             {...reg}
             onChange={(e) => {
-              // keep both local UI state + RHF state in sync
-              setDraft(e.target.value);
-              setValue("content", e.target.value, {
-                shouldValidate: true,
+              const v = e.target.value;
+              setDraft(v);
+              setValue("content", v, {
+                shouldValidate: false,
                 shouldDirty: true,
               });
             }}
             onKeyDown={(e) => {
-              // Enter submits; Shift+Enter adds newline
               if (e.key === "Enter" && !e.shiftKey) {
+                const val = e.currentTarget.value ?? "";
+                if (!val.trim()) {
+                  e.preventDefault(); 
+                  return;
+                }
                 e.preventDefault();
                 handleSubmit(onSubmit)();
               }
@@ -110,29 +109,15 @@ const CreateComment = ({ postId, onCommentCreated, onCancel }) => {
             aria-label="Send comment"
           >
             {isSubmitting ? (
-              <>
-                <Spinner size="sm" className="me-2" /> Sending…
-              </>
+              <Spinner size="sm" className="me-2" />
             ) : (
-              "Send"
+              <i className="fa-solid fa-comment" />
             )}
           </Button>
-
-          {onCancel && (
-            <Button type="button" variant="outline-secondary" onClick={onCancel}>
-              Cancel
-            </Button>
-          )}
         </InputGroup>
 
-        {errors.content && (
-          <div className="text-danger small mt-1">{errors.content.message}</div>
-        )}
+        {/* ✅ Removed the "Comment is required" error UI entirely */}
       </Form>
-
-      <div className="text-muted small mt-1">
-        Press Enter to send, Shift+Enter for a new line.
-      </div>
     </div>
   );
 };

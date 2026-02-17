@@ -19,7 +19,7 @@ const DesktopNav = ({ user, avatarUrl, onLogout }) => {
         {user && (
           <Nav.Link as={NavLink} to="/profile" style={navItemStylesWithAvatar}>
             <Avatar url={avatarUrl} />
-            Profile
+            Your Profile
           </Nav.Link>
         )}
 

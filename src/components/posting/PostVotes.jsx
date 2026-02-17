@@ -9,6 +9,10 @@ const PostVotes = ({ postId, onVoted }) => {
   const [user, setUser] = useState(null);
   const [myVote, setMyVote] = useState(0); // -1, 0, 1
 
+  // icon animations
+  const [animateUp, setAnimateUp] = useState(false);
+  const [animateDown, setAnimateDown] = useState(false);
+
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setUser(data.user ?? null));
     const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
@@ -30,8 +34,28 @@ const PostVotes = ({ postId, onVoted }) => {
     loadVote();
   }, [user, postId]);
 
+  const triggerAnim = (value) => {
+    if (value === 1) {
+      setAnimateUp(false);
+      // allow retrigger even if user clicks fast
+      window.requestAnimationFrame(() => {
+        setAnimateUp(true);
+        window.setTimeout(() => setAnimateUp(false), 450);
+      });
+    } else if (value === -1) {
+      setAnimateDown(false);
+      window.requestAnimationFrame(() => {
+        setAnimateDown(true);
+        window.setTimeout(() => setAnimateDown(false), 550);
+      });
+    }
+  };
+
   const handleVote = async (value) => {
     if (!user) return;
+
+    // animate immediately on click
+    triggerAnim(value);
 
     try {
       if (myVote === value) {
@@ -51,21 +75,41 @@ const PostVotes = ({ postId, onVoted }) => {
 
   if (!user) return null; // hide for logged-out users
 
+  const upActive = myVote === 1;
+  const downActive = myVote === -1;
+
   return (
-    <ButtonGroup className="mt-2" aria-label="Vote controls">
+    <ButtonGroup className="mt-2 shadow-sm" aria-label="Vote controls">
       <Button
         size="sm"
-        variant={myVote === 1 ? "success" : "outline-success"}
+        variant={upActive ? "success" : "outline-success"}
+        className={`d-inline-flex align-items-center justify-content-center px-3 ${
+          upActive ? "fw-semibold" : ""
+        }`}
         onClick={() => handleVote(1)}
+        aria-label="Upvote"
+        title={upActive ? "Remove upvote" : "Upvote"}
       >
-        ▲ Upvote
+        <i
+          className={`fa-solid fa-thumbs-up me-2 ${animateUp ? "bump" : ""} ${
+            upActive ? "vote-active" : ""
+          }`}
+        />
+        <span className="small">{upActive ? "Upvoted" : "Upvote"}</span>
       </Button>
+
       <Button
         size="sm"
-        variant={myVote === -1 ? "danger" : "outline-danger"}
+        variant={downActive ? "danger" : "outline-danger"}
+        className={`d-inline-flex align-items-center justify-content-center px-3 ${
+          downActive ? "fw-semibold" : ""
+        }`}
         onClick={() => handleVote(-1)}
+        aria-label="Downvote"
+        title={downActive ? "Remove downvote" : "Downvote"}
       >
-        ▼ Downvote
+        <i className={`fa-solid fa-thumbs-down me-2 ${animateDown ? "shake" : ""}`} />
+        <span className="small">{downActive ? "Downvoted" : "Downvote"}</span>
       </Button>
     </ButtonGroup>
   );

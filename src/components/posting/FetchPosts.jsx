@@ -14,6 +14,10 @@ import Card from "react-bootstrap/Card";
 import Dropdown from "react-bootstrap/Dropdown";
 import Form from "react-bootstrap/Form";
 import ListGroup from "react-bootstrap/ListGroup";
+import Row from "react-bootstrap/Row";
+import Col from "react-bootstrap/Col";
+import { Container } from "react-bootstrap";
+import Collapse from "react-bootstrap/Collapse";
 
 const validatePost = ({ title, content }) => {
   const errs = {};
@@ -47,6 +51,8 @@ const mapDbErrorToFields = (msg = "") => {
   return errs;
 };
 
+const normalize = (s) => (s ?? "").toString().toLowerCase().trim();
+
 const FetchPosts = ({ refreshTrigger }) => {
   const navigate = useNavigate();
   const user = useAuthUser();
@@ -54,7 +60,7 @@ const FetchPosts = ({ refreshTrigger }) => {
   const [posts, setPosts] = useState([]);
   const [expandedCommentsByPostId, setExpandedCommentsByPostId] = useState({});
 
-  // "3 dots" menu toggles
+  // "3 dots" menu state
   const [openMenuForPostId, setOpenMenuForPostId] = useState(null);
   const [openMenuForCommentId, setOpenMenuForCommentId] = useState(null);
 
@@ -75,7 +81,19 @@ const FetchPosts = ({ refreshTrigger }) => {
 
   const [serverError, setServerError] = useState("");
 
+  // ✅ Sort / Filter / Search controls
+  const [sortBy, setSortBy] = useState("newest"); // newest | oldest | score | comments
+  const [searchQuery, setSearchQuery] = useState("");
+  const [authorFilter, setAuthorFilter] = useState("all"); // all | mine
+  const [scoreFilter, setScoreFilter] = useState("any"); // any | gte1 | gte5 | gte10
+
+  // ✅ toggles: separate buttons for search + filters/sort
+  const [showSearch, setShowSearch] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
+
   const userId = useMemo(() => user?.id ?? null, [user]);
+  const isOwn = (authorId) =>
+    Boolean(userId && authorId && userId === authorId);
 
   const loadPosts = async () => {
     try {
@@ -91,9 +109,6 @@ const FetchPosts = ({ refreshTrigger }) => {
     // eslint-disable-next-line
     loadPosts();
   }, [refreshTrigger]);
-
-  const isOwn = (authorId) =>
-    Boolean(userId && authorId && userId === authorId);
 
   const startEditPost = (post) => {
     setServerError("");
@@ -159,7 +174,6 @@ const FetchPosts = ({ refreshTrigger }) => {
     try {
       await deletePost({ postId });
 
-      // If you were editing this post, reset edit state
       if (editingPostId === postId) cancelEditPost();
 
       await loadPosts();
@@ -221,11 +235,204 @@ const FetchPosts = ({ refreshTrigger }) => {
     }
   };
 
+  const displayedPosts = useMemo(() => {
+    const q = normalize(searchQuery);
+
+    let list = (posts ?? []).slice();
+
+    if (authorFilter === "mine") {
+      list = list.filter((p) => Boolean(userId && p.author_id === userId));
+    }
+
+    if (scoreFilter !== "any") {
+      const score = (p) => Number(p?.score ?? 0);
+      const threshold =
+        scoreFilter === "gte1"
+          ? 1
+          : scoreFilter === "gte10"
+            ? 10
+            : scoreFilter === "gte100"
+              ? 100
+              : 0;
+      list = list.filter((p) => score(p) >= threshold);
+    }
+
+    if (q) {
+      list = list.filter((p) => {
+        const title = normalize(p.title);
+        const content = normalize(p.content);
+        const author = normalize(p.post_author?.username);
+        return title.includes(q) || content.includes(q) || author.includes(q);
+      });
+    }
+
+    const createdAt = (p) => new Date(p?.created_at ?? 0).getTime();
+    const score = (p) => Number(p?.score ?? 0);
+    const commentsCount = (p) => (p.comments ?? []).length;
+
+    list.sort((a, b) => {
+      if (sortBy === "newest") return createdAt(b) - createdAt(a);
+      if (sortBy === "oldest") return createdAt(a) - createdAt(b);
+      if (sortBy === "score") {
+        const d = score(b) - score(a);
+        return d !== 0 ? d : createdAt(b) - createdAt(a);
+      }
+      if (sortBy === "comments") {
+        const d = commentsCount(b) - commentsCount(a);
+        return d !== 0 ? d : createdAt(b) - createdAt(a);
+      }
+      return createdAt(b) - createdAt(a);
+    });
+
+    return list;
+  }, [posts, searchQuery, sortBy, authorFilter, scoreFilter, userId]);
+
+  const clearControls = () => {
+    setSortBy("newest");
+    setSearchQuery("");
+    setAuthorFilter("all");
+    setScoreFilter("any");
+  };
+
+  const hasActiveSearch = !!searchQuery.trim();
+  const hasActiveFilters =
+    sortBy !== "newest" || authorFilter !== "all" || scoreFilter !== "any";
+
   return (
-    <div className="py-3">
+    <Container className="py-3">
       <div className="d-flex align-items-center justify-content-between mb-3">
-        <h2 className="mb-0">Latest Posts</h2>
+        <h2 className="mb-0">Posts</h2>
+
+        <div className="d-flex gap-2">
+          <Button
+            size="sm"
+            variant={showSearch || hasActiveSearch ? "primary" : "outline-primary"}
+            onClick={() => setShowSearch((v) => !v)}
+          >
+            <i className="fa-solid fa-magnifying-glass me-2" />
+            Search
+          </Button>
+
+          <Button
+            size="sm"
+            variant={
+              showFilters || hasActiveFilters
+                ? "primary"
+                : "outline-primary"
+            }
+            onClick={() => setShowFilters((v) => !v)}
+          >
+            <i className="fa-solid fa-sliders me-2" />
+            Filter & Sort
+          </Button>
+        </div>
       </div>
+
+      {/* ✅ Search panel (separate) */}
+      <Collapse in={showSearch}>
+        <div className="mb-3">
+          <Card className="shadow-sm">
+            <Card.Body>
+              <Row className="g-2 align-items-end">
+                <Col xs={12} md={10}>
+                  <Form.Group>
+                    <Form.Label className="small text-muted">Search</Form.Label>
+                    <Form.Control
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Search title, content, author…"
+                      autoFocus
+                    />
+                  </Form.Group>
+                </Col>
+
+                <Col xs={12} md={2} className="d-flex justify-content-end">
+                  <Button
+                    variant="outline-secondary"
+                    size="sm"
+                    onClick={() => setSearchQuery("")}
+                    disabled={!searchQuery}
+                  >
+                    Clear
+                  </Button>
+                </Col>
+              </Row>
+            </Card.Body>
+          </Card>
+        </div>
+      </Collapse>
+
+      {/* ✅ Filters/sort panel (separate) */}
+      <Collapse in={showFilters}>
+        <div className="mb-3">
+          <Card className="shadow-sm">
+            <Card.Body>
+              <Row className="g-2 align-items-end">
+                <Col xs={12} sm={6} md={4}>
+                  <Form.Group>
+                    <Form.Label className="small text-muted">Sort</Form.Label>
+                    <Form.Select
+                      value={sortBy}
+                      onChange={(e) => setSortBy(e.target.value)}
+                    >
+                      <option value="newest">Newest</option>
+                      <option value="oldest">Oldest</option>
+                      <option value="score">Highest score</option>
+                      <option value="comments">Most comments</option>
+                    </Form.Select>
+                  </Form.Group>
+                </Col>
+
+                <Col xs={12} sm={6} md={4}>
+                  <Form.Group>
+                    <Form.Label className="small text-muted">Author</Form.Label>
+                    <Form.Select
+                      value={authorFilter}
+                      onChange={(e) => setAuthorFilter(e.target.value)}
+                      disabled={!userId}
+                    >
+                      <option value="all">All</option>
+                      <option value="mine">Mine</option>
+                    </Form.Select>
+                  </Form.Group>
+                </Col>
+
+                <Col xs={12} sm={6} md={4}>
+                  <Form.Group>
+                    <Form.Label className="small text-muted">Score</Form.Label>
+                    <Form.Select
+                      value={scoreFilter}
+                      onChange={(e) => setScoreFilter(e.target.value)}
+                    >
+                      <option value="any">Any</option>
+                      <option value="gte1">≥ 1</option>
+                      <option value="gte10">≥ 10</option>
+                      <option value="gte100">≥ 100</option>
+                    </Form.Select>
+                  </Form.Group>
+                </Col>
+
+                <Col xs={12} className="d-flex justify-content-end gap-2 mt-2">
+                  <Button
+                    variant="outline-secondary"
+                    onClick={clearControls}
+                    size="sm"
+                  >
+                    Reset
+                  </Button>
+                  <Button
+                    variant="outline-primary"
+                    onClick={loadPosts}
+                    size="sm"
+                  >
+                    Refresh
+                  </Button>
+                </Col>
+              </Row>
+            </Card.Body>
+          </Card>
+        </div>
+      </Collapse>
 
       {serverError && (
         <Alert variant="danger" className="py-2">
@@ -233,9 +440,11 @@ const FetchPosts = ({ refreshTrigger }) => {
         </Alert>
       )}
 
-      {posts.length === 0 && <Alert variant="secondary">No posts yet</Alert>}
+      {displayedPosts.length === 0 && (
+        <Alert variant="secondary">No posts match your filters.</Alert>
+      )}
 
-      {posts.map((post) => {
+      {displayedPosts.map((post) => {
         const ownPost = isOwn(post.author_id);
 
         const sortedComments = (post.comments ?? [])
@@ -254,55 +463,53 @@ const FetchPosts = ({ refreshTrigger }) => {
               <div className="d-flex align-items-start justify-content-between gap-3">
                 <div className="flex-grow-1">
                   <div className="d-flex align-items-center gap-2">
-                    <Button
-                      variant="link"
-                      className="p-0 text-decoration-none"
-                      onClick={() => navigate(`/posts/${post.id}`)}
-                      title="Open post details"
-                    >
-                      <span className="h5 mb-0 text-decoration-underline">
-                        {post.title}
-                      </span>
-                    </Button>
-                    <Badge bg="secondary">Score: {post.score}</Badge>
-                  </div>
-
-                  <div className="mt-2">
-                    <PostVotes postId={post.id} onVoted={loadPosts} />
+                    <AvatarFromStorage
+                      pathOrUrl={post.post_author?.avatar_url}
+                    />
+                    <div>
+                      <div className="fw-semibold">
+                        {post.post_author?.username || "Unknown user"}
+                      </div>
+                      <div className="text-muted small">
+                        {new Date(post.created_at).toLocaleString()}
+                      </div>
+                    </div>
                   </div>
                 </div>
 
                 {ownPost && (
-                  <Dropdown align="end" show={openMenuForPostId === post.id}>
+                  <Dropdown
+                    align="end"
+                    show={openMenuForPostId === post.id}
+                    onToggle={(nextShow) => {
+                      if (nextShow) setOpenMenuForCommentId(null);
+                      setOpenMenuForPostId(nextShow ? post.id : null);
+                    }}
+                  >
                     <Dropdown.Toggle
                       variant="outline-secondary"
                       size="sm"
                       bsPrefix="btn"
-                      onClick={() => {
-                        setOpenMenuForCommentId(null);
-                        setOpenMenuForPostId((cur) =>
-                          cur === post.id ? null : post.id,
-                        );
-                      }}
                     >
-                      ⋯
+                      <i
+                        className="fa-solid fa-angle-down"
+                        style={{
+                          transition: "transform 0.25s ease",
+                          transform:
+                            openMenuForPostId === post.id
+                              ? "rotate(180deg)"
+                              : "rotate(0deg)",
+                        }}
+                      />
                     </Dropdown.Toggle>
 
                     <Dropdown.Menu>
-                      <Dropdown.Item
-                        onClick={() => {
-                          setOpenMenuForPostId(null);
-                          startEditPost(post);
-                        }}
-                      >
+                      <Dropdown.Item onClick={() => startEditPost(post)}>
                         Edit
                       </Dropdown.Item>
                       <Dropdown.Item
                         className="text-danger"
-                        onClick={() => {
-                          setOpenMenuForPostId(null);
-                          confirmAndDeletePost(post.id);
-                        }}
+                        onClick={() => confirmAndDeletePost(post.id)}
                       >
                         Delete
                       </Dropdown.Item>
@@ -311,7 +518,19 @@ const FetchPosts = ({ refreshTrigger }) => {
                 )}
               </div>
 
-              {/* Post content or edit form */}
+              <div className="mt-2">
+                <Button
+                  variant="link"
+                  className="p-0 text-decoration-none"
+                  onClick={() => navigate(`/posts/${post.id}`)}
+                  title="Open post details"
+                >
+                  <span className="h5 mb-0 text-decoration-underline">
+                    {post.title}
+                  </span>
+                </Button>
+              </div>
+
               {editingPostId === post.id ? (
                 <div className="mt-3">
                   <Form.Group className="mb-2">
@@ -370,15 +589,24 @@ const FetchPosts = ({ refreshTrigger }) => {
                   </div>
                 </div>
               ) : (
-                <p className="mt-3 mb-0">{post.content}</p>
+                <p className="mt-2 mb-0">{post.content}</p>
               )}
 
-              {/* Add comment composer (always visible) */}
+              <div className="mt-3">
+                <PostVotes postId={post.id} onVoted={loadPosts} />
+              </div>
+
+              <div className="mt-2 d-flex align-items-center justify-content-between">
+                <Badge bg="secondary">Score: {Number(post.score ?? 0)}</Badge>
+                <span className="text-muted small">
+                  {post.comments?.length ?? 0} comments
+                </span>
+              </div>
+
               <div className="mt-3">
                 <CreateComment postId={post.id} onCommentCreated={loadPosts} />
               </div>
 
-              {/* Comments */}
               <div className="mt-4">
                 <div className="d-flex align-items-center justify-content-between mb-2">
                   <h4 className="h6 mb-0">Comments</h4>
@@ -472,36 +700,41 @@ const FetchPosts = ({ refreshTrigger }) => {
                             <Dropdown
                               align="end"
                               show={openMenuForCommentId === comment.id}
+                              onToggle={(nextShow) => {
+                                if (nextShow) setOpenMenuForPostId(null);
+                                setOpenMenuForCommentId(
+                                  nextShow ? comment.id : null
+                                );
+                              }}
                             >
                               <Dropdown.Toggle
                                 variant="outline-secondary"
                                 size="sm"
                                 bsPrefix="btn"
-                                onClick={() => {
-                                  setOpenMenuForPostId(null);
-                                  setOpenMenuForCommentId((cur) =>
-                                    cur === comment.id ? null : comment.id,
-                                  );
-                                }}
                               >
-                                ⋯
+                                <i
+                                  className="fa-solid fa-angle-down"
+                                  style={{
+                                    transition: "transform 0.25s ease",
+                                    transform:
+                                      openMenuForCommentId === comment.id
+                                        ? "rotate(180deg)"
+                                        : "rotate(0deg)",
+                                  }}
+                                />
                               </Dropdown.Toggle>
 
                               <Dropdown.Menu>
                                 <Dropdown.Item
-                                  onClick={() => {
-                                    setOpenMenuForCommentId(null);
-                                    startEditComment(comment);
-                                  }}
+                                  onClick={() => startEditComment(comment)}
                                 >
                                   Edit
                                 </Dropdown.Item>
                                 <Dropdown.Item
                                   className="text-danger"
-                                  onClick={() => {
-                                    setOpenMenuForCommentId(null);
-                                    confirmAndDeleteComment(comment.id);
-                                  }}
+                                  onClick={() =>
+                                    confirmAndDeleteComment(comment.id)
+                                  }
                                 >
                                   Delete
                                 </Dropdown.Item>
@@ -518,7 +751,7 @@ const FetchPosts = ({ refreshTrigger }) => {
           </Card>
         );
       })}
-    </div>
+    </Container>
   );
 };
 

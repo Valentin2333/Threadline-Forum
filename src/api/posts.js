@@ -100,3 +100,26 @@ export async function getTopPosts(limit = 10) {
   if (error) throw error;
   return data ?? [];
 }
+
+export async function getMostCommentedPosts(limit = 10) {
+  const { data, error } = await supabase
+    .from("posts")
+    .select("id, title, created_at, score, comment_count")
+    .order("comment_count", { ascending: false })
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function getRecentPostsSummary(limit = 10) {
+  const { data, error } = await supabase
+    .from("posts")
+    .select("id, title, created_at, score, comment_count")
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (error) throw error;
+  return data ?? [];
+}

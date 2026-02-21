@@ -3,16 +3,20 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import AppNavigation from "./components/navigation/AppNavigation";
 import AuthPage from "./components/auth/shared/AuthPage";
 import UserProfile from "./components/userProfile/UserProfile";
-import CreatePostForm from "./components/posting/CreatePostForm";
-import FetchPosts from "./components/posting/FetchPosts";
-import PostDetails from "./components/posting/PostDetails";
-import PublicPostsView from "./components/posting/PublicPostsView";
+import PublicProfile from "./components/userProfile/PublicProfile";
+import CreatePostForm from "./components/posting/posts/CreatePostForm";
+import FetchPosts from "./components/posting/posts/FetchPosts";
+import PostDetails from "./components/posting/posts/PostDetails";
+import PublicPostsView from "./components/posting/posts/PublicPostsView";
+import AdminDashboard from "./components/admin/AdminDashboard";
 import useAuthUser from "./components/navigation/hooks/useAuthUser";
+import useAdminStatus from "./components/admin/hooks/useAdminStatus";
 
 import HomePage from "./components/home/HomePage";
 
 function App() {
   const user = useAuthUser();
+  const { isAdmin } = useAdminStatus(user?.id);
   const [refreshPosts, setRefreshPosts] = useState(0);
 
   const handlePostCreated = () => {
@@ -49,6 +53,18 @@ function App() {
           <Route
             path="/profile"
             element={user ? <UserProfile /> : <Navigate to="/login" replace />}
+          />
+
+          <Route
+            path="/profile/:userId"
+            element={user ? <PublicProfile /> : <Navigate to="/login" replace />}
+          />
+
+          <Route
+            path="/admin"
+            element={
+              user && isAdmin ? <AdminDashboard /> : <Navigate to="/" replace />
+            }
           />
 
           <Route path="/login" element={<AuthPage />} />

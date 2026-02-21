@@ -4,7 +4,7 @@ import Button from "react-bootstrap/Button";
 import { NavLink, useNavigate } from "react-router-dom";
 import { navItemStyles } from "./styles/navItemStyles";
 
-const MobileSidebar = ({ show, onClose, user, onLogout }) => {
+const MobileSidebar = ({ show, onClose, user, isAdmin }) => {
   const navigate = useNavigate();
 
   return (
@@ -56,41 +56,46 @@ const MobileSidebar = ({ show, onClose, user, onLogout }) => {
               Your Profile
             </Nav.Link>
           )}
+
+          {user && isAdmin && (
+            <Nav.Link
+              as={NavLink}
+              to="/admin"
+              style={navItemStyles}
+              onClick={onClose}
+            >
+              <i className="fa-solid fa-shield-halved me-2" style={{ fontSize: 13 }} />
+              Admin
+            </Nav.Link>
+          )}
         </Nav>
 
         <div className="flex-grow-1" />
 
-        <div className="d-flex flex-column gap-2">
-          {!user ? (
-            <>
-              <Button
-                variant="outline-light"
-                size="sm"
-                onClick={() => {
-                  onClose();
-                  navigate("/login");
-                }}
-              >
-                Login
-              </Button>
-              <Button
-                variant="light"
-                size="sm"
-                onClick={() => {
-                  onClose();
-                  navigate("/register");
-                }}
-              >
-                Register
-              </Button>
-            </>
-          ) : (
-            <Button variant="outline-light" size="sm" onClick={onLogout}>
-              <i className="fa-solid fa-right-from-bracket me-1" style={{ fontSize: 12 }} />
-              Logout
+        {!user && (
+          <div className="d-flex flex-column gap-2">
+            <Button
+              variant="outline-light"
+              size="sm"
+              onClick={() => {
+                onClose();
+                navigate("/login");
+              }}
+            >
+              Login
             </Button>
-          )}
-        </div>
+            <Button
+              variant="light"
+              size="sm"
+              onClick={() => {
+                onClose();
+                navigate("/register");
+              }}
+            >
+              Register
+            </Button>
+          </div>
+        )}
       </Offcanvas.Body>
     </Offcanvas>
   );

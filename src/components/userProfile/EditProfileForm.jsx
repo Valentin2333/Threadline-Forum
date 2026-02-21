@@ -15,6 +15,7 @@ const EditProfileForm = ({
   saving,
   getValues,
   reset,
+  isAdmin,
 }) => {
   return (
     <Form onSubmit={handleSubmit(onSave)}>
@@ -96,6 +97,31 @@ const EditProfileForm = ({
           Username cannot be changed.
         </Form.Text>
       </Form.Group>
+
+      {isAdmin && (
+        <Form.Group className="mb-3">
+          <Form.Label>Phone number</Form.Label>
+          <Form.Control
+            type="tel"
+            placeholder="e.g. +359 123 456 789"
+            isInvalid={Boolean(errors.phone)}
+            {...register("phone", {
+              validate: (v) => {
+                const trimmed = (v ?? "").trim();
+                if (!trimmed) return true;
+                if (!/^\+?[\d\s\-().]{7,20}$/.test(trimmed)) {
+                  return "Please enter a valid phone number.";
+                }
+                return true;
+              },
+            })}
+          />
+          <Form.Control.Feedback type="invalid">
+            {errors.phone?.message}
+          </Form.Control.Feedback>
+          <Form.Text muted>Optional.</Form.Text>
+        </Form.Group>
+      )}
 
       <Button type="submit" disabled={saving || !isDirty || !isValid} className="px-4">
         {saving ? (

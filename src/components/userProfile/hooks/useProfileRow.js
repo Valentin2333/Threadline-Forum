@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "../../../api/supabaseClient";
 
 const selectCols =
-  "id, username, first_name, last_name, avatar_url, is_blocked, reputation";
+  "id, username, first_name, last_name, avatar_url, is_blocked, reputation, phone";
 
 const useProfileRow = ({ userId, reset }) => {
   const [profile, setProfile] = useState(null);
@@ -38,6 +38,7 @@ const useProfileRow = ({ userId, reset }) => {
             firstName: data.first_name ?? "",
             lastName: data.last_name ?? "",
             username: data.username ?? "",
+            phone: data.phone ?? "",
           });
         }
       } catch (e) {

@@ -1,0 +1,41 @@
+import { useState } from "react";
+import Container from "react-bootstrap/Container";
+import Nav from "react-bootstrap/Nav";
+import AdminStats from "./AdminStats";
+import AdminUsers from "./AdminUsers";
+import AdminPosts from "./AdminPosts";
+
+const AdminDashboard = () => {
+  const [tab, setTab] = useState("users");
+
+  return (
+    <Container className="py-4">
+      <h2 className="fs-page-title mb-1">
+        <i className="fa-solid fa-shield-halved me-2" style={{ color: "var(--fs-primary)" }} />
+        Admin Dashboard
+      </h2>
+
+      <AdminStats />
+
+      <Nav variant="tabs" activeKey={tab} onSelect={setTab} className="mb-3 mt-4">
+        <Nav.Item>
+          <Nav.Link eventKey="users">
+            <i className="fa-solid fa-users me-2" style={{ fontSize: 13 }} />
+            Users
+          </Nav.Link>
+        </Nav.Item>
+        <Nav.Item>
+          <Nav.Link eventKey="posts">
+            <i className="fa-solid fa-newspaper me-2" style={{ fontSize: 13 }} />
+            Posts
+          </Nav.Link>
+        </Nav.Item>
+      </Nav>
+
+      {tab === "users" && <AdminUsers />}
+      {tab === "posts" && <AdminPosts />}
+    </Container>
+  );
+};
+
+export default AdminDashboard;

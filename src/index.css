@@ -384,6 +384,17 @@ hr { border-color: var(--fs-border-light); opacity: 1; }
   background: rgba(239,68,68,0.03);
 }
 
+.fs-author-name-link {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--fs-text);
+  text-decoration: none;
+  transition: color var(--fs-transition);
+}
+.fs-author-name-link:hover {
+  color: var(--fs-primary);
+}
+
 @keyframes fadeInUp {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }

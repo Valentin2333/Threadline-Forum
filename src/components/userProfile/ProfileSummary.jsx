@@ -1,4 +1,4 @@
-const ProfileSummary = ({ userEmail, profile }) => {
+const ProfileSummary = ({ userEmail, profile, isAdmin }) => {
   return (
     <dl className="fs-profile-info mb-3">
       <dt>Email</dt>
@@ -9,6 +9,13 @@ const ProfileSummary = ({ userEmail, profile }) => {
 
       <dt>Username</dt>
       <dd>{profile.username || "—"}</dd>
+
+      {isAdmin && (
+        <>
+          <dt>Phone</dt>
+          <dd>{profile.phone || "—"}</dd>
+        </>
+      )}
 
       <dt>Reputation</dt>
       <dd>

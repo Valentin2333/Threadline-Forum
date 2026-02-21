@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { supabase } from "../../api/supabaseClient";
-import { createPost } from "../../api/posts";
+import { supabase } from "../../../api/supabaseClient";
+import { createPost } from "../../../api/posts";
 
 import Card from "react-bootstrap/Card";
 import Form from "react-bootstrap/Form";

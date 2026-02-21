@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { supabase } from "../../api/supabaseClient";
-import { deleteVote, getMyVote, upsertVote } from "../../api/votes";
+import { supabase } from "../../../api/supabaseClient";
+import { deleteVote, getMyVote, upsertVote } from "../../../api/votes";
 
 import Button from "react-bootstrap/Button";
 import ButtonGroup from "react-bootstrap/ButtonGroup";

@@ -4,7 +4,7 @@ import { NavLink, useNavigate } from "react-router-dom";
 import Avatar from "./Avatar";
 import { navItemStyles, navItemStylesWithAvatar } from "./styles/navItemStyles";
 
-const DesktopNav = ({ user, avatarUrl, onLogout }) => {
+const DesktopNav = ({ user, avatarUrl, isAdmin }) => {
   const navigate = useNavigate();
 
   return (
@@ -14,6 +14,13 @@ const DesktopNav = ({ user, avatarUrl, onLogout }) => {
           <i className="fa-solid fa-newspaper me-2" style={{ fontSize: 13 }} />
           Posts
         </Nav.Link>
+
+        {user && isAdmin && (
+          <Nav.Link as={NavLink} to="/admin" style={navItemStyles}>
+            <i className="fa-solid fa-shield-halved me-2" style={{ fontSize: 13 }} />
+            Admin
+          </Nav.Link>
+        )}
       </Nav>
 
       <Nav className="ms-auto align-items-lg-center gap-2 d-none d-lg-flex">
@@ -24,7 +31,7 @@ const DesktopNav = ({ user, avatarUrl, onLogout }) => {
           </Nav.Link>
         )}
 
-        {!user ? (
+        {!user && (
           <>
             <Button
               variant="outline-light"
@@ -41,11 +48,6 @@ const DesktopNav = ({ user, avatarUrl, onLogout }) => {
               Register
             </Button>
           </>
-        ) : (
-          <Button variant="outline-light" size="sm" onClick={onLogout}>
-            <i className="fa-solid fa-right-from-bracket me-1" style={{ fontSize: 12 }} />
-            Logout
-          </Button>
         )}
       </Nav>
     </>

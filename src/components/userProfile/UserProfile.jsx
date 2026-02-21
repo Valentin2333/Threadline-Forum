@@ -15,12 +15,15 @@ import useProfileRow from "./hooks/useProfileRow";
 import useAvatarUrl from "./hooks/useAvatarUrl";
 import useAvatarUpload from "./hooks/useAvatarUpload";
 import useDeleteAccount from "./hooks/useDeleteAccount";
+import useAdminStatus from "../admin/hooks/useAdminStatus";
 import { supabase } from "../../api/supabaseClient";
+import { Button } from "react-bootstrap";
 
 const UserProfile = () => {
   const navigate = useNavigate();
 
   const { user, loadingUser, error: authError } = useAuthUser();
+  const { isAdmin } = useAdminStatus(user?.id);
 
   const [success, setSuccess] = useState("");
   const [isEditing, setIsEditing] = useState(false);
@@ -101,6 +104,7 @@ const UserProfile = () => {
       firstName: profile?.first_name ?? "",
       lastName: profile?.last_name ?? "",
       username: profile?.username ?? "",
+      phone: profile?.phone ?? "",
     });
   };
 
@@ -118,16 +122,18 @@ const UserProfile = () => {
     try {
       const newFirstName = (values.firstName ?? "").trim();
       const newLastName = (values.lastName ?? "").trim();
+      const newPhone = (values.phone ?? "").trim() || null;
 
       const { data: updated, error: updateError } = await supabase
         .from("profiles")
         .update({
           first_name: newFirstName,
           last_name: newLastName,
+          phone: newPhone,
         })
         .eq("id", user.id)
         .select(
-          "id, username, first_name, last_name, avatar_url, is_blocked, reputation",
+          "id, username, first_name, last_name, avatar_url, is_blocked, reputation, phone",
         )
         .single();
 
@@ -139,6 +145,7 @@ const UserProfile = () => {
         firstName: updated.first_name ?? "",
         lastName: updated.last_name ?? "",
         username: updated.username ?? "",
+        phone: updated.phone ?? "",
       });
 
       setSuccess("Profile updated successfully.");
@@ -151,6 +158,11 @@ const UserProfile = () => {
     }
   };
 
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate("/");
+  };
+
   return (
     <ProfileShell
       loadingUser={loadingUser}
@@ -158,10 +170,23 @@ const UserProfile = () => {
       authError={authError}
       onGoLogin={() => navigate("/login")}
     >
-      <h2 className="fs-page-title mb-3">
-        <i className="fa-solid fa-user-circle me-2" style={{ color: "var(--fs-primary)" }} />
-        Your Profile
-      </h2>
+      <div className="d-flex align-items-center justify-content-between mb-3">
+        <h2 className="fs-page-title mb-0">
+          <i
+            className="fa-solid fa-user-circle me-2"
+            style={{ color: "var(--fs-primary)" }}
+          />
+          Your Profile
+        </h2>
+
+        <Button variant="outline-danger" size="sm" onClick={handleLogout}>
+          <i
+            className="fa-solid fa-right-from-bracket me-2"
+            style={{ fontSize: 12 }}
+          />
+          Logout
+        </Button>
+      </div>
 
       <ProfileCard loadingProfile={loadingProfile} profile={profile}>
         <AvatarSection
@@ -175,7 +200,11 @@ const UserProfile = () => {
         />
 
         {user?.email && (
-          <ProfileSummary userEmail={user.email} profile={profile} />
+          <ProfileSummary
+            userEmail={user.email}
+            profile={profile}
+            isAdmin={isAdmin}
+          />
         )}
 
         <EditActions
@@ -183,6 +212,7 @@ const UserProfile = () => {
           saving={saving}
           onStartEdit={startEdit}
           onCancelEdit={cancelEdit}
+          onLogout={handleLogout}
         />
 
         <ProfileAlerts success={success} error={error} />
@@ -198,9 +228,9 @@ const UserProfile = () => {
             saving={saving}
             getValues={getValues}
             reset={reset}
+            isAdmin={isAdmin}
           />
         )}
-
         <hr className="my-4" />
 
         <DeleteAccountSection onOpen={openDeleteModal} />

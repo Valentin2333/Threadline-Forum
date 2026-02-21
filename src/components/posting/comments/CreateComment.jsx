@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { supabase } from "../../api/supabaseClient";
-import { createComment } from "../../api/comments";
+import { supabase } from "../../../api/supabaseClient";
+import { createComment } from "../../../api/comments";
 
 import Form from "react-bootstrap/Form";
 import Button from "react-bootstrap/Button";

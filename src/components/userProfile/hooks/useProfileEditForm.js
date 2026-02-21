@@ -6,6 +6,7 @@ const useProfileEditForm = () => {
       firstName: "",
       lastName: "",
       username: "",
+      phone: "",
     },
     mode: "onChange",
     reValidateMode: "onChange",

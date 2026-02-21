@@ -1,6 +1,6 @@
 import { useMemo } from "react";
-import { supabase } from "../../api/supabaseClient";
-import Avatar from "../navigation/Avatar";
+import { supabase } from "../../../api/supabaseClient";
+import Avatar from "../../navigation/Avatar";
 
 const AvatarFromStoragePath = ({ pathOrUrl, size }) => {
   const url = useMemo(() => {

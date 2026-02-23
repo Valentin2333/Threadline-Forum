@@ -85,14 +85,14 @@ const CreateCommunityForm = ({ show, onHide, userId }) => {
                     let s = (typeof v === "string" ? v : "")
                       .trim()
                       .toLowerCase();
-                    s = s.replace(/^t\//, ""); // was f\/
-                    return `t/${s}`; // was f/
+                    s = s.replace(/^t\//, ""); 
+                    return `t/${s}`; 
                   },
                   required: "Name is required",
                   validate: (val) => {
-                    const bare = val.replace(/^t\//, ""); // was f\/
-                    if (bare.length < 2) return "Min 2 characters after t/"; // was f/
-                    if (bare.length > 62) return "Max 62 characters after t/"; // was f/
+                    const bare = val.replace(/^t\//, ""); 
+                    if (bare.length < 2) return "Min 2 characters after t/"; 
+                    if (bare.length > 62) return "Max 62 characters after t/"; 
                     if (!/^[a-z0-9][a-z0-9_-]*$/.test(bare))
                       return "Only lowercase letters, numbers, hyphens, underscores";
                     return true;

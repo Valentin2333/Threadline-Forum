@@ -57,7 +57,7 @@ const Footer = () => {
             <h6 className="fs-footer-heading">Contact Us</h6>
             <Link to="/contact" className="fs-footer-link">
               <i className="fa-solid fa-envelope me-2" style={{ fontSize: 11 }} />
-              threadlineforum.info@gmail.com
+              Email Us
             </Link>
           </Col>
         </Row>

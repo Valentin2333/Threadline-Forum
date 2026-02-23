@@ -1,62 +1,37 @@
-import { useEffect, useMemo, useState } from "react";
-import { getNewestPosts } from "../../../api/posts";
-import useAuthUser from "../../navigation/hooks/useAuthUser";
-import useAdminStatus from "../../admin/hooks/useAdminStatus";
-import usePostEditing from "../hooks/usePostEditing";
-import useCommentEditing from "../hooks/useCommentEditing";
-import useDeleteModal from "../hooks/useDeleteModal";
-import usePostFilters from "../hooks/usePostFilters";
-import PostSearchBar from "../posts/PostSearchBar";
-import PostFilterBar from "../posts/PostFilterBar";
-import PostCard from "./PostCard";
-import DeleteConfirmModal from "../../shared/DeleteConfirmModal";
+import { useState } from "react";
+import usePostEditing from "../posting/hooks/usePostEditing";
+import useCommentEditing from "../posting/hooks/useCommentEditing";
+import useDeleteModal from "../posting/hooks/useDeleteModal";
+import usePostFilters from "../posting/hooks/usePostFilters";
+
+import PostCard from "../posting/posts/PostCard";
+import PostSearchBar from "../posting/posts/PostSearchBar";
+import PostFilterBar from "../posting/posts/PostFilterBar";
+import DeleteConfirmModal from "../shared/DeleteConfirmModal";
 
 import Alert from "react-bootstrap/Alert";
 import Button from "react-bootstrap/Button";
-import { Container } from "react-bootstrap";
 
-const FetchPosts = ({ refreshTrigger }) => {
-  const user = useAuthUser();
-  const { isAdmin } = useAdminStatus(user?.id);
-
-  const [posts, setPosts] = useState([]);
+const CommunityPostList = ({
+  posts,
+  userId,
+  isMember,
+  isOwn,
+  canManage,
+  onReload,
+  setServerError,
+}) => {
   const [expandedCommentsByPostId, setExpandedCommentsByPostId] = useState({});
   const [openMenuForPostId, setOpenMenuForPostId] = useState(null);
   const [openMenuForCommentId, setOpenMenuForCommentId] = useState(null);
-  const [serverError, setServerError] = useState("");
 
-  const userId = useMemo(() => user?.id ?? null, [user]);
-  const isOwn = (authorId) =>
-    Boolean(userId && authorId && userId === authorId);
-  const canManage = (authorId) => isOwn(authorId) || isAdmin;
-
-  const loadPosts = async () => {
-    try {
-      const data = await getNewestPosts();
-      setPosts(data ?? []);
-    } catch (err) {
-      console.error("Failed loading posts:", err.message);
-      setServerError(err?.message || "Failed loading posts.");
-    }
-  };
-
-  useEffect(() => {
-    // eslint-disable-next-line
-    loadPosts();
-  }, [refreshTrigger]);
-
-  const postEditing = usePostEditing({
-    onSuccess: loadPosts,
-    setServerError,
-  });
-
+  const postEditing = usePostEditing({ onSuccess: onReload, setServerError });
   const commentEditing = useCommentEditing({
-    onSuccess: loadPosts,
+    onSuccess: onReload,
     setServerError,
   });
-
   const deleteModalHook = useDeleteModal({
-    onSuccess: loadPosts,
+    onSuccess: onReload,
     setServerError,
     cancelEditPost: postEditing.cancelEditPost,
     cancelEditComment: commentEditing.cancelEditComment,
@@ -70,27 +45,26 @@ const FetchPosts = ({ refreshTrigger }) => {
     setOpenMenuForPostId(null);
     postEditing.startEditPost(post);
   };
-
   const handleStartEditComment = (comment) => {
     setOpenMenuForCommentId(null);
     commentEditing.startEditComment(comment);
   };
-
   const handleOpenDeletePost = (postId) => {
     setOpenMenuForPostId(null);
     deleteModalHook.openDeletePostModal(postId);
   };
-
   const handleOpenDeleteComment = (commentId) => {
     setOpenMenuForCommentId(null);
     deleteModalHook.openDeleteCommentModal(commentId);
   };
 
   return (
-    <Container className="py-3">
+    <>
+      {/* Search, Filter & Sort controls */}
       <div className="d-flex align-items-center justify-content-between mb-3">
-        <h2 className="fs-page-title mb-0">Posts</h2>
-
+        <h3 className="fs-page-title mb-0" style={{ fontSize: "1.1rem" }}>
+          Posts
+        </h3>
         <div className="d-flex gap-2">
           <Button
             size="sm"
@@ -104,7 +78,6 @@ const FetchPosts = ({ refreshTrigger }) => {
             <i className="fa-solid fa-magnifying-glass me-2" />
             Search
           </Button>
-
           <Button
             size="sm"
             variant={
@@ -125,7 +98,6 @@ const FetchPosts = ({ refreshTrigger }) => {
         searchQuery={filters.searchQuery}
         setSearchQuery={filters.setSearchQuery}
       />
-
       <PostFilterBar
         showFilters={filters.showFilters}
         sortBy={filters.sortBy}
@@ -136,19 +108,13 @@ const FetchPosts = ({ refreshTrigger }) => {
         setScoreFilter={filters.setScoreFilter}
         userId={userId}
         onClear={filters.clearControls}
-        onRefresh={loadPosts}
+        onRefresh={onReload}
       />
-
-      {serverError && (
-        <Alert variant="danger" className="py-2">
-          {serverError}
-        </Alert>
-      )}
 
       {filters.displayedPosts.length === 0 && (
         <Alert variant="secondary">
           <i className="fa-solid fa-inbox me-2" />
-          No posts match your filters.
+          No posts in this community yet.
         </Alert>
       )}
 
@@ -158,6 +124,7 @@ const FetchPosts = ({ refreshTrigger }) => {
           post={post}
           isOwn={isOwn}
           canManage={canManage}
+          isMember={isMember}
           editingPostId={postEditing.editingPostId}
           editingPostDraft={postEditing.editingPostDraft}
           setEditingPostDraft={postEditing.setEditingPostDraft}
@@ -167,7 +134,7 @@ const FetchPosts = ({ refreshTrigger }) => {
           onSaveEditPost={postEditing.saveEditPost}
           onCancelEditPost={postEditing.cancelEditPost}
           onDeletePost={handleOpenDeletePost}
-          onVoted={loadPosts}
+          onVoted={onReload}
           editingCommentId={commentEditing.editingCommentId}
           editingCommentDraft={commentEditing.editingCommentDraft}
           setEditingCommentDraft={commentEditing.setEditingCommentDraft}
@@ -208,8 +175,8 @@ const FetchPosts = ({ refreshTrigger }) => {
             : "Are you sure you want to delete this comment forever?"
         }
       />
-    </Container>
+    </>
   );
 };
 
-export default FetchPosts;
+export default CommunityPostList;

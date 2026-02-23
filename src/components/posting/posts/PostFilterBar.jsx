@@ -67,18 +67,10 @@ const PostFilterBar = ({
             </Col>
 
             <Col xs={12} className="d-flex justify-content-end gap-2 mt-2">
-              <Button
-                variant="outline-secondary"
-                onClick={onClear}
-                size="sm"
-              >
+              <Button variant="outline-secondary" onClick={onClear} size="sm">
                 Reset
               </Button>
-              <Button
-                variant="outline-primary"
-                onClick={onRefresh}
-                size="sm"
-              >
+              <Button variant="outline-primary" onClick={onRefresh} size="sm">
                 <i
                   className="fa-solid fa-rotate-right me-1"
                   style={{ fontSize: 11 }}

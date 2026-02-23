@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { getPostById } from "../../../api/posts";
+import { isMember as checkMembership } from "../../../api/communities";
 import useAuthUser from "../../navigation/hooks/useAuthUser";
 import useAdminStatus from "../../admin/hooks/useAdminStatus";
 import usePostEditing from "../hooks/usePostEditing";
@@ -31,40 +32,55 @@ const PostDetails = () => {
   const [openPostMenu, setOpenPostMenu] = useState(false);
   const [openMenuForCommentId, setOpenMenuForCommentId] = useState(null);
   const [serverError, setServerError] = useState("");
+  const [memberStatus, setMemberStatus] = useState(false);
 
   const userId = useMemo(() => user?.id ?? null, [user]);
   const isOwn = (authorId) =>
     Boolean(userId && authorId && userId === authorId);
   const canManage = (authorId) => isOwn(authorId) || isAdmin;
 
-  const load = async ({ silent = false } = {}) => {
-    try {
-      setServerError("");
-      if (!silent) setInitialLoading(true);
+  const load = useCallback(
+    async ({ silent = false } = {}) => {
+      try {
+        setServerError("");
+        if (!silent) setInitialLoading(true);
 
-      const data = await getPostById(postId);
-      setPost(data);
-    } catch (e) {
-      setServerError(e?.message || "Failed to load post.");
-      setPost(null);
-    } finally {
-      if (!silent) setInitialLoading(false);
-    }
-  };
+        const data = await getPostById(postId);
+        setPost(data);
+
+        // check membership
+        if (userId && data?.community_id) {
+          const yes = await checkMembership({
+            communityId: data.community_id,
+            userId,
+          });
+          setMemberStatus(yes);
+        }
+      } catch (e) {
+        setServerError(e?.message || "Failed to load post.");
+        setPost(null);
+      } finally {
+        if (!silent) setInitialLoading(false);
+      }
+    },
+    [postId, userId],
+  );
 
   useEffect(() => {
     load({ silent: false });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [postId]);
+  }, [load]);
 
-  const reload = () => load({ silent: true });
+  const reload = useCallback(() => load({ silent: true }), [load]);
 
   const postEditing = usePostEditing({ onSuccess: reload, setServerError });
-  const commentEditing = useCommentEditing({ onSuccess: reload, setServerError });
+  const commentEditing = useCommentEditing({
+    onSuccess: reload,
+    setServerError,
+  });
 
   const deleteModalHook = useDeleteModal({
     onSuccess: reload,
-    onPostDeleted: () => navigate("/posts"),
+    onPostDeleted: () => navigate("/feed"),
     setServerError,
     cancelEditPost: postEditing.cancelEditPost,
     cancelEditComment: commentEditing.cancelEditComment,
@@ -110,14 +126,13 @@ const PostDetails = () => {
           {serverError || "Post not found."}
         </Alert>
         <Button
-          as={Link}
-          to="/posts"
           variant="outline-secondary"
           size="sm"
           className="d-inline-flex align-items-center gap-2"
+          onClick={() => navigate(-1)}
         >
           <i className="fa-solid fa-arrow-left" aria-hidden="true" />
-          <span>Back to posts</span>
+          <span>Go back</span>
         </Button>
       </Container>
     );
@@ -130,17 +145,27 @@ const PostDetails = () => {
 
   return (
     <Container className="py-3" style={{ maxWidth: 800 }}>
-      <div className="mb-3">
+      <div className="mb-3 d-flex align-items-center gap-3">
         <Button
-          as={Link}
-          to="/posts"
           variant="outline-secondary"
           size="sm"
           className="d-inline-flex align-items-center gap-2"
+          onClick={() => navigate(-1)}
         >
           <i className="fa-solid fa-arrow-left" aria-hidden="true" />
-          <span>Back to posts</span>
+          <span>Back</span>
         </Button>
+
+        {post.community?.name && (
+          <Link
+            to={`/community/${encodeURIComponent(post.community.name)}`}
+            className="text-decoration-none d-inline-flex align-items-center gap-1"
+            style={{ fontSize: "0.85rem", color: "var(--fs-primary)" }}
+          >
+            <i className="fa-solid fa-users" style={{ fontSize: 11 }} />
+            {post.community.name}
+          </Link>
+        )}
       </div>
 
       {serverError && (
@@ -244,7 +269,11 @@ const PostDetails = () => {
           )}
 
           <div className="mt-3">
-            <PostVotes postId={post.id} onVoted={reload} />
+            <PostVotes
+              postId={post.id}
+              onVoted={reload}
+              isMember={memberStatus}
+            />
           </div>
 
           <div className="mt-3 d-flex align-items-center justify-content-between">
@@ -274,7 +303,11 @@ const PostDetails = () => {
               Comments
             </h3>
 
-            <CreateComment postId={post.id} onCommentCreated={reload} />
+            <CreateComment
+              postId={post.id}
+              onCommentCreated={reload}
+              isMember={memberStatus}
+            />
 
             <div className="mt-2">
               <CommentList

@@ -7,7 +7,7 @@ describe("ProfileCard", () => {
     const { container } = render(
       <ProfileCard loadingProfile={true} profile={null}>
         <p>Children</p>
-      </ProfileCard>
+      </ProfileCard>,
     );
     expect(container.querySelector(".spinner-border")).toBeInTheDocument();
     expect(screen.getByText("Loading profile...")).toBeInTheDocument();
@@ -17,10 +17,10 @@ describe("ProfileCard", () => {
     render(
       <ProfileCard loadingProfile={false} profile={null}>
         <p>Children</p>
-      </ProfileCard>
+      </ProfileCard>,
     );
     expect(
-      screen.getByText("No profile row found for this user.")
+      screen.getByText("No profile row found for this user."),
     ).toBeInTheDocument();
     expect(screen.queryByText("Children")).toBeNull();
   });
@@ -29,7 +29,7 @@ describe("ProfileCard", () => {
     render(
       <ProfileCard loadingProfile={false} profile={{ id: "1" }}>
         <p>Profile content</p>
-      </ProfileCard>
+      </ProfileCard>,
     );
     expect(screen.getByText("Profile content")).toBeInTheDocument();
   });

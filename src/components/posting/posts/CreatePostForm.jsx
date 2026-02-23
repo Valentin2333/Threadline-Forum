@@ -104,8 +104,14 @@ const CreatePostForm = ({ onPostCreated }) => {
         <div id="create-post-collapse">
           <Card className="mb-4">
             <Card.Body className="p-4">
-              <Card.Title as="h2" className="h5 mb-3 d-flex align-items-center gap-2">
-                <i className="fa-solid fa-pen-to-square" style={{ color: "var(--fs-primary)", fontSize: 18 }} />
+              <Card.Title
+                as="h2"
+                className="h5 mb-3 d-flex align-items-center gap-2"
+              >
+                <i
+                  className="fa-solid fa-pen-to-square"
+                  style={{ color: "var(--fs-primary)", fontSize: 18 }}
+                />
                 Create Post
               </Card.Title>
 
@@ -172,7 +178,11 @@ const CreatePostForm = ({ onPostCreated }) => {
                     Cancel
                   </Button>
 
-                  <Button type="submit" disabled={isSubmitting} className="px-4">
+                  <Button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="px-4"
+                  >
                     {isSubmitting ? "Creating…" : "Create Post"}
                   </Button>
                 </div>

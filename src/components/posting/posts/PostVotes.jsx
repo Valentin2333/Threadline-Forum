@@ -4,8 +4,10 @@ import { deleteVote, getMyVote, upsertVote } from "../../../api/votes";
 
 import Button from "react-bootstrap/Button";
 import ButtonGroup from "react-bootstrap/ButtonGroup";
+import OverlayTrigger from "react-bootstrap/OverlayTrigger";
+import Tooltip from "react-bootstrap/Tooltip";
 
-const PostVotes = ({ postId, onVoted }) => {
+const PostVotes = ({ postId, onVoted, isMember = false }) => {
   const [user, setUser] = useState(null);
   const [myVote, setMyVote] = useState(0);
 
@@ -50,7 +52,7 @@ const PostVotes = ({ postId, onVoted }) => {
   };
 
   const handleVote = async (value) => {
-    if (!user) return;
+    if (!user || !isMember) return;
 
     triggerAnim(value);
 
@@ -74,8 +76,9 @@ const PostVotes = ({ postId, onVoted }) => {
 
   const upActive = myVote === 1;
   const downActive = myVote === -1;
+  const disabled = !isMember;
 
-  return (
+  const buttons = (
     <ButtonGroup className="fs-vote-group" aria-label="Vote controls">
       <Button
         size="sm"
@@ -85,7 +88,14 @@ const PostVotes = ({ postId, onVoted }) => {
         }`}
         onClick={() => handleVote(1)}
         aria-label="Upvote"
-        title={upActive ? "Remove upvote" : "Upvote"}
+        title={
+          disabled
+            ? "Join the community to vote"
+            : upActive
+              ? "Remove upvote"
+              : "Upvote"
+        }
+        disabled={disabled}
       >
         <i
           className={`fa-solid fa-thumbs-up me-2 ${animateUp ? "bump" : ""} ${
@@ -103,13 +113,35 @@ const PostVotes = ({ postId, onVoted }) => {
         }`}
         onClick={() => handleVote(-1)}
         aria-label="Downvote"
-        title={downActive ? "Remove downvote" : "Downvote"}
+        title={
+          disabled
+            ? "Join the community to vote"
+            : downActive
+              ? "Remove downvote"
+              : "Downvote"
+        }
+        disabled={disabled}
       >
-        <i className={`fa-solid fa-thumbs-down me-2 ${animateDown ? "shake" : ""}`} />
+        <i
+          className={`fa-solid fa-thumbs-down me-2 ${animateDown ? "shake" : ""}`}
+        />
         <span className="small">{downActive ? "Downvoted" : "Downvote"}</span>
       </Button>
     </ButtonGroup>
   );
+
+  if (disabled) {
+    return (
+      <OverlayTrigger
+        placement="top"
+        overlay={<Tooltip>Join this community to vote</Tooltip>}
+      >
+        <div style={{ display: "inline-block" }}>{buttons}</div>
+      </OverlayTrigger>
+    );
+  }
+
+  return buttons;
 };
 
 export default PostVotes;

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import RegisterFields from "../RegisterFields";
 
 describe("RegisterFields", () => {
@@ -20,16 +20,18 @@ describe("RegisterFields", () => {
       username: { required: "Username is required" },
       email: { required: "Email is required" },
       password: { required: "Password is required" },
+      acceptTerms: { required: "You must accept the Terms & Conditions and Privacy Policy" },
     },
   };
 
-  it("renders all five fields", () => {
+  it("renders all five fields and the terms checkbox", () => {
     render(<RegisterFields {...baseProps} />);
     expect(screen.getByPlaceholderText("Enter first name")).toBeInTheDocument();
     expect(screen.getByPlaceholderText("Enter last name")).toBeInTheDocument();
     expect(screen.getByPlaceholderText("Enter username")).toBeInTheDocument();
     expect(screen.getByPlaceholderText("Enter email")).toBeInTheDocument();
     expect(screen.getByPlaceholderText("Enter password")).toBeInTheDocument();
+    expect(screen.getByRole("checkbox")).toBeInTheDocument();
   });
 
   it("renders all labels", () => {
@@ -41,12 +43,30 @@ describe("RegisterFields", () => {
     expect(screen.getByText("Password")).toBeInTheDocument();
   });
 
+  it("renders terms and privacy links that open modals", () => {
+    render(<RegisterFields {...baseProps} />);
+    expect(screen.getByText("Terms & Conditions")).toBeInTheDocument();
+    expect(screen.getByText("Privacy Policy")).toBeInTheDocument();
+  });
+
+  it("opens Terms modal when clicking Terms & Conditions link", () => {
+    render(<RegisterFields {...baseProps} />);
+    fireEvent.click(screen.getByText("Terms & Conditions"));
+    expect(screen.getByText("1. Acceptance of Terms")).toBeInTheDocument();
+  });
+
+  it("opens Privacy modal when clicking Privacy Policy link", () => {
+    render(<RegisterFields {...baseProps} />);
+    fireEvent.click(screen.getByText("Privacy Policy"));
+    expect(screen.getByText("1. Information We Collect")).toBeInTheDocument();
+  });
+
   it("shows error message for firstName", () => {
     render(
       <RegisterFields
         {...baseProps}
         errors={{ firstName: { message: "First name is required" } }}
-      />
+      />,
     );
     expect(screen.getByText("First name is required")).toBeInTheDocument();
   });
@@ -56,17 +76,43 @@ describe("RegisterFields", () => {
       <RegisterFields
         {...baseProps}
         errors={{ email: { message: "Please enter a valid email" } }}
-      />
+      />,
     );
     expect(screen.getByText("Please enter a valid email")).toBeInTheDocument();
   });
 
-  it("calls register for each field", () => {
+  it("shows error message for acceptTerms", () => {
+    render(
+      <RegisterFields
+        {...baseProps}
+        errors={{ acceptTerms: { message: "You must accept the Terms & Conditions and Privacy Policy" } }}
+      />,
+    );
+    expect(screen.getByText("You must accept the Terms & Conditions and Privacy Policy")).toBeInTheDocument();
+  });
+
+  it("calls register for each field including acceptTerms", () => {
     render(<RegisterFields {...baseProps} />);
-    expect(mockRegister).toHaveBeenCalledWith("firstName", baseProps.rules.firstName);
-    expect(mockRegister).toHaveBeenCalledWith("lastName", baseProps.rules.lastName);
-    expect(mockRegister).toHaveBeenCalledWith("username", baseProps.rules.username);
+    expect(mockRegister).toHaveBeenCalledWith(
+      "firstName",
+      baseProps.rules.firstName,
+    );
+    expect(mockRegister).toHaveBeenCalledWith(
+      "lastName",
+      baseProps.rules.lastName,
+    );
+    expect(mockRegister).toHaveBeenCalledWith(
+      "username",
+      baseProps.rules.username,
+    );
     expect(mockRegister).toHaveBeenCalledWith("email", baseProps.rules.email);
-    expect(mockRegister).toHaveBeenCalledWith("password", baseProps.rules.password);
+    expect(mockRegister).toHaveBeenCalledWith(
+      "password",
+      baseProps.rules.password,
+    );
+    expect(mockRegister).toHaveBeenCalledWith(
+      "acceptTerms",
+      baseProps.rules.acceptTerms,
+    );
   });
 });

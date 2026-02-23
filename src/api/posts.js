@@ -4,12 +4,14 @@ export async function getNewestPosts() {
   const { data, error } = await supabase
     .from("posts")
     .select(`
-      id, author_id, title, content, created_at, score, comment_count,
+      id, author_id, title, content, created_at, score, comment_count, community_id,
 
       post_author:profiles!posts_author_id_fkey (
         username,
         avatar_url
       ),
+
+      community:communities!posts_community_id_fkey ( id, name ),
 
       comments (
         id, post_id, author_id, content, created_at, score,
@@ -31,12 +33,14 @@ export async function getPostById(postId) {
   const { data, error } = await supabase
     .from("posts")
     .select(`
-      id, author_id, title, content, created_at, score, comment_count,
+      id, author_id, title, content, created_at, score, comment_count, community_id,
 
       post_author:profiles!posts_author_id_fkey (
         username,
         avatar_url
       ),
+
+      community:communities!posts_community_id_fkey ( id, name ),
 
       comments (
         id, post_id, author_id, content, created_at, score,
@@ -54,16 +58,17 @@ export async function getPostById(postId) {
   return data;
 }
 
-export async function createPost({ userId, title, content }) {
+export async function createPost({ userId, title, content, communityId = null }) {
+  const row = {
+    author_id: userId,
+    title,
+    content,
+  };
+  if (communityId) row.community_id = communityId;
+
   const { data, error } = await supabase
     .from("posts")
-    .insert([
-      {
-        author_id: userId,
-        title,
-        content,
-      },
-    ])
+    .insert([row])
     .select()
     .single();
 

@@ -179,7 +179,7 @@ const UserProfile = () => {
           Your Profile
         </h2>
 
-        <Button variant="outline-danger" size="sm" onClick={handleLogout}>
+        <Button className="fs-logout-btn" size="sm" onClick={handleLogout}>
           <i
             className="fa-solid fa-right-from-bracket me-2"
             style={{ fontSize: 12 }}

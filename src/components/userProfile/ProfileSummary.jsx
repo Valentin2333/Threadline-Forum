@@ -5,7 +5,9 @@ const ProfileSummary = ({ userEmail, profile, isAdmin }) => {
       <dd>{userEmail}</dd>
 
       <dt>Name</dt>
-      <dd>{profile.first_name} {profile.last_name}</dd>
+      <dd>
+        {profile.first_name} {profile.last_name}
+      </dd>
 
       <dt>Username</dt>
       <dd>{profile.username || "—"}</dd>

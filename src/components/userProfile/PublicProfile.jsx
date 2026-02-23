@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useParams, Navigate } from "react-router-dom";
+import { useParams, Navigate, useNavigate } from "react-router-dom";
 import Container from "react-bootstrap/Container";
 import Card from "react-bootstrap/Card";
 import Spinner from "react-bootstrap/Spinner";
@@ -14,6 +14,7 @@ import RecentPostsList from "./RecentPostsList";
 
 const PublicProfile = () => {
   const { userId } = useParams();
+  const navigate = useNavigate();
   const currentUser = useAuthUser();
   const { isAdmin } = useAdminStatus(currentUser?.id);
 
@@ -37,7 +38,9 @@ const PublicProfile = () => {
       try {
         const { data: profileData, error: profileError } = await supabase
           .from("profiles")
-          .select("id, username, first_name, last_name, avatar_url, reputation, is_blocked, is_admin")
+          .select(
+            "id, username, first_name, last_name, avatar_url, reputation, is_blocked, is_admin",
+          )
           .eq("id", userId)
           .single();
 
@@ -78,7 +81,10 @@ const PublicProfile = () => {
     setBlockLoading(true);
     setError("");
     try {
-      const updated = await setUserBlocked({ userId: profile.id, blocked: !profile.is_blocked });
+      const updated = await setUserBlocked({
+        userId: profile.id,
+        blocked: !profile.is_blocked,
+      });
       setProfile((prev) => ({ ...prev, is_blocked: updated.is_blocked }));
     } catch (e) {
       setError(e?.message || "Action failed.");
@@ -104,9 +110,14 @@ const PublicProfile = () => {
         <Alert variant="danger" className="mb-3">
           {error || "User not found."}
         </Alert>
-        <Button as={Link} to="/posts" variant="outline-secondary" size="sm">
-          <i className="fa-solid fa-arrow-left me-2" />
-          Back to posts
+        <Button
+          variant="outline-secondary"
+          size="sm"
+          className="d-inline-flex align-items-center gap-2"
+          onClick={() => navigate(-1)}
+        >
+          <i className="fa-solid fa-arrow-left" aria-hidden="true" />
+          <span>Back</span>
         </Button>
       </Container>
     );
@@ -115,13 +126,22 @@ const PublicProfile = () => {
   return (
     <Container className="py-4" style={{ maxWidth: 720 }}>
       <div className="mb-3">
-        <Button as={Link} to="/posts" variant="outline-secondary" size="sm" className="d-inline-flex align-items-center gap-2">
-          <i className="fa-solid fa-arrow-left" />
-          <span>Back to posts</span>
+        <Button
+          variant="outline-secondary"
+          size="sm"
+          className="d-inline-flex align-items-center gap-2"
+          onClick={() => navigate(-1)}
+        >
+          <i className="fa-solid fa-arrow-left" aria-hidden="true" />
+          <span>Back</span>
         </Button>
       </div>
 
-      {error && <Alert variant="danger" className="py-2">{error}</Alert>}
+      {error && (
+        <Alert variant="danger" className="py-2">
+          {error}
+        </Alert>
+      )}
 
       <Card className="p-4">
         <PublicProfileHeader

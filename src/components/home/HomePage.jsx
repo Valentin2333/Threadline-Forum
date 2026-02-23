@@ -14,7 +14,11 @@ import FeatureList from "./FeatureList";
 const HomePage = () => {
   const user = useAuthUser();
 
-  const [stats, setStats] = useState({ users: null, posts: null });
+  const [stats, setStats] = useState({
+    users: null,
+    posts: null,
+    communities: null,
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [username, setUsername] = useState("");
@@ -27,24 +31,29 @@ const HomePage = () => {
       setError("");
 
       try {
-        const [profilesRes, postsRes] = await Promise.all([
+        const [profilesRes, postsRes, communitiesRes] = await Promise.all([
           supabase.from("profiles").select("*", { count: "exact", head: true }),
           supabase.from("posts").select("*", { count: "exact", head: true }),
+          supabase
+            .from("communities")
+            .select("*", { count: "exact", head: true }),
         ]);
 
         if (profilesRes.error) throw profilesRes.error;
         if (postsRes.error) throw postsRes.error;
+        if (communitiesRes.error) throw communitiesRes.error;
 
         if (!cancelled) {
           setStats({
             users: profilesRes.count ?? 0,
             posts: postsRes.count ?? 0,
+            communities: communitiesRes.count ?? 0,
           });
         }
       } catch (e) {
         if (!cancelled) {
           setError(e?.message || "Could not load platform stats.");
-          setStats({ users: null, posts: null });
+          setStats({ users: null, posts: null, communities: null });
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -94,17 +103,17 @@ const HomePage = () => {
               <div className="mb-4">
                 <h1 className="fs-page-title mb-2">
                   {user
-                    ? `Welcome back${username ? `, ${username}` : ""}!`
-                    : "Welcome to Forum"}
+                    ? `${username ? `${username}'s here 👋` : ""}`
+                    : "Threadline"}
                 </h1>
                 <p className="text-muted mb-0">
-                  A community space - post ideas, discuss in comments, upvote, downvote, and build
-                  your profile.
+                  A community space - join communities, post ideas, discuss in
+                  comments, vote, and build your profile.
                 </p>
               </div>
 
               <Row className="g-3 mb-4">
-                <Col xs={12} md={6}>
+                <Col xs={12} md={4}>
                   <StatCard
                     value={stats.users}
                     label="Members"
@@ -112,11 +121,19 @@ const HomePage = () => {
                     loading={loading}
                   />
                 </Col>
-                <Col xs={12} md={6}>
+                <Col xs={12} md={4}>
                   <StatCard
                     value={stats.posts}
                     label="Posts created"
                     icon="fa-solid fa-pen-to-square"
+                    loading={loading}
+                  />
+                </Col>
+                <Col xs={12} md={4}>
+                  <StatCard
+                    value={stats.communities}
+                    label="Communities"
+                    icon="fa-solid fa-people-group"
                     loading={loading}
                   />
                 </Col>
@@ -131,15 +148,28 @@ const HomePage = () => {
               <div className="mt-auto d-flex flex-wrap gap-2">
                 <Button
                   as={Link}
-                  to="/posts"
+                  to="/communities"
                   variant="primary"
+                  className="px-4"
+                >
+                  <i
+                    className="fa-solid fa-users me-2"
+                    style={{ fontSize: 13 }}
+                  />
+                  Browse communities
+                </Button>
+
+                <Button
+                  as={Link}
+                  to="/posts"
+                  variant="outline-primary"
                   className="px-4"
                 >
                   <i
                     className="fa-solid fa-newspaper me-2"
                     style={{ fontSize: 13 }}
                   />
-                  Browse posts
+                  View feed
                 </Button>
 
                 {user ? (

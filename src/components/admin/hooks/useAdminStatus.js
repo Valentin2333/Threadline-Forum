@@ -35,7 +35,9 @@ const useAdminStatus = (userId) => {
     };
 
     check();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [userId]);
 
   return { isAdmin, loading };

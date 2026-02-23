@@ -29,7 +29,8 @@ serve(async (req) => {
     const authHeader = req.headers.get("Authorization") ?? "";
     const token = authHeader.replace("Bearer ", "");
 
-    const { data: userData, error: userError } = await admin.auth.getUser(token);
+    const { data: userData, error: userError } =
+      await admin.auth.getUser(token);
     if (userError || !userData?.user) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
@@ -88,7 +89,10 @@ serve(async (req) => {
     }
 
     // 3) Delete profile row (optional if you have cascade triggers; safe to do)
-    const { error: profDelErr } = await admin.from("profiles").delete().eq("id", userId);
+    const { error: profDelErr } = await admin
+      .from("profiles")
+      .delete()
+      .eq("id", userId);
     if (profDelErr) {
       // not fatal; still attempt auth delete
       console.error("Profile delete error:", profDelErr);

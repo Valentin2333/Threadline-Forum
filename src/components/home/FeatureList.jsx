@@ -4,8 +4,14 @@ import ListGroup from "react-bootstrap/ListGroup";
 
 const FEATURES = [
   {
+    title: "Public communities",
+    desc: "Create and join communities prefixed with f/. Manage members and content as a creator.",
+    badge: "Communities",
+    icon: "fa-solid fa-users",
+  },
+  {
     title: "Create and browse posts",
-    desc: "Share ideas with a title + content and see the newest posts first.",
+    desc: "Share ideas within communities with a title + content.",
     badge: "Posts",
     icon: "fa-solid fa-pen",
   },
@@ -22,16 +28,16 @@ const FEATURES = [
     icon: "fa-solid fa-comments",
   },
   {
+    title: "Global search",
+    desc: "Search across communities and posts from a single search bar.",
+    badge: "Search",
+    icon: "fa-solid fa-magnifying-glass",
+  },
+  {
     title: "Profiles + profile pictures",
     desc: "Customize your profile and upload an avatar to storage.",
     badge: "Profile",
     icon: "fa-solid fa-image",
-  },
-  {
-    title: "Account management",
-    desc: "Update your profile data and delete your account when needed.",
-    badge: "Settings",
-    icon: "fa-solid fa-gear",
   },
   {
     title: "Authentication",
@@ -72,16 +78,10 @@ const FeatureList = () => (
                 />
               </div>
               <div>
-                <div
-                  className="fw-semibold"
-                  style={{ fontSize: "0.875rem" }}
-                >
+                <div className="fw-semibold" style={{ fontSize: "0.875rem" }}>
                   {f.title}
                 </div>
-                <div
-                  className="text-muted"
-                  style={{ fontSize: "0.8125rem" }}
-                >
+                <div className="text-muted" style={{ fontSize: "0.8125rem" }}>
                   {f.desc}
                 </div>
               </div>

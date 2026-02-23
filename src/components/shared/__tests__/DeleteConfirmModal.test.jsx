@@ -54,7 +54,7 @@ describe("DeleteConfirmModal", () => {
 
   it("renders nothing when show is false", () => {
     const { container } = render(
-      <DeleteConfirmModal {...baseProps} show={false} />
+      <DeleteConfirmModal {...baseProps} show={false} />,
     );
     expect(container.querySelector(".modal")).toBeNull();
   });

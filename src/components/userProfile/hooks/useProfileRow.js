@@ -70,7 +70,9 @@ const useProfileRow = ({ userId, reset }) => {
         },
         (payload) => {
           const nextAvatarPath = payload?.new?.avatar_url ?? "";
-          setProfile((prev) => (prev ? { ...prev, avatar_url: nextAvatarPath } : prev));
+          setProfile((prev) =>
+            prev ? { ...prev, avatar_url: nextAvatarPath } : prev,
+          );
         },
       )
       .subscribe();

@@ -13,6 +13,7 @@ const useRegisterForm = () => {
       username: "",
       email: "",
       password: "",
+      acceptTerms: false,
     },
     mode: "onBlur",
   });
@@ -67,6 +68,9 @@ const useRegisterForm = () => {
         value: 8,
         message: "Password must be at least 8 characters",
       },
+    },
+    acceptTerms: {
+      required: "You must accept the Terms & Conditions and Privacy Policy",
     },
   };
 

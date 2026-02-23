@@ -82,7 +82,9 @@ const Login = ({ onSwitchToRegister }) => {
           placeholder="you@example.com"
           {...register("email", { required: "Email is required" })}
         />
-        {errors.email && <p className="text-danger small mt-1 mb-0">{errors.email.message}</p>}
+        {errors.email && (
+          <p className="text-danger small mt-1 mb-0">{errors.email.message}</p>
+        )}
       </Form.Group>
 
       <Form.Group className="mb-4">
@@ -93,7 +95,9 @@ const Login = ({ onSwitchToRegister }) => {
           {...register("password", { required: "Password is required" })}
         />
         {errors.password && (
-          <p className="text-danger small mt-1 mb-0">{errors.password.message}</p>
+          <p className="text-danger small mt-1 mb-0">
+            {errors.password.message}
+          </p>
         )}
       </Form.Group>
 

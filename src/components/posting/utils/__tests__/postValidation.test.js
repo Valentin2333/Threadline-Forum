@@ -10,7 +10,7 @@ describe("validatePost", () => {
 
   it("returns no errors for valid title & content", () => {
     expect(validatePost({ title: validTitle, content: validContent })).toEqual(
-      {}
+      {},
     );
   });
 
@@ -70,14 +70,14 @@ describe("validatePost", () => {
 describe("mapDbErrorToFields", () => {
   it("maps post_title_length constraint error", () => {
     const errs = mapDbErrorToFields(
-      'violates check constraint "post_title_length"'
+      'violates check constraint "post_title_length"',
     );
     expect(errs.title).toBe("Title must be 16-64 characters.");
   });
 
   it("maps post_content_length constraint error", () => {
     const errs = mapDbErrorToFields(
-      'violates check constraint "post_content_length"'
+      'violates check constraint "post_content_length"',
     );
     expect(errs.content).toBe("Content must be 32-8192 characters.");
   });

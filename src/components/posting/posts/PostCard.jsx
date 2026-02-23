@@ -15,6 +15,7 @@ const PostCard = ({
   post,
   isOwn,
   canManage,
+  isMember = false,
   // post editing
   editingPostId,
   editingPostDraft,
@@ -69,17 +70,33 @@ const PostCard = ({
                 to={`/profile/${post.author_id}`}
                 className="text-decoration-none"
               >
-                <AvatarFromStorage
-                  pathOrUrl={post.post_author?.avatar_url}
-                />
+                <AvatarFromStorage pathOrUrl={post.post_author?.avatar_url} />
               </Link>
               <div>
-                <Link
-                  to={`/profile/${post.author_id}`}
-                  className="fs-author-name-link"
-                >
-                  {post.post_author?.username || "Unknown user"}
-                </Link>
+                <div className="d-flex align-items-center gap-2">
+                  <Link
+                    to={`/profile/${post.author_id}`}
+                    className="fs-author-name-link"
+                  >
+                    {post.post_author?.username || "Unknown user"}
+                  </Link>
+                  {post.community?.name && (
+                    <Link
+                      to={`/community/${encodeURIComponent(post.community.name)}`}
+                      className="text-decoration-none"
+                      style={{
+                        fontSize: "0.75rem",
+                        color: "var(--fs-primary)",
+                      }}
+                    >
+                      <i
+                        className="fa-solid fa-users me-1"
+                        style={{ fontSize: 9 }}
+                      />
+                      {post.community.name}
+                    </Link>
+                  )}
+                </div>
                 <div className="fs-timestamp">
                   {new Date(post.created_at).toLocaleString()}
                 </div>
@@ -163,15 +180,12 @@ const PostCard = ({
         )}
 
         <div className="mt-3">
-          <PostVotes postId={post.id} onVoted={onVoted} />
+          <PostVotes postId={post.id} onVoted={onVoted} isMember={isMember} />
         </div>
 
         <div className="mt-3 d-flex align-items-center justify-content-between">
           <Badge className="fs-score-badge">
-            <i
-              className="fa-solid fa-arrow-up me-1"
-              style={{ fontSize: 10 }}
-            />
+            <i className="fa-solid fa-arrow-up me-1" style={{ fontSize: 10 }} />
             {Number(post.score ?? 0)} points
           </Badge>
           <span className="text-muted" style={{ fontSize: "0.8125rem" }}>
@@ -181,7 +195,11 @@ const PostCard = ({
         </div>
 
         <div className="mt-3">
-          <CreateComment postId={post.id} onCommentCreated={onVoted} />
+          <CreateComment
+            postId={post.id}
+            onCommentCreated={onVoted}
+            isMember={isMember}
+          />
         </div>
 
         <div className="mt-4">
@@ -203,9 +221,7 @@ const PostCard = ({
                 variant="outline-primary"
                 onClick={onToggleExpand}
               >
-                {isExpanded
-                  ? "Hide"
-                  : `Show all (${sortedComments.length})`}
+                {isExpanded ? "Hide" : `Show all (${sortedComments.length})`}
               </Button>
             )}
           </div>

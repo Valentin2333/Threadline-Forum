@@ -129,20 +129,40 @@ ALTER FUNCTION "public"."apply_vote_to_score"() OWNER TO "postgres";
 CREATE OR REPLACE FUNCTION "public"."comments_count_sync"() RETURNS "trigger"
     LANGUAGE "plpgsql"
     AS $$
-begin
-  if (tg_op = 'INSERT') then
-    update public.posts set comment_count = comment_count + 1 where id = new.post_id;
-    return new;
-  elsif (tg_op = 'DELETE') then
-    update public.posts set comment_count = comment_count - 1 where id = old.post_id;
-    return old;
-  end if;
-  return null;
-end;
+BEGIN
+  IF tg_op = 'INSERT' THEN
+    UPDATE public.posts SET comment_count = comment_count + 1 WHERE id = new.post_id;
+    RETURN new;
+  ELSIF tg_op = 'DELETE' THEN
+    UPDATE public.posts SET comment_count = GREATEST(comment_count - 1, 0) WHERE id = old.post_id;
+    RETURN old;
+  END IF;
+  RETURN null;
+END;
 $$;
 
 
 ALTER FUNCTION "public"."comments_count_sync"() OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."community_member_count_sync"() RETURNS "trigger"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public'
+    AS $$
+BEGIN
+  IF tg_op = 'INSERT' THEN
+    UPDATE public.communities SET member_count = member_count + 1 WHERE id = new.community_id;
+    RETURN new;
+  ELSIF tg_op = 'DELETE' THEN
+    UPDATE public.communities SET member_count = GREATEST(member_count - 1, 0) WHERE id = old.community_id;
+    RETURN old;
+  END IF;
+  RETURN null;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."community_member_count_sync"() OWNER TO "postgres";
 
 
 CREATE OR REPLACE FUNCTION "public"."handle_new_user"() RETURNS "trigger"
@@ -371,6 +391,34 @@ CREATE TABLE IF NOT EXISTS "public"."comments" (
 ALTER TABLE "public"."comments" OWNER TO "postgres";
 
 
+CREATE TABLE IF NOT EXISTS "public"."communities" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "name" "text" NOT NULL,
+    "description" "text" DEFAULT ''::"text" NOT NULL,
+    "creator_id" "uuid" NOT NULL,
+    "member_count" integer DEFAULT 0 NOT NULL,
+    "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    "updated_at" timestamp with time zone DEFAULT "now"() NOT NULL,
+    CONSTRAINT "community_description_length" CHECK (("char_length"("description") <= 500)),
+    CONSTRAINT "community_name_length" CHECK ((("char_length"("name") >= 4) AND ("char_length"("name") <= 64))),
+    CONSTRAINT "community_name_prefix" CHECK (("name" ~~ 'f/%'::"text"))
+);
+
+
+ALTER TABLE "public"."communities" OWNER TO "postgres";
+
+
+CREATE TABLE IF NOT EXISTS "public"."community_members" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "community_id" "uuid" NOT NULL,
+    "user_id" "uuid" NOT NULL,
+    "joined_at" timestamp with time zone DEFAULT "now"() NOT NULL
+);
+
+
+ALTER TABLE "public"."community_members" OWNER TO "postgres";
+
+
 CREATE TABLE IF NOT EXISTS "public"."posts" (
     "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
     "author_id" "uuid" NOT NULL,
@@ -380,6 +428,7 @@ CREATE TABLE IF NOT EXISTS "public"."posts" (
     "updated_at" timestamp with time zone DEFAULT "now"() NOT NULL,
     "score" integer DEFAULT 0 NOT NULL,
     "comment_count" integer DEFAULT 0 NOT NULL,
+    "community_id" "uuid",
     CONSTRAINT "post_content_length" CHECK ((("char_length"("content") >= 32) AND ("char_length"("content") <= 8192))),
     CONSTRAINT "post_title_length" CHECK ((("char_length"("title") >= 16) AND ("char_length"("title") <= 64)))
 );
@@ -445,6 +494,16 @@ ALTER TABLE ONLY "public"."comments"
 
 
 
+ALTER TABLE ONLY "public"."communities"
+    ADD CONSTRAINT "communities_pkey" PRIMARY KEY ("id");
+
+
+
+ALTER TABLE ONLY "public"."community_members"
+    ADD CONSTRAINT "community_members_pkey" PRIMARY KEY ("id");
+
+
+
 ALTER TABLE ONLY "public"."posts"
     ADD CONSTRAINT "posts_pkey" PRIMARY KEY ("id");
 
@@ -457,6 +516,11 @@ ALTER TABLE ONLY "public"."profiles"
 
 ALTER TABLE ONLY "public"."profiles"
     ADD CONSTRAINT "profiles_username_key" UNIQUE ("username");
+
+
+
+ALTER TABLE ONLY "public"."community_members"
+    ADD CONSTRAINT "unique_community_member" UNIQUE ("community_id", "user_id");
 
 
 
@@ -475,6 +539,10 @@ ALTER TABLE ONLY "public"."votes"
 
 
 
+CREATE UNIQUE INDEX "communities_name_unique" ON "public"."communities" USING "btree" ("lower"("name"));
+
+
+
 CREATE INDEX "idx_comments_created_at" ON "public"."comments" USING "btree" ("created_at" DESC);
 
 
@@ -483,7 +551,19 @@ CREATE INDEX "idx_comments_post_id" ON "public"."comments" USING "btree" ("post_
 
 
 
+CREATE INDEX "idx_community_members_community" ON "public"."community_members" USING "btree" ("community_id");
+
+
+
+CREATE INDEX "idx_community_members_user" ON "public"."community_members" USING "btree" ("user_id");
+
+
+
 CREATE INDEX "idx_posts_comment_count" ON "public"."posts" USING "btree" ("comment_count" DESC);
+
+
+
+CREATE INDEX "idx_posts_community_id" ON "public"."posts" USING "btree" ("community_id");
 
 
 
@@ -531,6 +611,18 @@ CREATE OR REPLACE TRIGGER "trg_comments_updated_at" BEFORE UPDATE ON "public"."c
 
 
 
+CREATE OR REPLACE TRIGGER "trg_communities_updated_at" BEFORE UPDATE ON "public"."communities" FOR EACH ROW EXECUTE FUNCTION "public"."set_updated_at"();
+
+
+
+CREATE OR REPLACE TRIGGER "trg_community_member_delete" AFTER DELETE ON "public"."community_members" FOR EACH ROW EXECUTE FUNCTION "public"."community_member_count_sync"();
+
+
+
+CREATE OR REPLACE TRIGGER "trg_community_member_insert" AFTER INSERT ON "public"."community_members" FOR EACH ROW EXECUTE FUNCTION "public"."community_member_count_sync"();
+
+
+
 CREATE OR REPLACE TRIGGER "trg_posts_updated_at" BEFORE UPDATE ON "public"."posts" FOR EACH ROW EXECUTE FUNCTION "public"."set_updated_at"();
 
 
@@ -561,8 +653,28 @@ ALTER TABLE ONLY "public"."comments"
 
 
 
+ALTER TABLE ONLY "public"."communities"
+    ADD CONSTRAINT "communities_creator_id_fkey" FOREIGN KEY ("creator_id") REFERENCES "public"."profiles"("id") ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."community_members"
+    ADD CONSTRAINT "community_members_community_id_fkey" FOREIGN KEY ("community_id") REFERENCES "public"."communities"("id") ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."community_members"
+    ADD CONSTRAINT "community_members_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "public"."profiles"("id") ON DELETE CASCADE;
+
+
+
 ALTER TABLE ONLY "public"."posts"
     ADD CONSTRAINT "posts_author_id_fkey" FOREIGN KEY ("author_id") REFERENCES "public"."profiles"("id") ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."posts"
+    ADD CONSTRAINT "posts_community_id_fkey" FOREIGN KEY ("community_id") REFERENCES "public"."communities"("id") ON DELETE CASCADE;
 
 
 
@@ -630,6 +742,13 @@ CREATE POLICY "Users can update their own profile" ON "public"."profiles" FOR UP
 ALTER TABLE "public"."comments" ENABLE ROW LEVEL SECURITY;
 
 
+CREATE POLICY "comments_delete_community_creator" ON "public"."comments" FOR DELETE USING ((EXISTS ( SELECT 1
+   FROM ("public"."posts" "p"
+     JOIN "public"."communities" "c" ON (("c"."id" = "p"."community_id")))
+  WHERE (("p"."id" = "comments"."post_id") AND ("c"."creator_id" = "auth"."uid"())))));
+
+
+
 CREATE POLICY "comments_delete_own_or_admin" ON "public"."comments" FOR DELETE USING ((("auth"."uid"() = "author_id") OR "public"."is_admin"("auth"."uid"())));
 
 
@@ -660,7 +779,81 @@ CREATE POLICY "comments_update_own_or_admin" ON "public"."comments" FOR UPDATE U
 
 
 
+ALTER TABLE "public"."communities" ENABLE ROW LEVEL SECURITY;
+
+
+CREATE POLICY "communities_delete_admin" ON "public"."communities" FOR DELETE USING ((EXISTS ( SELECT 1
+   FROM "public"."profiles"
+  WHERE (("profiles"."id" = "auth"."uid"()) AND ("profiles"."is_admin" = true)))));
+
+
+
+CREATE POLICY "communities_delete_creator" ON "public"."communities" FOR DELETE USING (("auth"."uid"() = "creator_id"));
+
+
+
+CREATE POLICY "communities_delete_creator_or_admin" ON "public"."communities" FOR DELETE USING ((("auth"."uid"() = "creator_id") OR "public"."is_admin"("auth"."uid"())));
+
+
+
+CREATE POLICY "communities_insert_auth" ON "public"."communities" FOR INSERT WITH CHECK ((("auth"."uid"() = "creator_id") AND (EXISTS ( SELECT 1
+   FROM "public"."profiles" "p"
+  WHERE (("p"."id" = "auth"."uid"()) AND ("p"."is_blocked" = false))))));
+
+
+
+CREATE POLICY "communities_select_public" ON "public"."communities" FOR SELECT USING (true);
+
+
+
+CREATE POLICY "communities_update_creator_or_admin" ON "public"."communities" FOR UPDATE USING ((("auth"."uid"() = "creator_id") OR "public"."is_admin"("auth"."uid"())));
+
+
+
+ALTER TABLE "public"."community_members" ENABLE ROW LEVEL SECURITY;
+
+
+CREATE POLICY "community_members_delete_admin" ON "public"."community_members" FOR DELETE USING ((EXISTS ( SELECT 1
+   FROM "public"."profiles"
+  WHERE (("profiles"."id" = "auth"."uid"()) AND ("profiles"."is_admin" = true)))));
+
+
+
+CREATE POLICY "community_members_delete_by_creator" ON "public"."community_members" FOR DELETE USING (((EXISTS ( SELECT 1
+   FROM "public"."communities" "c"
+  WHERE (("c"."id" = "community_members"."community_id") AND ("c"."creator_id" = "auth"."uid"())))) AND (NOT (EXISTS ( SELECT 1
+   FROM "public"."profiles" "p"
+  WHERE (("p"."id" = "community_members"."user_id") AND ("p"."is_admin" = true)))))));
+
+
+
+CREATE POLICY "community_members_delete_creator" ON "public"."community_members" FOR DELETE USING ((EXISTS ( SELECT 1
+   FROM "public"."communities" "c"
+  WHERE (("c"."id" = "community_members"."community_id") AND ("c"."creator_id" = "auth"."uid"())))));
+
+
+
+CREATE POLICY "community_members_delete_self" ON "public"."community_members" FOR DELETE USING (("auth"."uid"() = "user_id"));
+
+
+
+CREATE POLICY "community_members_insert_self" ON "public"."community_members" FOR INSERT WITH CHECK ((("auth"."uid"() = "user_id") AND (EXISTS ( SELECT 1
+   FROM "public"."profiles" "p"
+  WHERE (("p"."id" = "auth"."uid"()) AND ("p"."is_blocked" = false))))));
+
+
+
+CREATE POLICY "community_members_select_public" ON "public"."community_members" FOR SELECT USING (true);
+
+
+
 ALTER TABLE "public"."posts" ENABLE ROW LEVEL SECURITY;
+
+
+CREATE POLICY "posts_delete_community_creator" ON "public"."posts" FOR DELETE USING ((EXISTS ( SELECT 1
+   FROM "public"."communities" "c"
+  WHERE (("c"."id" = "posts"."community_id") AND ("c"."creator_id" = "auth"."uid"())))));
+
 
 
 CREATE POLICY "posts_delete_own_or_admin" ON "public"."posts" FOR DELETE USING ((("auth"."uid"() = "author_id") OR "public"."is_admin"("auth"."uid"())));
@@ -736,6 +929,19 @@ CREATE POLICY "user_roles_delete_supabase_admin" ON "public"."user_roles" FOR DE
 
 
 ALTER TABLE "public"."votes" ENABLE ROW LEVEL SECURITY;
+
+
+CREATE POLICY "votes_delete_admin" ON "public"."votes" FOR DELETE USING ((EXISTS ( SELECT 1
+   FROM "public"."profiles"
+  WHERE (("profiles"."id" = "auth"."uid"()) AND ("profiles"."is_admin" = true)))));
+
+
+
+CREATE POLICY "votes_delete_community_creator" ON "public"."votes" FOR DELETE USING ((("target_type" = 'post'::"public"."vote_target") AND (EXISTS ( SELECT 1
+   FROM ("public"."posts" "p"
+     JOIN "public"."communities" "c" ON (("c"."id" = "p"."community_id")))
+  WHERE (("p"."id" = "votes"."target_id") AND ("c"."creator_id" = "auth"."uid"()))))));
+
 
 
 CREATE POLICY "votes_delete_own" ON "public"."votes" FOR DELETE USING (("auth"."uid"() = "voter_id"));
@@ -950,6 +1156,12 @@ GRANT ALL ON FUNCTION "public"."comments_count_sync"() TO "service_role";
 
 
 
+GRANT ALL ON FUNCTION "public"."community_member_count_sync"() TO "anon";
+GRANT ALL ON FUNCTION "public"."community_member_count_sync"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."community_member_count_sync"() TO "service_role";
+
+
+
 GRANT ALL ON FUNCTION "public"."handle_new_user"() TO "anon";
 GRANT ALL ON FUNCTION "public"."handle_new_user"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."handle_new_user"() TO "service_role";
@@ -1016,6 +1228,18 @@ GRANT ALL ON FUNCTION "public"."votes_sync"() TO "service_role";
 GRANT ALL ON TABLE "public"."comments" TO "anon";
 GRANT ALL ON TABLE "public"."comments" TO "authenticated";
 GRANT ALL ON TABLE "public"."comments" TO "service_role";
+
+
+
+GRANT ALL ON TABLE "public"."communities" TO "anon";
+GRANT ALL ON TABLE "public"."communities" TO "authenticated";
+GRANT ALL ON TABLE "public"."communities" TO "service_role";
+
+
+
+GRANT ALL ON TABLE "public"."community_members" TO "anon";
+GRANT ALL ON TABLE "public"."community_members" TO "authenticated";
+GRANT ALL ON TABLE "public"."community_members" TO "service_role";
 
 
 

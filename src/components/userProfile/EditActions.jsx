@@ -9,7 +9,11 @@ const EditActions = ({ isEditing, saving, onStartEdit, onCancelEdit }) => {
           Edit profile
         </Button>
       ) : (
-        <Button variant="outline-secondary" onClick={onCancelEdit} disabled={saving}>
+        <Button
+          variant="outline-secondary"
+          onClick={onCancelEdit}
+          disabled={saving}
+        >
           Cancel
         </Button>
       )}

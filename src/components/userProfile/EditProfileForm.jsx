@@ -42,7 +42,10 @@ const EditProfileForm = ({
             const next = e.target.value.trim();
             if (next !== e.target.value) {
               const current = getValues();
-              reset({ ...current, firstName: next }, { keepDirty: true, keepErrors: true });
+              reset(
+                { ...current, firstName: next },
+                { keepDirty: true, keepErrors: true },
+              );
             }
           }}
         />
@@ -77,7 +80,10 @@ const EditProfileForm = ({
             const next = e.target.value.trim();
             if (next !== e.target.value) {
               const current = getValues();
-              reset({ ...current, lastName: next }, { keepDirty: true, keepErrors: true });
+              reset(
+                { ...current, lastName: next },
+                { keepDirty: true, keepErrors: true },
+              );
             }
           }}
         />
@@ -91,7 +97,12 @@ const EditProfileForm = ({
 
       <Form.Group className="mb-3">
         <Form.Label>Username</Form.Label>
-        <Form.Control type="text" placeholder="Username" disabled {...register("username")} />
+        <Form.Control
+          type="text"
+          placeholder="Username"
+          disabled
+          {...register("username")}
+        />
         <Form.Text muted>
           <i className="fa-solid fa-lock me-1" style={{ fontSize: 10 }} />
           Username cannot be changed.
@@ -123,7 +134,11 @@ const EditProfileForm = ({
         </Form.Group>
       )}
 
-      <Button type="submit" disabled={saving || !isDirty || !isValid} className="px-4">
+      <Button
+        type="submit"
+        disabled={saving || !isDirty || !isValid}
+        className="px-4"
+      >
         {saving ? (
           <>
             <Spinner size="sm" className="me-2" />

@@ -25,7 +25,7 @@ describe("CommentList", () => {
     render(
       <MemoryRouter>
         <CommentList comments={[]} {...sharedProps} />
-      </MemoryRouter>
+      </MemoryRouter>,
     );
     expect(screen.getByText("No comments yet")).toBeInTheDocument();
   });
@@ -51,7 +51,7 @@ describe("CommentList", () => {
     render(
       <MemoryRouter>
         <CommentList comments={comments} {...sharedProps} />
-      </MemoryRouter>
+      </MemoryRouter>,
     );
 
     expect(screen.getByText("Nice post!")).toBeInTheDocument();

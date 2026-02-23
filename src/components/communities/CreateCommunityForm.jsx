@@ -77,7 +77,7 @@ const CreateCommunityForm = ({ show, onHide, userId }) => {
           <Form.Group className="mb-3">
             <Form.Label>Community Name</Form.Label>
             <InputGroup>
-              <InputGroup.Text>f/</InputGroup.Text>
+              <InputGroup.Text>t/</InputGroup.Text>
               <Form.Control
                 placeholder="my-community"
                 {...register("name", {
@@ -85,14 +85,14 @@ const CreateCommunityForm = ({ show, onHide, userId }) => {
                     let s = (typeof v === "string" ? v : "")
                       .trim()
                       .toLowerCase();
-                    s = s.replace(/^f\//, "");
-                    return `f/${s}`;
+                    s = s.replace(/^t\//, ""); // was f\/
+                    return `t/${s}`; // was f/
                   },
                   required: "Name is required",
                   validate: (val) => {
-                    const bare = val.replace(/^f\//, "");
-                    if (bare.length < 2) return "Min 2 characters after f/";
-                    if (bare.length > 62) return "Max 62 characters after f/";
+                    const bare = val.replace(/^t\//, ""); // was f\/
+                    if (bare.length < 2) return "Min 2 characters after t/"; // was f/
+                    if (bare.length > 62) return "Max 62 characters after t/"; // was f/
                     if (!/^[a-z0-9][a-z0-9_-]*$/.test(bare))
                       return "Only lowercase letters, numbers, hyphens, underscores";
                     return true;
@@ -105,7 +105,7 @@ const CreateCommunityForm = ({ show, onHide, userId }) => {
               </Form.Control.Feedback>
             </InputGroup>
             <Form.Text className="text-muted">
-              2–62 characters. Lowercase letters, numbers, hyphens, underscores.
+              2-62 characters. Lowercase letters, numbers, hyphens, underscores.
             </Form.Text>
           </Form.Group>
 

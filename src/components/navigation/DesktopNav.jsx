@@ -3,6 +3,7 @@ import Button from "react-bootstrap/Button";
 import { NavLink, useNavigate } from "react-router-dom";
 import Avatar from "./Avatar";
 import { navItemStyles, navItemStylesWithAvatar } from "./styles/navItemStyles";
+import NotificationsBell from "./NotificationsBell";
 
 const DesktopNav = ({ user, avatarUrl, isAdmin }) => {
   const navigate = useNavigate();
@@ -25,10 +26,13 @@ const DesktopNav = ({ user, avatarUrl, isAdmin }) => {
 
       <Nav className="ms-auto align-items-lg-center gap-2 d-none d-lg-flex">
         {user && (
-          <Nav.Link as={NavLink} to="/profile" style={navItemStylesWithAvatar}>
-            <Avatar url={avatarUrl} size="sm" />
-            <span className="ms-1">Profile</span>
-          </Nav.Link>
+          <>
+            <NotificationsBell userId={user.id} />
+            <Nav.Link as={NavLink} to="/profile" style={navItemStylesWithAvatar}>
+              <Avatar url={avatarUrl} size="sm" />
+              <span className="ms-1">Profile</span>
+            </Nav.Link>
+          </>
         )}
 
         {!user && (

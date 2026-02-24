@@ -1,12 +1,9 @@
 import { describe, it, expect } from "vitest";
 import { validatePost, mapDbErrorToFields } from "../postValidation";
 
-/* ------------------------------------------------------------------ */
-/*  validatePost                                                       */
-/* ------------------------------------------------------------------ */
 describe("validatePost", () => {
-  const validTitle = "A".repeat(16); // exactly 16 chars
-  const validContent = "B".repeat(32); // exactly 32 chars
+  const validTitle = "A".repeat(16); 
+  const validContent = "B".repeat(32); 
 
   it("returns no errors for valid title & content", () => {
     expect(validatePost({ title: validTitle, content: validContent })).toEqual(
@@ -64,9 +61,6 @@ describe("validatePost", () => {
   });
 });
 
-/* ------------------------------------------------------------------ */
-/*  mapDbErrorToFields                                                 */
-/* ------------------------------------------------------------------ */
 describe("mapDbErrorToFields", () => {
   it("maps post_title_length constraint error", () => {
     const errs = mapDbErrorToFields(

@@ -1,9 +1,7 @@
 import Form from "react-bootstrap/Form";
 import Button from "react-bootstrap/Button";
 import Spinner from "react-bootstrap/Spinner";
-
-const NAME_MIN = 4;
-const NAME_MAX = 32;
+import { NAME_MIN, NAME_MAX } from "./shared/constants";
 
 const EditProfileForm = ({
   register,

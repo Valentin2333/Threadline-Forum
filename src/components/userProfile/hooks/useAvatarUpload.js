@@ -1,14 +1,6 @@
 import { useState } from "react";
 import { supabase } from "../../../api/supabaseClient";
-
-const AVATAR_BUCKET = "avatars";
-const MAX_AVATAR_MB = 5;
-const ALLOWED_IMAGE_TYPES = [
-  "image/jpeg",
-  "image/png",
-  "image/webp",
-  "image/gif",
-];
+import { AVATAR_BUCKET, MAX_AVATAR_MB, ALLOWED_IMAGE_TYPES } from "../shared/constants";
 
 const useAvatarUpload = ({
   userId,

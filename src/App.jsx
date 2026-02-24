@@ -45,7 +45,6 @@ function App() {
             }
           />
 
-          {/* Redirect old /posts route to /feed */}
           <Route path="/posts" element={<Navigate to="/feed" replace />} />
 
           <Route
@@ -96,7 +95,6 @@ function App() {
           <Route path="/login" element={<AuthPage />} />
           <Route path="/register" element={<AuthPage />} />
 
-          {/* Footer pages */}
           <Route path="/faq" element={<FAQ />} />
           <Route path="/terms" element={<TermsAndConditions />} />
           <Route path="/privacy" element={<PrivacyPolicy />} />

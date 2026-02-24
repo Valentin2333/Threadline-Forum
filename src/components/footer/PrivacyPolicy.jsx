@@ -2,49 +2,7 @@ import { Link, useNavigate } from "react-router-dom";
 import Container from "react-bootstrap/Container";
 import Card from "react-bootstrap/Card";
 import Button from "react-bootstrap/Button";
-
-const SECTIONS = [
-  {
-    title: "1. Information We Collect",
-    content:
-      "When you register we collect your email address, username, and optional profile details such as " +
-      "your first name, last name, phone number, and avatar image. We also collect content you create " +
-      "(posts, comments, votes) and basic usage data needed to operate the platform.",
-  },
-  {
-    title: "2. How We Use Your Information",
-    content:
-      "Your information is used to provide and improve the Threadline service: authenticating your account, " +
-      "displaying your profile and content to other users, calculating reputation scores, and sending " +
-      "service-related notifications. We do not sell your personal data to third parties.",
-  },
-  {
-    title: "3. Data Storage & Security",
-    content:
-      "Your data is stored securely via Supabase infrastructure with row-level security policies. " +
-      "Passwords are hashed and never stored in plain text. While we take reasonable measures to protect " +
-      "your information, no method of electronic transmission or storage is 100% secure.",
-  },
-  {
-    title: "4. Cookies & Local Storage",
-    content:
-      "Threadline uses session tokens stored in your browser to keep you logged in. " +
-      "We do not use third-party tracking cookies or analytics services that profile your behaviour across other websites.",
-  },
-  {
-    title: "5. Your Rights",
-    content:
-      "You may view, edit, or delete your profile information at any time from the Your Profile page. " +
-      "You may also permanently delete your account, which will remove your profile data. " +
-      "To request a full data export or erasure, contact us at the email below.",
-  },
-  {
-    title: "6. Changes to This Policy",
-    content:
-      "We may update this Privacy Policy from time to time. Any changes will be reflected on this page " +
-      "with an updated revision date. Continued use of Threadline after changes are posted constitutes acceptance of the revised policy.",
-  },
-];
+import { PRIVACY_SECTIONS } from "./shared/constants";
 
 const PrivacyPolicy = () => {
   const navigate = useNavigate();
@@ -76,7 +34,7 @@ const PrivacyPolicy = () => {
             Last updated: {new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" })}
           </p>
 
-          {SECTIONS.map((section, i) => (
+          {PRIVACY_SECTIONS.map((section, i) => (
             <div key={i} className="mb-4">
               <h5
                 className="fw-semibold mb-2"

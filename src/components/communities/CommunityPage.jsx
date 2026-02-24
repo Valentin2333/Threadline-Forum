@@ -14,6 +14,7 @@ import CommunityMembers from "./CommunityMembers";
 import CommunityCreatePostForm from "./CommunityCreatePostForm";
 import CommunityPostList from "./CommunityPostList";
 import DeleteConfirmModal from "../shared/DeleteConfirmModal";
+import useRealtimePosts from "../../api/useRealtimePosts";
 
 import Container from "react-bootstrap/Container";
 import Alert from "react-bootstrap/Alert";
@@ -35,7 +36,6 @@ const CommunityPage = () => {
   const [serverError, setServerError] = useState("");
   const [showMembers, setShowMembers] = useState(false);
 
-  // community delete modal
   const [communityDeleteModal, setCommunityDeleteModal] = useState(false);
   const [communityDeleting, setCommunityDeleting] = useState(false);
 
@@ -76,6 +76,8 @@ const CommunityPage = () => {
       setServerError(e?.message || "Failed to load posts.");
     }
   }, [community?.id]);
+
+  useRealtimePosts({ channelName: `community-${community?.id}`, communityId: community?.id, onUpdate: loadPosts });
 
   useEffect(() => {
     let cancelled = false;
@@ -164,7 +166,6 @@ const CommunityPage = () => {
 
   return (
     <Container className="py-3">
-      {/* Back button */}
       <div className="mb-3">
         <Button
           variant="outline-secondary"
@@ -215,7 +216,6 @@ const CommunityPage = () => {
         setServerError={setServerError}
       />
 
-      {/* Delete community modal */}
       <DeleteConfirmModal
         show={communityDeleteModal}
         onHide={handleCloseDeleteCommunity}

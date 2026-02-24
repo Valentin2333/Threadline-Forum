@@ -1,7 +1,6 @@
 import { useMemo } from "react";
 import { supabase } from "../../../api/supabaseClient";
-
-const AVATAR_BUCKET = "avatars";
+import { AVATAR_BUCKET } from "../shared/constants";
 
 const useAvatarUrl = ({ avatarPath, avatarVersion }) => {
   return useMemo(() => {

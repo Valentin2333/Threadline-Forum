@@ -10,7 +10,6 @@ const Footer = () => {
     <footer className="fs-footer mt-auto">
       <Container>
         <Row className="g-4 py-4">
-          {/* Brand */}
           <Col xs={12} md={4}>
             <div className="d-flex align-items-center gap-2 mb-2">
               <i
@@ -27,7 +26,6 @@ const Footer = () => {
             </p>
           </Col>
 
-          {/* Quick Links */}
           <Col xs={6} md={4}>
             <h6 className="fs-footer-heading">Resources</h6>
             <ul className="list-unstyled mb-0 d-flex flex-column gap-1">
@@ -52,7 +50,6 @@ const Footer = () => {
             </ul>
           </Col>
 
-          {/* Contact */}
           <Col xs={6} md={4}>
             <h6 className="fs-footer-heading">Contact Us</h6>
             <Link to="/contact" className="fs-footer-link">

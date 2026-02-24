@@ -3,7 +3,6 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import RegisterFields from "../RegisterFields";
 
 describe("RegisterFields", () => {
-  // Create a minimal mock for react-hook-form's register function
   const mockRegister = vi.fn((name) => ({
     name,
     ref: vi.fn(),

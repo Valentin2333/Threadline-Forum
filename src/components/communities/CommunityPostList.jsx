@@ -60,7 +60,6 @@ const CommunityPostList = ({
 
   return (
     <>
-      {/* Search, Filter & Sort controls */}
       <div className="d-flex align-items-center justify-content-between mb-3">
         <h3 className="fs-page-title mb-0" style={{ fontSize: "1.1rem" }}>
           Posts

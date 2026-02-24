@@ -16,7 +16,6 @@ const PostCard = ({
   isOwn,
   canManage,
   isMember = false,
-  // post editing
   editingPostId,
   editingPostDraft,
   setEditingPostDraft,
@@ -25,10 +24,8 @@ const PostCard = ({
   onStartEditPost,
   onSaveEditPost,
   onCancelEditPost,
-  // post actions
   onDeletePost,
   onVoted,
-  // comment editing
   editingCommentId,
   editingCommentDraft,
   setEditingCommentDraft,
@@ -40,11 +37,9 @@ const PostCard = ({
   onDeleteComment,
   openMenuForCommentId,
   onToggleCommentMenu,
-  // post menu
   openMenuForPostId,
   onTogglePostMenu,
   onCloseCommentMenu,
-  // comments expand
   isExpanded,
   onToggleExpand,
 }) => {

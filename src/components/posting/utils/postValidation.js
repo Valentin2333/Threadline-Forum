@@ -1,15 +1,17 @@
+import { TITLE_MIN, TITLE_MAX, CONTENT_MIN, CONTENT_MAX } from "../shared/constants";
+
 export const validatePost = ({ title, content }) => {
   const errs = {};
   const t = (title ?? "").trim();
   const c = (content ?? "").trim();
 
   if (!t) errs.title = "Title required";
-  else if (t.length < 16) errs.title = "Min 16 chars";
-  else if (t.length > 64) errs.title = "Max 64 chars";
+  else if (t.length < TITLE_MIN) errs.title = "Min 16 chars";
+  else if (t.length > TITLE_MAX) errs.title = "Max 64 chars";
 
   if (!c) errs.content = "Content required";
-  else if (c.length < 32) errs.content = "Min 32 chars";
-  else if (c.length > 8192) errs.content = "Max 8192 chars";
+  else if (c.length < CONTENT_MIN) errs.content = "Min 32 chars";
+  else if (c.length > CONTENT_MAX) errs.content = "Max 8192 chars";
 
   return errs;
 };

@@ -1,8 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../../../api/supabaseClient";
-
-const selectCols =
-  "id, username, first_name, last_name, avatar_url, is_blocked, reputation, phone";
+import { SELECT_COLS } from "../shared/constants";
 
 const useProfileRow = ({ userId, reset }) => {
   const [profile, setProfile] = useState(null);
@@ -25,7 +23,7 @@ const useProfileRow = ({ userId, reset }) => {
       try {
         const { data, error: profileError } = await supabase
           .from("profiles")
-          .select(selectCols)
+          .select(SELECT_COLS)
           .eq("id", userId)
           .single();
 

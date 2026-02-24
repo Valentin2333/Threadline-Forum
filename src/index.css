@@ -55,6 +55,8 @@
 
 /* ── Dark Theme ── */
 [data-theme="dark"] {
+  --fs-primary: #8a7dff;
+  --fs-primary-hover: #786cff;
   --fs-primary-subtle: rgba(129, 140, 248, 0.12);
 
   --fs-bg: #0f172a;

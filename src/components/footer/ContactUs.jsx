@@ -7,8 +7,7 @@ import Button from "react-bootstrap/Button";
 import Form from "react-bootstrap/Form";
 import Alert from "react-bootstrap/Alert";
 import Spinner from "react-bootstrap/Spinner";
-
-const FORMSUBMIT_URL = "https://formsubmit.co/ajax/ddf54138babbfb5237dcaa20ecb15fc4";
+import {FORMSUBMIT_URL} from "./shared/constants"
 
 const ContactUs = () => {
   const navigate = useNavigate();

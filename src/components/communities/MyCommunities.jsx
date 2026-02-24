@@ -19,7 +19,6 @@ const MyCommunities = () => {
   const [error, setError] = useState("");
   const [showCreate, setShowCreate] = useState(false);
 
-  // delete community modal state
   const [deleteModal, setDeleteModal] = useState({
     show: false,
     community: null,

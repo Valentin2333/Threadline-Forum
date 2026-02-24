@@ -48,7 +48,6 @@ const PostDetails = () => {
         const data = await getPostById(postId);
         setPost(data);
 
-        // check membership
         if (userId && data?.community_id) {
           const yes = await checkMembership({
             communityId: data.community_id,

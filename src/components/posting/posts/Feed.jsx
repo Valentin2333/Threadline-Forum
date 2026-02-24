@@ -12,11 +12,11 @@ import useCommentEditing from "../hooks/useCommentEditing";
 import useDeleteModal from "../hooks/useDeleteModal";
 import usePostFilters from "../hooks/usePostFilters";
 import PostCard from "./PostCard";
-import PostSearchBar from "./PostSearchBar";
 import PostFilterBar from "./PostFilterBar";
 import DeleteConfirmModal from "../../shared/DeleteConfirmModal";
 import CommunityCard from "../../communities/CommunityCard";
 import GlobalSearchBar from "../../communities/GlobalSearchBar";
+import useRealtimePosts from "../../../api/useRealtimePosts";
 
 import Alert from "react-bootstrap/Alert";
 import Button from "react-bootstrap/Button";
@@ -76,6 +76,8 @@ const Feed = () => {
     [loadPosts],
   );
 
+  useRealtimePosts({ channelName: "feed-realtime", onUpdate: silentReload });
+
   const postEditing = usePostEditing({
     onSuccess: silentReload,
     setServerError,
@@ -93,7 +95,6 @@ const Feed = () => {
     editingCommentId: commentEditing.editingCommentId,
   });
 
-  // filters
   const filters = usePostFilters({ posts, userId });
 
   const handleStartEditPost = (post) => {
@@ -115,7 +116,6 @@ const Feed = () => {
 
   return (
     <Container className="py-3">
-      {/* Header */}
       <div className="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
         <h2 className="fs-page-title mb-0">
           <i
@@ -165,7 +165,6 @@ const Feed = () => {
         </div>
       ) : (
         <>
-          {/* Search, Filter & Sort controls */}
           <div className="d-flex align-items-center justify-content-between mb-3">
             <h3 className="fs-page-title mb-0" style={{ fontSize: "1.1rem" }}>
               Posts

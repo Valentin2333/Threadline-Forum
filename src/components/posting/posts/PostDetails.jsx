@@ -12,6 +12,7 @@ import PostEditForm from "./PostEditForm";
 import CommentList from "../comments/CommentList";
 import PostVotes from "../posts/PostVotes";
 import DeleteConfirmModal from "../../shared/DeleteConfirmModal";
+import { getPostMediaPublicUrl } from "../../../api/postMedia";
 
 import Alert from "react-bootstrap/Alert";
 import Badge from "react-bootstrap/Badge";
@@ -33,8 +34,7 @@ const PostDetails = () => {
   const [serverError, setServerError] = useState("");
 
   const userId = useMemo(() => user?.id ?? null, [user]);
-  const isOwn = (authorId) =>
-    Boolean(userId && authorId && userId === authorId);
+  const isOwn = (authorId) => Boolean(userId && authorId && userId === authorId);
   const canManage = (authorId) => isOwn(authorId) || isAdmin;
 
   const load = async ({ silent = false } = {}) => {
@@ -151,6 +151,7 @@ const PostDetails = () => {
 
       <Card>
         <Card.Body className="p-4">
+          {/* Header row: author/title on left, menu on right */}
           <div className="d-flex align-items-start justify-content-between gap-3">
             <div className="flex-grow-1">
               <div className="d-flex align-items-center gap-2">
@@ -224,6 +225,52 @@ const PostDetails = () => {
             )}
           </div>
 
+          {(post.post_media?.length ?? 0) > 0 && (
+            <div className="mt-3">
+              {post.post_media.map((m) => {
+                const url = getPostMediaPublicUrl(m.storage_path);
+                if (!url) return null;
+
+                if (m.media_type === "video") {
+                  return (
+                    <div key={m.id} className="mb-3">
+                      <video
+                        controls
+                        preload="metadata"
+                        style={{
+                          width: "100%",
+                          maxHeight: 600,
+                          borderRadius: 12,
+                          display: "block",
+                        }}
+                      >
+                        <source src={url} />
+                      </video>
+                    </div>
+                  );
+                }
+
+                return (
+                  <div key={m.id} className="mb-3">
+                    <img
+                      src={url}
+                      alt="Post attachment"
+                      style={{
+                        width: "100%",
+                        maxHeight: 700,
+                        objectFit: "contain",
+                        borderRadius: 12,
+                        display: "block",
+                        background: "rgba(0,0,0,0.04)",
+                      }}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Content / edit form */}
           {postEditing.editingPostId === post.id ? (
             <PostEditForm
               draft={postEditing.editingPostDraft}
@@ -249,10 +296,7 @@ const PostDetails = () => {
 
           <div className="mt-3 d-flex align-items-center justify-content-between">
             <Badge className="fs-score-badge">
-              <i
-                className="fa-solid fa-arrow-up me-1"
-                style={{ fontSize: 10 }}
-              />
+              <i className="fa-solid fa-arrow-up me-1" style={{ fontSize: 10 }} />
               {Number(post.score ?? 0)} points
             </Badge>
             <span className="text-muted" style={{ fontSize: "0.8125rem" }}>
@@ -260,17 +304,12 @@ const PostDetails = () => {
               {post.comments?.length ?? 0} comments
             </span>
           </div>
+
           <hr className="my-4" />
 
           <div>
-            <h3
-              className="h6 mb-3"
-              style={{ color: "var(--fs-text-secondary)" }}
-            >
-              <i
-                className="fa-regular fa-comments me-2"
-                style={{ fontSize: 14 }}
-              />
+            <h3 className="h6 mb-3" style={{ color: "var(--fs-text-secondary)" }}>
+              <i className="fa-regular fa-comments me-2" style={{ fontSize: 14 }} />
               Comments
             </h3>
 
@@ -304,11 +343,7 @@ const PostDetails = () => {
         onHide={deleteModalHook.closeDeleteModal}
         onDelete={deleteModalHook.executeDelete}
         deleting={deleteModalHook.deleting}
-        title={
-          deleteModalHook.deleteModal.type === "post"
-            ? "Delete post"
-            : "Delete comment"
-        }
+        title={deleteModalHook.deleteModal.type === "post" ? "Delete post" : "Delete comment"}
         warning={
           deleteModalHook.deleteModal.type === "post"
             ? "Are you sure you want to delete this post forever?"

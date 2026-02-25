@@ -31,7 +31,7 @@ describe("AuthSubmitRow", () => {
   it("renders secondary link button", () => {
     render(<AuthSubmitRow {...defaultProps} />);
     expect(
-      screen.getByText("Don't have an account? Register")
+      screen.getByText("Don't have an account? Register"),
     ).toBeInTheDocument();
   });
 
@@ -39,9 +39,7 @@ describe("AuthSubmitRow", () => {
     const user = userEvent.setup();
     const onClick = vi.fn();
     render(<AuthSubmitRow {...defaultProps} onSecondaryClick={onClick} />);
-    await user.click(
-      screen.getByText("Don't have an account? Register")
-    );
+    await user.click(screen.getByText("Don't have an account? Register"));
     expect(onClick).toHaveBeenCalledOnce();
   });
 });

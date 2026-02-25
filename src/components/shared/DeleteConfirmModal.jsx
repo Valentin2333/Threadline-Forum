@@ -15,7 +15,10 @@ const DeleteConfirmModal = ({
     <Modal show={show} onHide={onHide} centered>
       <Modal.Header closeButton={!deleting}>
         <Modal.Title>
-          <i className="fa-solid fa-triangle-exclamation me-2" style={{ color: "var(--fs-danger)" }} />
+          <i
+            className="fa-solid fa-triangle-exclamation me-2"
+            style={{ color: "var(--fs-danger)" }}
+          />
           {title}
         </Modal.Title>
       </Modal.Header>
@@ -26,7 +29,11 @@ const DeleteConfirmModal = ({
         </Alert>
       </Modal.Body>
       <Modal.Footer>
-        <Button variant="outline-secondary" onClick={onHide} disabled={deleting}>
+        <Button
+          variant="outline-secondary"
+          onClick={onHide}
+          disabled={deleting}
+        >
           No
         </Button>
         <Button variant="danger" onClick={onDelete} disabled={deleting}>

@@ -1,45 +1,7 @@
 import Card from "react-bootstrap/Card";
 import Badge from "react-bootstrap/Badge";
 import ListGroup from "react-bootstrap/ListGroup";
-
-const FEATURES = [
-  {
-    title: "Create and browse posts",
-    desc: "Share ideas with a title + content and see the newest posts first.",
-    badge: "Posts",
-    icon: "fa-solid fa-pen",
-  },
-  {
-    title: "Upvote or downvote posts",
-    desc: "Upvote or downvote posts that you like or dislike.",
-    badge: "Posts",
-    icon: "fa-solid fa-thumbs-up",
-  },
-  {
-    title: "Comment threads",
-    desc: "Discuss posts with replies that include author information and timestamps.",
-    badge: "Comments",
-    icon: "fa-solid fa-comments",
-  },
-  {
-    title: "Profiles + profile pictures",
-    desc: "Customize your profile and upload an avatar to storage.",
-    badge: "Profile",
-    icon: "fa-solid fa-image",
-  },
-  {
-    title: "Account management",
-    desc: "Update your profile data and delete your account when needed.",
-    badge: "Settings",
-    icon: "fa-solid fa-gear",
-  },
-  {
-    title: "Authentication",
-    desc: "Secure signup/login with Supabase Auth and session-aware navigation.",
-    badge: "Auth",
-    icon: "fa-solid fa-lock",
-  },
-];
+import { FEATURES } from "./shared/constants";
 
 const FeatureList = () => (
   <Card className="h-100">
@@ -72,16 +34,10 @@ const FeatureList = () => (
                 />
               </div>
               <div>
-                <div
-                  className="fw-semibold"
-                  style={{ fontSize: "0.875rem" }}
-                >
+                <div className="fw-semibold" style={{ fontSize: "0.875rem" }}>
                   {f.title}
                 </div>
-                <div
-                  className="text-muted"
-                  style={{ fontSize: "0.8125rem" }}
-                >
+                <div className="text-muted" style={{ fontSize: "0.8125rem" }}>
                   {f.desc}
                 </div>
               </div>

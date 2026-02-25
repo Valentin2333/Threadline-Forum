@@ -26,10 +26,10 @@ vi.mock("../api/supabaseClient", () => {
       from: vi.fn(() => makeMockChain()),
       auth: {
         getUser: vi.fn(() =>
-          Promise.resolve({ data: { user: null }, error: null })
+          Promise.resolve({ data: { user: null }, error: null }),
         ),
         getSession: vi.fn(() =>
-          Promise.resolve({ data: { session: null }, error: null })
+          Promise.resolve({ data: { session: null }, error: null }),
         ),
         signInWithPassword: vi.fn(() => Promise.resolve({ error: null })),
         signUp: vi.fn(() => Promise.resolve({ error: null })),
@@ -87,7 +87,31 @@ vi.mock("../api/admin", () => ({
   setUserBlocked: vi.fn(() => Promise.resolve({})),
   deleteAnyPost: vi.fn(() => Promise.resolve(true)),
   getAllPosts: vi.fn(() => Promise.resolve([])),
+  getAllCommunities: vi.fn(() => Promise.resolve([])),
   getAdminStats: vi.fn(() =>
-    Promise.resolve({ users: 0, posts: 0, comments: 0, blocked: 0 })
+    Promise.resolve({
+      users: 0,
+      posts: 0,
+      comments: 0,
+      blocked: 0,
+      communities: 0,
+    }),
   ),
+}));
+
+vi.mock("../api/communities", () => ({
+  getCommunityByName: vi.fn(() => Promise.resolve(null)),
+  getCommunityPosts: vi.fn(() => Promise.resolve([])),
+  getTopCommunities: vi.fn(() => Promise.resolve([])),
+  getUserCommunities: vi.fn(() => Promise.resolve([])),
+  getPostsForJoinedCommunities: vi.fn(() => Promise.resolve([])),
+  getCreatedCommunities: vi.fn(() => Promise.resolve([])),
+  getCommunityMembers: vi.fn(() => Promise.resolve([])),
+  createCommunity: vi.fn(() => Promise.resolve({})),
+  joinCommunity: vi.fn(() => Promise.resolve({})),
+  leaveCommunity: vi.fn(() => Promise.resolve({})),
+  removeMember: vi.fn(() => Promise.resolve({})),
+  deleteCommunity: vi.fn(() => Promise.resolve(true)),
+  isMember: vi.fn(() => Promise.resolve(false)),
+  globalSearch: vi.fn(() => Promise.resolve({ communities: [], posts: [] })),
 }));

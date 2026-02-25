@@ -1,11 +1,14 @@
 import { useState } from "react";
 import { supabase } from "../../../api/supabaseClient";
+import { AVATAR_BUCKET, MAX_AVATAR_MB, ALLOWED_IMAGE_TYPES } from "../shared/constants";
 
-const AVATAR_BUCKET = "avatars";
-const MAX_AVATAR_MB = 5;
-const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
-
-const useAvatarUpload = ({ userId, setProfile, setError, setSuccess, setAvatarVersion }) => {
+const useAvatarUpload = ({
+  userId,
+  setProfile,
+  setError,
+  setSuccess,
+  setAvatarVersion,
+}) => {
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [showAvatarUpload, setShowAvatarUpload] = useState(false);
 
@@ -59,7 +62,9 @@ const useAvatarUpload = ({ userId, setProfile, setError, setSuccess, setAvatarVe
         .from("profiles")
         .update({ avatar_url: path })
         .eq("id", userId)
-        .select("id, username, first_name, last_name, avatar_url, is_blocked, reputation")
+        .select(
+          "id, username, first_name, last_name, avatar_url, is_blocked, reputation",
+        )
         .single();
 
       if (updateError) throw updateError;

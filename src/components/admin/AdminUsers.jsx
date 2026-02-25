@@ -44,7 +44,10 @@ const AdminUsers = () => {
     setError("");
     setActionLoading(user.id);
     try {
-      const updated = await setUserBlocked({ userId: user.id, blocked: !user.is_blocked });
+      const updated = await setUserBlocked({
+        userId: user.id,
+        blocked: !user.is_blocked,
+      });
       setUsers((prev) => prev.map((u) => (u.id === updated.id ? updated : u)));
     } catch (e) {
       setError(e?.message || "Action failed.");
@@ -64,7 +67,10 @@ const AdminUsers = () => {
               placeholder="Search by username, email, or name…"
             />
             <Button type="submit" variant="primary">
-              <i className="fa-solid fa-magnifying-glass me-2" style={{ fontSize: 12 }} />
+              <i
+                className="fa-solid fa-magnifying-glass me-2"
+                style={{ fontSize: 12 }}
+              />
               Search
             </Button>
             {query && (
@@ -81,7 +87,11 @@ const AdminUsers = () => {
           </InputGroup>
         </Form>
 
-        {error && <Alert variant="danger" className="py-2">{error}</Alert>}
+        {error && (
+          <Alert variant="danger" className="py-2">
+            {error}
+          </Alert>
+        )}
 
         {loading ? (
           <div className="d-flex align-items-center gap-2 text-muted py-3">
@@ -111,14 +121,26 @@ const AdminUsers = () => {
                   <tr key={u.id}>
                     <td>
                       <div className="d-flex align-items-center gap-2">
-                        <Link to={`/profile/${u.id}`} className="text-decoration-none">
-                          <AvatarFromStorage pathOrUrl={u.avatar_url} size="sm" />
+                        <Link
+                          to={`/profile/${u.id}`}
+                          className="text-decoration-none"
+                        >
+                          <AvatarFromStorage
+                            pathOrUrl={u.avatar_url}
+                            size="sm"
+                          />
                         </Link>
                         <div>
-                          <Link to={`/profile/${u.id}`} className="fs-author-name-link">
+                          <Link
+                            to={`/profile/${u.id}`}
+                            className="fs-author-name-link"
+                          >
                             {u.username || "—"}
                           </Link>
-                          <div className="text-muted" style={{ fontSize: "0.75rem" }}>
+                          <div
+                            className="text-muted"
+                            style={{ fontSize: "0.75rem" }}
+                          >
                             {u.first_name} {u.last_name}
                           </div>
                         </div>
@@ -140,19 +162,28 @@ const AdminUsers = () => {
                           borderRadius: "var(--fs-radius-pill)",
                         }}
                       >
-                        <i className="fa-solid fa-star" style={{ fontSize: 9 }} />
+                        <i
+                          className="fa-solid fa-star"
+                          style={{ fontSize: 9 }}
+                        />
                         {u.reputation ?? 0}
                       </span>
                     </td>
                     <td>
                       <div className="d-flex align-items-center gap-1">
                         {u.is_admin && (
-                          <Badge bg="primary" style={{ fontSize: "0.6875rem" }}>Admin</Badge>
+                          <Badge bg="primary" style={{ fontSize: "0.6875rem" }}>
+                            Admin
+                          </Badge>
                         )}
                         {u.is_blocked ? (
-                          <Badge bg="danger" style={{ fontSize: "0.6875rem" }}>Blocked</Badge>
+                          <Badge bg="danger" style={{ fontSize: "0.6875rem" }}>
+                            Blocked
+                          </Badge>
                         ) : (
-                          <Badge bg="success" style={{ fontSize: "0.6875rem" }}>Active</Badge>
+                          <Badge bg="success" style={{ fontSize: "0.6875rem" }}>
+                            Active
+                          </Badge>
                         )}
                       </div>
                     </td>
@@ -160,7 +191,9 @@ const AdminUsers = () => {
                       {!u.is_admin && (
                         <Button
                           size="sm"
-                          variant={u.is_blocked ? "outline-success" : "outline-danger"}
+                          variant={
+                            u.is_blocked ? "outline-success" : "outline-danger"
+                          }
                           onClick={() => toggleBlock(u)}
                           disabled={actionLoading === u.id}
                         >
@@ -168,12 +201,18 @@ const AdminUsers = () => {
                             <Spinner size="sm" />
                           ) : u.is_blocked ? (
                             <>
-                              <i className="fa-solid fa-unlock me-1" style={{ fontSize: 11 }} />
+                              <i
+                                className="fa-solid fa-unlock me-1"
+                                style={{ fontSize: 11 }}
+                              />
                               Unblock
                             </>
                           ) : (
                             <>
-                              <i className="fa-solid fa-ban me-1" style={{ fontSize: 11 }} />
+                              <i
+                                className="fa-solid fa-ban me-1"
+                                style={{ fontSize: 11 }}
+                              />
                               Block
                             </>
                           )}

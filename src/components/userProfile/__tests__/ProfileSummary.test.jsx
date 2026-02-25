@@ -13,7 +13,11 @@ describe("ProfileSummary", () => {
 
   it("displays email, name, and username", () => {
     render(
-      <ProfileSummary userEmail="john@example.com" profile={profile} isAdmin={false} />
+      <ProfileSummary
+        userEmail="john@example.com"
+        profile={profile}
+        isAdmin={false}
+      />,
     );
     expect(screen.getByText("john@example.com")).toBeInTheDocument();
     expect(screen.getByText("John Doe")).toBeInTheDocument();
@@ -22,19 +26,23 @@ describe("ProfileSummary", () => {
 
   it("displays reputation", () => {
     render(
-      <ProfileSummary userEmail="john@example.com" profile={profile} isAdmin={false} />
+      <ProfileSummary
+        userEmail="john@example.com"
+        profile={profile}
+        isAdmin={false}
+      />,
     );
     expect(screen.getByText("42")).toBeInTheDocument();
   });
 
   it("shows phone only when isAdmin is true", () => {
     const { rerender } = render(
-      <ProfileSummary userEmail="a@b.com" profile={profile} isAdmin={false} />
+      <ProfileSummary userEmail="a@b.com" profile={profile} isAdmin={false} />,
     );
     expect(screen.queryByText("+1234567890")).toBeNull();
 
     rerender(
-      <ProfileSummary userEmail="a@b.com" profile={profile} isAdmin={true} />
+      <ProfileSummary userEmail="a@b.com" profile={profile} isAdmin={true} />,
     );
     expect(screen.getByText("+1234567890")).toBeInTheDocument();
   });
@@ -45,7 +53,7 @@ describe("ProfileSummary", () => {
         userEmail="a@b.com"
         profile={{ ...profile, username: "" }}
         isAdmin={false}
-      />
+      />,
     );
     expect(screen.getByText("—")).toBeInTheDocument();
   });

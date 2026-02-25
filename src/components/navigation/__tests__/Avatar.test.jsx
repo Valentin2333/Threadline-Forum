@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render } from "@testing-library/react";
 import Avatar from "../Avatar";
 
 describe("Avatar", () => {
@@ -31,14 +31,14 @@ describe("Avatar", () => {
 
   it("applies sm size class", () => {
     const { container } = render(
-      <Avatar url="https://x.com/a.png" size="sm" />
+      <Avatar url="https://x.com/a.png" size="sm" />,
     );
     expect(container.querySelector(".fs-avatar-sm")).toBeInTheDocument();
   });
 
   it("applies lg size class", () => {
     const { container } = render(
-      <Avatar url="https://x.com/a.png" size="lg" />
+      <Avatar url="https://x.com/a.png" size="lg" />,
     );
     expect(container.querySelector(".fs-avatar-lg")).toBeInTheDocument();
   });

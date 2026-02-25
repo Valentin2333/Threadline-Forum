@@ -130,10 +130,7 @@ const CreatePostForm = ({ onPostCreated }) => {
               >
                 <i
                   className="fa-solid fa-pen-to-square"
-                  style={{
-                    color: "var(--fs-primary)",
-                    fontSize: 18,
-                  }}
+                  style={{ color: "var(--fs-primary)", fontSize: 18 }}
                 />
                 Create Post
               </Card.Title>
@@ -216,7 +213,11 @@ const CreatePostForm = ({ onPostCreated }) => {
                     Cancel
                   </Button>
 
-                  <Button type="submit" disabled={isSubmitting} className="px-4">
+                  <Button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="px-4"
+                  >
                     {isSubmitting ? "Creating…" : "Create Post"}
                   </Button>
                 </div>

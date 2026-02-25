@@ -5,10 +5,7 @@ import ListGroup from "react-bootstrap/ListGroup";
 const RecentPostsList = ({ posts }) => (
   <div>
     <h3 className="h6 mb-3" style={{ color: "var(--fs-text-secondary)" }}>
-      <i
-        className="fa-solid fa-pen-to-square me-2"
-        style={{ fontSize: 14 }}
-      />
+      <i className="fa-solid fa-pen-to-square me-2" style={{ fontSize: 14 }} />
       Recent posts
     </h3>
 

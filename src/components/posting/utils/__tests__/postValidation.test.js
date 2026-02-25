@@ -1,16 +1,13 @@
 import { describe, it, expect } from "vitest";
 import { validatePost, mapDbErrorToFields } from "../postValidation";
 
-/* ------------------------------------------------------------------ */
-/*  validatePost                                                       */
-/* ------------------------------------------------------------------ */
 describe("validatePost", () => {
-  const validTitle = "A".repeat(16); // exactly 16 chars
-  const validContent = "B".repeat(32); // exactly 32 chars
+  const validTitle = "A".repeat(16); 
+  const validContent = "B".repeat(32); 
 
   it("returns no errors for valid title & content", () => {
     expect(validatePost({ title: validTitle, content: validContent })).toEqual(
-      {}
+      {},
     );
   });
 
@@ -64,20 +61,17 @@ describe("validatePost", () => {
   });
 });
 
-/* ------------------------------------------------------------------ */
-/*  mapDbErrorToFields                                                 */
-/* ------------------------------------------------------------------ */
 describe("mapDbErrorToFields", () => {
   it("maps post_title_length constraint error", () => {
     const errs = mapDbErrorToFields(
-      'violates check constraint "post_title_length"'
+      'violates check constraint "post_title_length"',
     );
     expect(errs.title).toBe("Title must be 16-64 characters.");
   });
 
   it("maps post_content_length constraint error", () => {
     const errs = mapDbErrorToFields(
-      'violates check constraint "post_content_length"'
+      'violates check constraint "post_content_length"',
     );
     expect(errs.content).toBe("Content must be 32-8192 characters.");
   });

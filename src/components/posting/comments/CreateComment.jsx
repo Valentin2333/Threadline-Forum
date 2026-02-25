@@ -9,7 +9,7 @@ import Alert from "react-bootstrap/Alert";
 import InputGroup from "react-bootstrap/InputGroup";
 import Spinner from "react-bootstrap/Spinner";
 
-const CreateComment = ({ postId, onCommentCreated }) => {
+const CreateComment = ({ postId, onCommentCreated, isMember = false }) => {
   const [serverError, setServerError] = useState("");
   const [draft, setDraft] = useState("");
 
@@ -58,6 +58,17 @@ const CreateComment = ({ postId, onCommentCreated }) => {
       }
     }
   };
+
+  if (!isMember) {
+    return (
+      <div className="mt-2">
+        <small className="text-muted">
+          <i className="fa-solid fa-lock me-1" style={{ fontSize: 10 }} />
+          Join this community to comment.
+        </small>
+      </div>
+    );
+  }
 
   const reg = register("content", {
     setValueAs: (v) => (typeof v === "string" ? v.trim() : v),

@@ -21,7 +21,9 @@ describe("DeleteAccountModal", () => {
   it("renders permanent warning", () => {
     render(<DeleteAccountModal {...baseProps} />);
     expect(
-      screen.getByText("This is permanent. Your profile will be deleted forever.")
+      screen.getByText(
+        "This is permanent. Your profile will be deleted forever.",
+      ),
     ).toBeInTheDocument();
   });
 
@@ -34,7 +36,7 @@ describe("DeleteAccountModal", () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
     render(
-      <DeleteAccountModal {...baseProps} onChangeConfirmText={onChange} />
+      <DeleteAccountModal {...baseProps} onChangeConfirmText={onChange} />,
     );
     await user.type(screen.getByPlaceholderText("delete"), "d");
     expect(onChange).toHaveBeenCalled();

@@ -77,7 +77,10 @@ const AdminPosts = () => {
                   placeholder="Search by title or content…"
                 />
                 <Button type="submit" variant="primary">
-                  <i className="fa-solid fa-magnifying-glass me-2" style={{ fontSize: 12 }} />
+                  <i
+                    className="fa-solid fa-magnifying-glass me-2"
+                    style={{ fontSize: 12 }}
+                  />
                   Search
                 </Button>
                 {search && (
@@ -94,7 +97,10 @@ const AdminPosts = () => {
               </InputGroup>
             </Col>
             <Col xs={12} md={5}>
-              <Form.Select value={sortBy} onChange={(e) => handleSortChange(e.target.value)}>
+              <Form.Select
+                value={sortBy}
+                onChange={(e) => handleSortChange(e.target.value)}
+              >
                 <option value="newest">Newest first</option>
                 <option value="oldest">Oldest first</option>
                 <option value="score">Highest score</option>
@@ -104,7 +110,11 @@ const AdminPosts = () => {
           </Row>
         </Form>
 
-        {error && <Alert variant="danger" className="py-2">{error}</Alert>}
+        {error && (
+          <Alert variant="danger" className="py-2">
+            {error}
+          </Alert>
+        )}
 
         {loading ? (
           <div className="d-flex align-items-center gap-2 text-muted py-3">
@@ -134,10 +144,19 @@ const AdminPosts = () => {
                   <tr key={post.id}>
                     <td>
                       <div className="d-flex align-items-center gap-2">
-                        <Link to={`/profile/${post.author_id}`} className="text-decoration-none">
-                          <AvatarFromStorage pathOrUrl={post.post_author?.avatar_url} size="sm" />
+                        <Link
+                          to={`/profile/${post.author_id}`}
+                          className="text-decoration-none"
+                        >
+                          <AvatarFromStorage
+                            pathOrUrl={post.post_author?.avatar_url}
+                            size="sm"
+                          />
                         </Link>
-                        <Link to={`/profile/${post.author_id}`} className="fs-author-name-link">
+                        <Link
+                          to={`/profile/${post.author_id}`}
+                          className="fs-author-name-link"
+                        >
                           {post.post_author?.username || "Unknown"}
                         </Link>
                       </div>
@@ -149,18 +168,29 @@ const AdminPosts = () => {
                         style={{ fontSize: "0.875rem" }}
                         title={post.title}
                       >
-                        {post.title.length > 50 ? post.title.substring(0, 50) + "…" : post.title}
+                        {post.title.length > 50
+                          ? post.title.substring(0, 50) + "…"
+                          : post.title}
                       </Link>
                     </td>
                     <td>
-                      <Badge className="fs-score-badge" style={{ fontSize: "0.6875rem" }}>
-                        <i className="fa-solid fa-arrow-up me-1" style={{ fontSize: 9 }} />
+                      <Badge
+                        className="fs-score-badge"
+                        style={{ fontSize: "0.6875rem" }}
+                      >
+                        <i
+                          className="fa-solid fa-arrow-up me-1"
+                          style={{ fontSize: 9 }}
+                        />
                         {post.score ?? 0}
                       </Badge>
                     </td>
                     <td>
                       <span style={{ fontSize: "0.875rem" }}>
-                        <i className="fa-regular fa-comment me-1" style={{ fontSize: 11 }} />
+                        <i
+                          className="fa-regular fa-comment me-1"
+                          style={{ fontSize: 11 }}
+                        />
                         {post.comment_count ?? 0}
                       </span>
                     </td>
@@ -180,7 +210,10 @@ const AdminPosts = () => {
                           <Spinner size="sm" />
                         ) : (
                           <>
-                            <i className="fa-solid fa-trash me-1" style={{ fontSize: 11 }} />
+                            <i
+                              className="fa-solid fa-trash me-1"
+                              style={{ fontSize: 11 }}
+                            />
                             Delete
                           </>
                         )}

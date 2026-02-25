@@ -11,12 +11,17 @@ const useRealtimePosts = ({ channelName, communityId = null, onUpdate }) => {
 
     const commentFilter = { event: "*", schema: "public", table: "comments" };
 
+    const postMediaFilter = { event: "*", schema: "public", table: "post_media" };
+
     const channel = supabase
-      .channel(channelName)
+      .channel(channelName || "realtime-posts")
       .on("postgres_changes", postFilter, () => {
         onUpdate();
       })
       .on("postgres_changes", commentFilter, () => {
+        onUpdate();
+      })
+      .on("postgres_changes", postMediaFilter, () => {
         onUpdate();
       })
       .subscribe();

@@ -36,11 +36,16 @@ export async function markAllNotificationsRead() {
 }
 
 // Realtime: listen only to INSERTs for this user.
-export function subscribeToMyNotificationInserts(userId, onInsert, onStatus) {
+
+export const subscribeToMyNotificationInserts = (userId, onInsert) => {
   if (!userId) return null;
 
+  const channelName = `notif-inserts-${userId}-${Math.random()
+    .toString(16)
+    .slice(2)}`;
+
   const channel = supabase
-    .channel(`notifications:${userId}`)
+    .channel(channelName)
     .on(
       "postgres_changes",
       {
@@ -49,11 +54,11 @@ export function subscribeToMyNotificationInserts(userId, onInsert, onStatus) {
         table: "notifications",
         filter: `recipient_id=eq.${userId}`,
       },
-      (payload) => onInsert?.(payload.new)
+      (payload) => {
+        onInsert?.(payload.new);
+      }
     )
-    .subscribe((status) => {
-      onStatus?.(status); // e.g. "SUBSCRIBED"
-    });
+    .subscribe();
 
   return channel;
-}
+};

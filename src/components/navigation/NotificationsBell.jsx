@@ -27,7 +27,7 @@ const labelFor = (n) => {
   return "New notification";
 };
 
-const NotificationsBell = ({ userId }) => {
+const NotificationsBell = () => {
   const navigate = useNavigate();
 
   const [open, setOpen] = useState(false);
@@ -54,48 +54,58 @@ const NotificationsBell = ({ userId }) => {
   };
 
   useEffect(() => {
-    if (!userId) return;
+    let channel;
 
-    // initial fetch
-    load();
+    const run = async () => {
+      // ✅ Always use the real Supabase auth uid (prevents id mismatch bugs)
+      const { data, error: authErr } = await supabase.auth.getUser();
+      if (authErr) {
+        console.error("auth.getUser error:", authErr);
+        return;
+      }
 
-    const channel = subscribeToMyNotificationInserts(
-      userId,
-      async (newNotif) => {
-        // Instantly show it (even before we fetch actor join)
+      const uid = data?.user?.id;
+      if (!uid) return;
+
+      // initial fetch
+      load();
+
+      // subscribe to inserts for *this* user
+      channel = subscribeToMyNotificationInserts(uid, async (newNotif) => {
+        // Instantly show it
         setItems((prev) => {
-          // avoid duplicates if the user opens dropdown and load() returns it too
           if (prev.some((x) => x.id === newNotif.id)) return prev;
           return [{ ...newNotif, actor: null }, ...prev];
         });
 
-        // Optional: fetch actor username/avatar to make the text nicer
-        // (Realtime payload doesn't include joins)
+        // Optional: fetch actor username/avatar (realtime payload doesn't include joins)
         if (newNotif.actor_id) {
           try {
-            const { data } = await supabase
+            const { data: actor } = await supabase
               .from("profiles")
               .select("id, username, avatar_url")
               .eq("id", newNotif.actor_id)
               .single();
 
-            if (data) {
+            if (actor) {
               setItems((prev) =>
-                prev.map((n) => (n.id === newNotif.id ? { ...n, actor: data } : n))
+                prev.map((n) => (n.id === newNotif.id ? { ...n, actor } : n))
               );
             }
           } catch {
             // ignore
           }
         }
-      },
-    );
+      });
+    };
+
+    run();
 
     return () => {
-      if (channel) channel.unsubscribe();
+      if (channel) supabase.removeChannel(channel);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId]);
+  }, []);
 
   const handleClickNotification = async (n) => {
     try {
@@ -122,15 +132,13 @@ const NotificationsBell = ({ userId }) => {
     }
   };
 
-  if (!userId) return null;
-
   return (
     <Dropdown
       align="end"
       show={open}
       onToggle={(next) => {
         setOpen(next);
-        if (next) load();
+        if (next) load(); // refresh list when opening dropdown
       }}
     >
       <Dropdown.Toggle

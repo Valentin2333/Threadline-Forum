@@ -5,7 +5,7 @@ describe("minTrimmedLength", () => {
   it("returns true when trimmed value meets the minimum", () => {
     const validate = minTrimmedLength(4, "Username");
     expect(validate("abcd")).toBe(true);
-    expect(validate("  abcd  ")).toBe(true); // trimmed is 4
+    expect(validate("  abcd  ")).toBe(true); 
   });
 
   it("returns an error string when too short after trimming", () => {

@@ -5,9 +5,7 @@ export const navItemStyles = ({ isActive }) => ({
   fontSize: 14,
   fontWeight: 500,
   transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
-  background: isActive
-    ? "rgba(129, 140, 248, 0.15)"
-    : "transparent",
+  background: isActive ? "rgba(129, 140, 248, 0.15)" : "transparent",
   border: isActive
     ? "1px solid rgba(129, 140, 248, 0.25)"
     : "1px solid transparent",

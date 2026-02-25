@@ -46,7 +46,7 @@ describe("PostEditForm", () => {
       <PostEditForm
         {...baseProps}
         fieldErrors={{ title: "Min 16 chars", content: "Min 32 chars" }}
-      />
+      />,
     );
     expect(screen.getByText("Min 16 chars")).toBeInTheDocument();
     expect(screen.getByText("Min 32 chars")).toBeInTheDocument();

@@ -26,9 +26,11 @@ const useAuthUser = () => {
 
     loadUser();
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-    });
+    const { data: listener } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setUser(session?.user ?? null);
+      },
+    );
 
     return () => {
       cancelled = true;

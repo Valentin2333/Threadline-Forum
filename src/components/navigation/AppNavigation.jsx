@@ -26,7 +26,7 @@ const AppNavigation = () => {
         />
 
         <Navbar.Brand as={NavLink} to="/" end onClick={closeSidebar}>
-          Forum
+          Threadline
         </Navbar.Brand>
 
         <DesktopNav user={user} avatarUrl={avatarUrl} isAdmin={isAdmin} />

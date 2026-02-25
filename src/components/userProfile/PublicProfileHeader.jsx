@@ -3,7 +3,12 @@ import Button from "react-bootstrap/Button";
 import Spinner from "react-bootstrap/Spinner";
 import AvatarFromStorage from "../posting/posts/AvatarFromStorage";
 
-const PublicProfileHeader = ({ profile, isAdmin, blockLoading, onToggleBlock }) => (
+const PublicProfileHeader = ({
+  profile,
+  isAdmin,
+  blockLoading,
+  onToggleBlock,
+}) => (
   <div className="d-flex flex-column align-items-center text-center mb-4">
     <div className="fs-avatar fs-avatar-lg mb-2">
       {profile.avatar_url ? (
@@ -16,9 +21,7 @@ const PublicProfileHeader = ({ profile, isAdmin, blockLoading, onToggleBlock }) 
       )}
     </div>
 
-    <h2 className="fs-page-title mb-1">
-      {profile.username || "Unknown user"}
-    </h2>
+    <h2 className="fs-page-title mb-1">{profile.username || "Unknown user"}</h2>
 
     {(profile.first_name || profile.last_name) && (
       <p className="text-muted mb-2" style={{ fontSize: "0.9375rem" }}>
@@ -69,10 +72,7 @@ const PublicProfileHeader = ({ profile, isAdmin, blockLoading, onToggleBlock }) 
           <Spinner size="sm" />
         ) : profile.is_blocked ? (
           <>
-            <i
-              className="fa-solid fa-unlock me-2"
-              style={{ fontSize: 11 }}
-            />
+            <i className="fa-solid fa-unlock me-2" style={{ fontSize: 11 }} />
             Unblock user
           </>
         ) : (

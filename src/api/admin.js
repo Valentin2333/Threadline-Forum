@@ -67,23 +67,55 @@ export async function getAllPosts({ sortBy = "newest", search = "", limit = 50 }
   return data ?? [];
 }
 
+export async function getAllCommunities({ sortBy = "newest", search = "", limit = 50 } = {}) {
+  let req = supabase
+    .from("communities")
+    .select(`
+      id, name, description, created_at, member_count,
+      creator:profiles!communities_creator_id_fkey (
+        id, username, avatar_url
+      )
+    `)
+    .limit(limit);
+
+  if (search.trim()) {
+    const q = `%${search.trim()}%`;
+    req = req.or(`name.ilike.${q},description.ilike.${q}`);
+  }
+
+  if (sortBy === "oldest") {
+    req = req.order("created_at", { ascending: true });
+  } else if (sortBy === "members") {
+    req = req.order("member_count", { ascending: false }).order("created_at", { ascending: false });
+  } else {
+    req = req.order("created_at", { ascending: false });
+  }
+
+  const { data, error } = await req;
+  if (error) throw error;
+  return data ?? [];
+}
+
 export async function getAdminStats() {
-  const [usersRes, postsRes, commentsRes, blockedRes] = await Promise.all([
+  const [usersRes, postsRes, commentsRes, blockedRes, communitiesRes] = await Promise.all([
     supabase.from("profiles").select("*", { count: "exact", head: true }),
     supabase.from("posts").select("*", { count: "exact", head: true }),
     supabase.from("comments").select("*", { count: "exact", head: true }),
     supabase.from("profiles").select("*", { count: "exact", head: true }).eq("is_blocked", true),
+    supabase.from("communities").select("*", { count: "exact", head: true }),
   ]);
 
   if (usersRes.error) throw usersRes.error;
   if (postsRes.error) throw postsRes.error;
   if (commentsRes.error) throw commentsRes.error;
   if (blockedRes.error) throw blockedRes.error;
+  if (communitiesRes.error) throw communitiesRes.error;
 
   return {
     users: usersRes.count ?? 0,
     posts: postsRes.count ?? 0,
     comments: commentsRes.count ?? 0,
     blocked: blockedRes.count ?? 0,
+    communities: communitiesRes.count ?? 0,
   };
 }

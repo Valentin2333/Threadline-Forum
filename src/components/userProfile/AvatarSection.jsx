@@ -15,12 +15,12 @@ const AvatarSection = ({
     <div className="d-flex flex-column align-items-center text-center mb-4">
       <div className="fs-avatar fs-avatar-lg mb-2">
         {avatarUrl ? (
-          <img
-            src={avatarUrl}
-            alt="Profile avatar"
-          />
+          <img src={avatarUrl} alt="Profile avatar" />
         ) : (
-          <i className="fa-solid fa-user" style={{ fontSize: 32, color: "var(--fs-text-muted)" }} />
+          <i
+            className="fa-solid fa-user"
+            style={{ fontSize: 32, color: "var(--fs-text-muted)" }}
+          />
         )}
       </div>
 
@@ -52,9 +52,7 @@ const AvatarSection = ({
             />
             {uploadingAvatar && <Spinner size="sm" />}
           </div>
-          <Form.Text muted>
-            Max {maxAvatarMb}MB. JPG/PNG/WEBP/GIF.
-          </Form.Text>
+          <Form.Text muted>Max {maxAvatarMb}MB. JPG/PNG/WEBP/GIF.</Form.Text>
         </Form.Group>
       )}
     </div>

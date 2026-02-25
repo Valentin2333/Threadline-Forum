@@ -6,9 +6,14 @@ import ProfileShell from "../ProfileShell";
 describe("ProfileShell", () => {
   it("shows spinner when loadingUser is true", () => {
     const { container } = render(
-      <ProfileShell loadingUser={true} user={null} authError="" onGoLogin={vi.fn()}>
+      <ProfileShell
+        loadingUser={true}
+        user={null}
+        authError=""
+        onGoLogin={vi.fn()}
+      >
         <p>Content</p>
-      </ProfileShell>
+      </ProfileShell>,
     );
     expect(container.querySelector(".spinner-border")).toBeInTheDocument();
     expect(screen.getByText("Loading user...")).toBeInTheDocument();
@@ -16,21 +21,31 @@ describe("ProfileShell", () => {
 
   it("shows auth error when present", () => {
     render(
-      <ProfileShell loadingUser={false} user={null} authError="Auth failed" onGoLogin={vi.fn()}>
+      <ProfileShell
+        loadingUser={false}
+        user={null}
+        authError="Auth failed"
+        onGoLogin={vi.fn()}
+      >
         <p>Content</p>
-      </ProfileShell>
+      </ProfileShell>,
     );
     expect(screen.getByText("Auth failed")).toBeInTheDocument();
   });
 
   it("shows login prompt when user is null", () => {
     render(
-      <ProfileShell loadingUser={false} user={null} authError="" onGoLogin={vi.fn()}>
+      <ProfileShell
+        loadingUser={false}
+        user={null}
+        authError=""
+        onGoLogin={vi.fn()}
+      >
         <p>Content</p>
-      </ProfileShell>
+      </ProfileShell>,
     );
     expect(
-      screen.getByText("You must be logged in to view your profile.")
+      screen.getByText("You must be logged in to view your profile."),
     ).toBeInTheDocument();
   });
 
@@ -38,9 +53,14 @@ describe("ProfileShell", () => {
     const user = userEvent.setup();
     const onGoLogin = vi.fn();
     render(
-      <ProfileShell loadingUser={false} user={null} authError="" onGoLogin={onGoLogin}>
+      <ProfileShell
+        loadingUser={false}
+        user={null}
+        authError=""
+        onGoLogin={onGoLogin}
+      >
         <p>Content</p>
-      </ProfileShell>
+      </ProfileShell>,
     );
     await user.click(screen.getByText("Go to Login"));
     expect(onGoLogin).toHaveBeenCalledOnce();
@@ -55,7 +75,7 @@ describe("ProfileShell", () => {
         onGoLogin={vi.fn()}
       >
         <p>Profile page content</p>
-      </ProfileShell>
+      </ProfileShell>,
     );
     expect(screen.getByText("Profile page content")).toBeInTheDocument();
   });

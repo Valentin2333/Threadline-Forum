@@ -13,7 +13,7 @@ describe("RankedPostList", () => {
         iconColor="#f00"
         posts={[]}
         renderMeta={baseMeta}
-      />
+      />,
     );
     expect(screen.getByText("Top Posts")).toBeInTheDocument();
   });
@@ -26,7 +26,7 @@ describe("RankedPostList", () => {
         iconColor="#f00"
         posts={[]}
         renderMeta={baseMeta}
-      />
+      />,
     );
     expect(screen.getByText("No posts yet.")).toBeInTheDocument();
   });
@@ -44,7 +44,7 @@ describe("RankedPostList", () => {
         iconColor="#f00"
         posts={posts}
         renderMeta={baseMeta}
-      />
+      />,
     );
 
     expect(screen.getByText("1")).toBeInTheDocument();

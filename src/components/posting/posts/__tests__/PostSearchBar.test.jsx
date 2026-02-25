@@ -10,10 +10,10 @@ describe("PostSearchBar", () => {
         showSearch={true}
         searchQuery=""
         setSearchQuery={vi.fn()}
-      />
+      />,
     );
     expect(
-      screen.getByPlaceholderText("Search title, content, author…")
+      screen.getByPlaceholderText("Search title, content, author…"),
     ).toBeInTheDocument();
   });
 
@@ -23,7 +23,7 @@ describe("PostSearchBar", () => {
         showSearch={true}
         searchQuery=""
         setSearchQuery={vi.fn()}
-      />
+      />,
     );
     expect(screen.getByText("Clear").closest("button")).toBeDisabled();
   });
@@ -34,7 +34,7 @@ describe("PostSearchBar", () => {
         showSearch={true}
         searchQuery="hello"
         setSearchQuery={vi.fn()}
-      />
+      />,
     );
     expect(screen.getByText("Clear").closest("button")).not.toBeDisabled();
   });
@@ -47,11 +47,11 @@ describe("PostSearchBar", () => {
         showSearch={true}
         searchQuery=""
         setSearchQuery={setSearchQuery}
-      />
+      />,
     );
     await user.type(
       screen.getByPlaceholderText("Search title, content, author…"),
-      "test"
+      "test",
     );
     expect(setSearchQuery).toHaveBeenCalled();
   });
@@ -64,7 +64,7 @@ describe("PostSearchBar", () => {
         showSearch={true}
         searchQuery="something"
         setSearchQuery={setSearchQuery}
-      />
+      />,
     );
     await user.click(screen.getByText("Clear"));
     expect(setSearchQuery).toHaveBeenCalledWith("");

@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "../../../api/supabaseClient";
-
-const AVATAR_BUCKET = "avatars";
+import { AVATAR_BUCKET } from "../shared/constants";
 
 const useAvatar = (userId) => {
   const [avatarPath, setAvatarPath] = useState("");

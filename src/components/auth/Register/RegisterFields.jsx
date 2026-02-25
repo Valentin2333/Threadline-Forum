@@ -1,6 +1,41 @@
+import { useState } from "react";
 import Form from "react-bootstrap/Form";
+import Modal from "react-bootstrap/Modal";
+import Button from "react-bootstrap/Button";
+import {TERMS_SECTIONS, PRIVACY_SECTIONS} from "../shared/constants"
+
+const PolicyModal = ({ show, onHide, title, icon, sections }) => (
+  <Modal show={show} onHide={onHide} size="lg" scrollable centered>
+    <Modal.Header closeButton>
+      <Modal.Title style={{ fontSize: "1.125rem" }}>
+        <i className={`${icon} me-2`} style={{ color: "var(--fs-primary)" }} />
+        {title}
+      </Modal.Title>
+    </Modal.Header>
+    <Modal.Body>
+      {sections.map((section, i) => (
+        <div key={i} className="mb-4">
+          <h6 className="fw-semibold mb-2" style={{ fontSize: "0.95rem" }}>
+            {section.title}
+          </h6>
+          <p className="mb-0 text-muted" style={{ fontSize: "0.875rem", lineHeight: 1.7 }}>
+            {section.content}
+          </p>
+        </div>
+      ))}
+    </Modal.Body>
+    <Modal.Footer>
+      <Button variant="primary" size="sm" onClick={onHide}>
+        Close
+      </Button>
+    </Modal.Footer>
+  </Modal>
+);
 
 const RegisterFields = ({ register, errors, rules }) => {
+  const [showTerms, setShowTerms] = useState(false);
+  const [showPrivacy, setShowPrivacy] = useState(false);
+
   return (
     <>
       <Form.Group className="mb-3">
@@ -70,6 +105,53 @@ const RegisterFields = ({ register, errors, rules }) => {
           {errors.password?.message}
         </Form.Control.Feedback>
       </Form.Group>
+
+      <Form.Group className="mb-3">
+        <Form.Check
+          type="checkbox"
+          id="acceptTerms"
+          isInvalid={!!errors.acceptTerms}
+          {...register("acceptTerms", rules.acceptTerms)}
+          label={
+            <span style={{ fontSize: "0.85rem" }}>
+              I agree to the{" "}
+              <a
+                href="#"
+                role="button"
+                onClick={(e) => { e.preventDefault(); setShowTerms(true); }}
+              >
+                Terms & Conditions
+              </a>{" "}
+              and{" "}
+              <a
+                href="#"
+                role="button"
+                onClick={(e) => { e.preventDefault(); setShowPrivacy(true); }}
+              >
+                Privacy Policy
+              </a>
+            </span>
+          }
+          feedback={errors.acceptTerms?.message}
+          feedbackType="invalid"
+        />
+      </Form.Group>
+
+      <PolicyModal
+        show={showTerms}
+        onHide={() => setShowTerms(false)}
+        title="Terms & Conditions"
+        icon="fa-solid fa-file-contract"
+        sections={TERMS_SECTIONS}
+      />
+
+      <PolicyModal
+        show={showPrivacy}
+        onHide={() => setShowPrivacy(false)}
+        title="Privacy Policy"
+        icon="fa-solid fa-shield-halved"
+        sections={PRIVACY_SECTIONS}
+      />
     </>
   );
 };

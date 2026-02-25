@@ -1,8 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../../../api/supabaseClient";
-
-const selectCols =
-  "id, username, first_name, last_name, avatar_url, is_blocked, reputation, phone";
+import { SELECT_COLS } from "../shared/constants";
 
 const useProfileRow = ({ userId, reset }) => {
   const [profile, setProfile] = useState(null);
@@ -25,7 +23,7 @@ const useProfileRow = ({ userId, reset }) => {
       try {
         const { data, error: profileError } = await supabase
           .from("profiles")
-          .select(selectCols)
+          .select(SELECT_COLS)
           .eq("id", userId)
           .single();
 
@@ -70,7 +68,9 @@ const useProfileRow = ({ userId, reset }) => {
         },
         (payload) => {
           const nextAvatarPath = payload?.new?.avatar_url ?? "";
-          setProfile((prev) => (prev ? { ...prev, avatar_url: nextAvatarPath } : prev));
+          setProfile((prev) =>
+            prev ? { ...prev, avatar_url: nextAvatarPath } : prev,
+          );
         },
       )
       .subscribe();

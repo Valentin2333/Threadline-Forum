@@ -11,7 +11,7 @@ describe("EditActions", () => {
         saving={false}
         onStartEdit={vi.fn()}
         onCancelEdit={vi.fn()}
-      />
+      />,
     );
     expect(screen.getByText("Edit profile")).toBeInTheDocument();
   });
@@ -23,7 +23,7 @@ describe("EditActions", () => {
         saving={false}
         onStartEdit={vi.fn()}
         onCancelEdit={vi.fn()}
-      />
+      />,
     );
     expect(screen.getByText("Cancel")).toBeInTheDocument();
     expect(screen.queryByText("Edit profile")).toBeNull();
@@ -38,7 +38,7 @@ describe("EditActions", () => {
         saving={false}
         onStartEdit={onStartEdit}
         onCancelEdit={vi.fn()}
-      />
+      />,
     );
     await user.click(screen.getByText("Edit profile"));
     expect(onStartEdit).toHaveBeenCalledOnce();
@@ -53,7 +53,7 @@ describe("EditActions", () => {
         saving={false}
         onStartEdit={vi.fn()}
         onCancelEdit={onCancelEdit}
-      />
+      />,
     );
     await user.click(screen.getByText("Cancel"));
     expect(onCancelEdit).toHaveBeenCalledOnce();
@@ -66,7 +66,7 @@ describe("EditActions", () => {
         saving={true}
         onStartEdit={vi.fn()}
         onCancelEdit={vi.fn()}
-      />
+      />,
     );
     expect(screen.getByText("Cancel").closest("button")).toBeDisabled();
   });

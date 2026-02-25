@@ -16,7 +16,10 @@ const DeleteAccountModal = ({
     <Modal show={show} onHide={onHide} centered>
       <Modal.Header closeButton={!deleting}>
         <Modal.Title>
-          <i className="fa-solid fa-triangle-exclamation me-2" style={{ color: "var(--fs-danger)" }} />
+          <i
+            className="fa-solid fa-triangle-exclamation me-2"
+            style={{ color: "var(--fs-danger)" }}
+          />
           Delete account
         </Modal.Title>
       </Modal.Header>
@@ -40,7 +43,11 @@ const DeleteAccountModal = ({
         </Form.Group>
       </Modal.Body>
       <Modal.Footer>
-        <Button variant="outline-secondary" onClick={onHide} disabled={deleting}>
+        <Button
+          variant="outline-secondary"
+          onClick={onHide}
+          disabled={deleting}
+        >
           Cancel
         </Button>
         <Button variant="danger" onClick={onDelete} disabled={deleting}>

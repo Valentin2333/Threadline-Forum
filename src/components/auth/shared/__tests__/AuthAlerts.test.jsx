@@ -4,9 +4,7 @@ import AuthAlerts from "../AuthAlerts";
 
 describe("AuthAlerts", () => {
   it("renders nothing when both props are empty", () => {
-    const { container } = render(
-      <AuthAlerts infoMessage="" serverError="" />
-    );
+    const { container } = render(<AuthAlerts infoMessage="" serverError="" />);
     expect(container.querySelectorAll(".alert")).toHaveLength(0);
   });
 
@@ -24,7 +22,7 @@ describe("AuthAlerts", () => {
 
   it("renders both alerts simultaneously", () => {
     render(
-      <AuthAlerts infoMessage="Info message" serverError="Error message" />
+      <AuthAlerts infoMessage="Info message" serverError="Error message" />,
     );
     expect(screen.getByText("Info message")).toBeInTheDocument();
     expect(screen.getByText("Error message")).toBeInTheDocument();

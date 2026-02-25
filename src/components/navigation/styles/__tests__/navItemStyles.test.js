@@ -22,7 +22,7 @@ describe("navItemStylesWithAvatar", () => {
     const styles = navItemStylesWithAvatar({ isActive: true });
     expect(styles.display).toBe("inline-flex");
     expect(styles.alignItems).toBe("center");
-    expect(styles.color).toBe("#fff"); // from navItemStyles active
+    expect(styles.color).toBe("#fff");
   });
 
   it("includes inactive base styles", () => {

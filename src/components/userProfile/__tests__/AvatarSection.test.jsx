@@ -20,7 +20,9 @@ describe("AvatarSection", () => {
   });
 
   it("renders image when avatarUrl is set", () => {
-    render(<AvatarSection {...baseProps} avatarUrl="https://example.com/pic.jpg" />);
+    render(
+      <AvatarSection {...baseProps} avatarUrl="https://example.com/pic.jpg" />,
+    );
     const img = screen.getByAltText("Profile avatar");
     expect(img).toHaveAttribute("src", "https://example.com/pic.jpg");
   });

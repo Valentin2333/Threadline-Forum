@@ -1,32 +1,46 @@
-# Forum System
+# Threadline
 
-A full-featured community forum built with **React 19**, **Supabase**, and **Bootstrap 5**. Users can register, create posts, comment, upvote/downvote, manage their profile with avatar uploads, and more. Admins have a dedicated dashboard for managing users and content.
+A full-featured community forum platform built with React and Supabase. Users can create and join communities (prefixed with `f/`), publish posts, comment, upvote/downvote, manage profiles, and more — all within a responsive, theme-aware interface.
 
 ## Hosted Project
 
-**Live demo:** _Not currently hosted online._
+🔗 **Live demo:** [https://threadline.netlify.app](https://threadline.netlify.app)
+
+## Features
+
+- **Communities** — create, join, leave, and manage communities with the `f/` prefix
+- **Posts & Comments** — full CRUD with inline editing, validation, and author attribution
+- **Voting** — upvote/downvote system that updates post scores and author reputation in real time via database triggers
+- **Global Search** — search across communities and posts from a single search bar
+- **User Profiles** — avatar uploads to Supabase Storage, profile editing, account deletion
+- **Admin Dashboard** — manage users (block/unblock), posts, and communities with platform statistics
+- **Dark / Light Theme** — toggle switch in the navbar, persisted in localStorage, respects OS preference
+- **Responsive Design** — desktop navigation bar + mobile offcanvas sidebar
+- **Authentication** — email/password registration and login via Supabase Auth
+- **Footer Pages** — FAQ, Terms & Conditions, Privacy Policy, and Contact Us form (via Formsubmit.co)
 
 ## Tech Stack
 
-- **Frontend:** React 19, React Router 7, React Hook Form, React-Bootstrap, Font Awesome
-- **Backend / BaaS:** Supabase (Auth, PostgreSQL, Storage, Edge Functions, Row-Level Security)
-- **Build tool:** Vite 7
-- **Language:** JavaScript (JSX)
-
----
+| Layer       | Technology                                                      |
+| ----------- | --------------------------------------------------------------- |
+| Frontend    | React 19, Vite 7, React Router 7                               |
+| UI          | Bootstrap 5, React Bootstrap, Font Awesome 7                   |
+| Forms       | React Hook Form                                                 |
+| Backend     | Supabase (Auth, PostgreSQL, Storage, Row-Level Security)        |
+| Testing     | Vitest, Testing Library, happy-dom                              |
 
 ## Local Setup
 
 ### Prerequisites
 
 - **Node.js** ≥ 18
-- **npm** (included with Node)
-- A **Supabase** project (free tier works fine)
+- **npm** ≥ 9
+- A **Supabase** project (free tier works) with the database schema applied (see [Database Schema](#database-schema))
 
 ### 1. Clone the repository
 
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/your-username/forum-system.git
 cd forum-system
 ```
 
@@ -38,235 +52,248 @@ npm install
 
 ### 3. Configure environment variables
 
-Create a `.env` file in the project root with your Supabase credentials:
+Create a `.env` file in the project root:
 
 ```env
-VITE_SUPABASE_URL=https://<your-project-ref>.supabase.co
-VITE_SUPABASE_ANON_KEY=<your-anon-public-key>
+VITE_SUPABASE_URL=https://your-project-id.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-key
 ```
 
-You can find both values in your Supabase dashboard under **Settings → API**.
+Both values are available in the Supabase dashboard under **Settings → API**.
 
 ### 4. Set up the database
 
-Open the Supabase SQL Editor and run the contents of `backup.sql` to create all tables, functions, triggers, indexes, and RLS policies.
+Apply the schema from the [Database Schema](#database-schema) section below in the Supabase SQL Editor. This creates all tables, functions, triggers, indexes, and RLS policies.
 
-### 5. Set up storage
+### 5. Set up Supabase Storage
 
-In your Supabase dashboard, create a **Storage bucket** called `avatars` (set it to public or configure appropriate policies for read access).
+Create a **public** storage bucket named `avatars` in Supabase Storage for user profile pictures.
 
-### 6. Deploy the Edge Function
-
-The project includes a Supabase Edge Function for account deletion (`supabase/functions/delete-user/index.ts`). Deploy it with the Supabase CLI:
-
-```bash
-npx supabase functions deploy delete-user
-```
-
-Make sure the `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` environment variables are configured in your Supabase project's Edge Function settings.
-
-### 7. Start the dev server
+### 6. Start the development server
 
 ```bash
 npm run dev
 ```
 
-The app will be available at `http://localhost:5173` by default.
+The app will be available at `http://localhost:5173`.
 
-### Other scripts
+### Available Scripts
 
-| Command | Description |
-|---|---|
-| `npm run build` | Create a production build in `dist/` |
-| `npm run preview` | Preview the production build locally |
-| `npm run lint` | Run ESLint |
-
----
+| Command                 | Description                |
+| ----------------------- | -------------------------- |
+| `npm run dev`           | Start development server   |
+| `npm run build`         | Production build           |
+| `npm run preview`       | Preview production build   |
+| `npm test`              | Run all tests once         |
+| `npm run test:watch`    | Run tests in watch mode    |
+| `npm run test:coverage` | Run tests with coverage    |
+| `npm run lint`          | Lint the codebase          |
 
 ## Database Schema
 
-The database consists of **5 tables**, connected through foreign keys with cascading deletes. All tables have Row-Level Security (RLS) enabled.
+The database runs on **Supabase PostgreSQL** with Row-Level Security (RLS) enabled on every table.
 
 ### Entity Relationship Diagram
 
 ```
-┌──────────────┐       ┌──────────────┐       ┌──────────────┐
-│  auth.users  │       │   profiles   │       │  user_roles  │
-│──────────────│       │──────────────│       │──────────────│
-│ id (PK)      │◄──────│ id (PK, FK)  │──────►│ user_id(PK,FK│
-│ email        │  1:1  │ username (UQ)│  1:1  │ role         │
-│ ...          │       │ email (UQ)   │       └──────────────┘
-└──────────────┘       │ first_name   │
-                       │ last_name    │
-                       │ phone        │
-                       │ avatar_url   │
-                       │ avatar_path  │
-                       │ avatar_upd.. │
-                       │ is_blocked   │
-                       │ reputation   │
-                       │ is_active    │
-                       │ created_at   │
-                       │ updated_at   │
-                       └──────┬───────┘
-                              │ 1
-                              │
-                 ┌────────────┼────────────┐
-                 │            │            │
-                 ▼ N          ▼ N          ▼ N
-          ┌──────────┐  ┌──────────┐  ┌──────────┐
-          │  posts   │  │ comments │  │  votes   │
-          │──────────│  │──────────│  │──────────│
-          │ id (PK)  │  │ id (PK)  │  │ id (PK)  │
-          │ author_id│  │ post_id  │──│ voter_id │
-          │ title    │  │ author_id│  │target_type│
-          │ content  │  │ content  │  │ target_id│
-          │ score    │  │ score    │  │ value    │
-          │ comment_ │  │created_at│  │created_at│
-          │  count   │  │updated_at│  └──────────┘
-          │created_at│  └──────────┘
-          │updated_at│       ▲ N
-          └────┬─────┘       │
-               │ 1           │
-               └─────────────┘
+┌──────────────────────┐       ┌──────────────────┐       ┌──────────────────┐
+│       profiles       │       │   communities    │       │    user_roles    │
+├──────────────────────┤       ├──────────────────┤       ├──────────────────┤
+│ id          (PK, FK) │◄──┐   │ id          (PK) │       │ user_id (PK, FK) │
+│ username        (UQ) │   │   │ name        (UQ) │       │ role             │
+│ email                │   │   │ description      │       └────────┬─────────┘
+│ first_name           │   │   │ creator_id  (FK) │───┐            │
+│ last_name            │   │   │ member_count     │   │   references profiles
+│ phone                │   │   │ created_at       │   │
+│ avatar_url           │   │   └────────┬─────────┘   │
+│ avatar_path          │   │            │             │
+│ avatar_updated_at    │   │   ┌────────┴─────────┐   │
+│ is_blocked           │   │   │community_members │   │
+│ is_admin             │   │   ├──────────────────┤   │
+│ reputation           │   │   │ id          (PK) │   │
+│ is_active            │   │   │ community_id(FK) │───┘
+│ created_at           │   │   │ user_id     (FK) │── references profiles
+│ updated_at           │   │   │ joined_at        │
+└──────────────────────┘   │   └──────────────────┘
+         │                 │
+         │                 │
+    ┌────┴─────────────┐   │   ┌──────────────────┐
+    │      posts       │   │   │      votes       │
+    ├──────────────────┤   │   ├──────────────────┤
+    │ id          (PK) │   │   │ id          (PK) │
+    │ author_id   (FK) │───┘   │ voter_id    (FK) │── references profiles
+    │ community_id(FK) │       │ target_type      │   (enum: 'post'|'comment')
+    │ title            │       │ target_id        │
+    │ content          │       │ value            │   (-1 or 1)
+    │ score            │       │ created_at       │
+    │ comment_count    │       └──────────────────┘
+    │ created_at       │         UNIQUE(voter_id, target_type, target_id)
+    │ updated_at       │
+    └────────┬─────────┘
+             │
+    ┌────────┴─────────┐
+    │     comments     │
+    ├──────────────────┤
+    │ id          (PK) │
+    │ post_id     (FK) │── references posts    (CASCADE)
+    │ author_id   (FK) │── references profiles (CASCADE)
+    │ content          │
+    │ score            │
+    │ created_at       │
+    │ updated_at       │
+    └──────────────────┘
 ```
 
-### Table: `profiles`
+### Tables
 
-Automatically created via a database trigger (`handle_new_user`) when a new user signs up through Supabase Auth. Linked 1:1 to `auth.users`.
+#### `profiles`
 
-| Column | Type | Default | Nullable | Description |
-|---|---|---|---|---|
-| `id` | `uuid` | — | **NO** | Primary key. References `auth.users(id)` ON DELETE CASCADE |
-| `username` | `text` | — | **NO** | Unique, case-insensitive. 4–32 chars. Cannot be changed after initial set |
-| `first_name` | `text` | — | **NO** | 4–32 characters |
-| `last_name` | `text` | — | **NO** | 4–32 characters |
-| `email` | `text` | — | YES | Unique (case-insensitive). Copied from auth on creation |
-| `phone` | `text` | — | YES | Optional phone number |
-| `avatar_url` | `text` | `null` | YES | Storage path to avatar file |
-| `avatar_path` | `text` | `null` | YES | Internal storage path |
-| `avatar_updated_at` | `timestamptz` | `null` | YES | Last avatar change timestamp |
-| `is_blocked` | `boolean` | `false` | **NO** | Blocked users cannot create posts or comments |
-| `reputation` | `integer` | `0` | **NO** | Accumulated score from votes on user's posts/comments |
-| `is_active` | `boolean` | `true` | **NO** | Account active flag |
-| `created_at` | `timestamptz` | `now()` | **NO** | Row creation timestamp |
-| `updated_at` | `timestamptz` | `now()` | **NO** | Auto-updated via trigger |
+Stores user profile data. A row is automatically created on registration via the `handle_new_user()` trigger on `auth.users`.
 
-**Constraints:** `username_length_check (4–32)`, `first_name_length (4–32)`, `last_name_length (4–32)`, `profiles_username_key (UNIQUE)`, `profiles_email_unique (UNIQUE, case-insensitive)`
+| Column              | Type          | Constraints / Default                      |
+| ------------------- | ------------- | ------------------------------------------ |
+| `id`                | `uuid`        | PK, FK → `auth.users(id)` ON DELETE CASCADE |
+| `username`          | `text`        | UNIQUE (case-insensitive), NOT NULL, 4–32 chars |
+| `email`             | `text`        | UNIQUE (case-insensitive)                  |
+| `first_name`        | `text`        | NOT NULL, 4–32 chars                       |
+| `last_name`         | `text`        | NOT NULL, 4–32 chars                       |
+| `phone`             | `text`        | nullable                                   |
+| `avatar_url`        | `text`        | nullable                                   |
+| `avatar_path`       | `text`        | nullable (Supabase Storage path)           |
+| `avatar_updated_at` | `timestamptz` | nullable                                   |
+| `is_blocked`        | `boolean`     | NOT NULL, default `false`                  |
+| `is_admin`          | `boolean`     | NOT NULL, default `false`                  |
+| `reputation`        | `integer`     | NOT NULL, default `0`                      |
+| `is_active`         | `boolean`     | NOT NULL, default `true`                   |
+| `created_at`        | `timestamptz` | NOT NULL, default `now()`                  |
+| `updated_at`        | `timestamptz` | NOT NULL, default `now()`                  |
 
-**Triggers:** `trg_prevent_username_change` — blocks username changes after initial set. `trg_profiles_updated_at` — auto-sets `updated_at`.
+#### `communities`
 
----
+Each community name is prefixed with `f/` (e.g. `f/react-devs`).
 
-### Table: `posts`
+| Column         | Type          | Constraints / Default                       |
+| -------------- | ------------- | ------------------------------------------- |
+| `id`           | `uuid`        | PK, default `gen_random_uuid()`             |
+| `name`         | `text`        | UNIQUE, NOT NULL                            |
+| `description`  | `text`        | nullable                                    |
+| `creator_id`   | `uuid`        | FK → `profiles(id)` ON DELETE CASCADE       |
+| `member_count` | `integer`     | NOT NULL, default `0`                       |
+| `created_at`   | `timestamptz` | NOT NULL, default `now()`                   |
 
-| Column | Type | Default | Nullable | Description |
-|---|---|---|---|---|
-| `id` | `uuid` | `gen_random_uuid()` | **NO** | Primary key |
-| `author_id` | `uuid` | — | **NO** | FK → `profiles(id)` ON DELETE CASCADE |
-| `title` | `text` | — | **NO** | 16–64 characters |
-| `content` | `text` | — | **NO** | 32–8,192 characters |
-| `score` | `integer` | `0` | **NO** | Net vote score (managed by triggers, not editable directly) |
-| `comment_count` | `integer` | `0` | **NO** | Denormalized count (managed by triggers, not editable directly) |
-| `created_at` | `timestamptz` | `now()` | **NO** | Row creation timestamp |
-| `updated_at` | `timestamptz` | `now()` | **NO** | Auto-updated via trigger |
+#### `community_members`
 
-**Constraints:** `post_title_length (16–64)`, `post_content_length (32–8192)`
+Join table linking users to communities they have joined.
 
-**Triggers:** `trg_posts_updated_at`, `trg_prevent_manual_score_change` — prevents direct changes to `score` and `comment_count` from client-side queries.
+| Column         | Type          | Constraints / Default                       |
+| -------------- | ------------- | ------------------------------------------- |
+| `id`           | `uuid`        | PK, default `gen_random_uuid()`             |
+| `community_id` | `uuid`       | FK → `communities(id)` ON DELETE CASCADE    |
+| `user_id`      | `uuid`        | FK → `profiles(id)` ON DELETE CASCADE       |
+| `joined_at`    | `timestamptz` | NOT NULL, default `now()`                   |
 
-**Indexes:** `idx_posts_created_at (DESC)`, `idx_posts_score (DESC)`, `idx_posts_comment_count (DESC)`
+#### `posts`
 
----
+| Column          | Type          | Constraints / Default                       |
+| --------------- | ------------- | ------------------------------------------- |
+| `id`            | `uuid`        | PK, default `gen_random_uuid()`             |
+| `author_id`     | `uuid`        | FK → `profiles(id)` ON DELETE CASCADE       |
+| `community_id`  | `uuid`        | FK → `communities(id)`, nullable            |
+| `title`         | `text`        | NOT NULL, 16–64 chars                       |
+| `content`       | `text`        | NOT NULL, 32–8 192 chars                    |
+| `score`         | `integer`     | NOT NULL, default `0` (managed by triggers) |
+| `comment_count` | `integer`     | NOT NULL, default `0` (managed by triggers) |
+| `created_at`    | `timestamptz` | NOT NULL, default `now()`                   |
+| `updated_at`    | `timestamptz` | NOT NULL, default `now()`                   |
 
-### Table: `comments`
+#### `comments`
 
-| Column | Type | Default | Nullable | Description |
-|---|---|---|---|---|
-| `id` | `uuid` | `gen_random_uuid()` | **NO** | Primary key |
-| `post_id` | `uuid` | — | **NO** | FK → `posts(id)` ON DELETE CASCADE |
-| `author_id` | `uuid` | — | **NO** | FK → `profiles(id)` ON DELETE CASCADE |
-| `content` | `text` | — | **NO** | 1–8,192 characters |
-| `score` | `integer` | `0` | **NO** | Net vote score |
-| `created_at` | `timestamptz` | `now()` | **NO** | Row creation timestamp |
-| `updated_at` | `timestamptz` | `now()` | **NO** | Auto-updated via trigger |
+| Column       | Type          | Constraints / Default                       |
+| ------------ | ------------- | ------------------------------------------- |
+| `id`         | `uuid`        | PK, default `gen_random_uuid()`             |
+| `post_id`    | `uuid`        | FK → `posts(id)` ON DELETE CASCADE          |
+| `author_id`  | `uuid`        | FK → `profiles(id)` ON DELETE CASCADE       |
+| `content`    | `text`        | NOT NULL, 1–8 192 chars                     |
+| `score`      | `integer`     | NOT NULL, default `0`                       |
+| `created_at` | `timestamptz` | NOT NULL, default `now()`                   |
+| `updated_at` | `timestamptz` | NOT NULL, default `now()`                   |
 
-**Constraints:** `comment_content_length (1–8192)`
+#### `votes`
 
-**Triggers:** `trg_comments_count_insert` / `trg_comments_count_delete` — syncs the parent post's `comment_count`. `trg_comments_updated_at` — auto-sets `updated_at`.
+Polymorphic voting — a single table handles votes on both posts and comments.
 
-**Indexes:** `idx_comments_post_id`, `idx_comments_created_at (DESC)`
+| Column        | Type                      | Constraints / Default                          |
+| ------------- | ------------------------- | ---------------------------------------------- |
+| `id`          | `uuid`                    | PK, default `gen_random_uuid()`                |
+| `voter_id`    | `uuid`                    | FK → `profiles(id)` ON DELETE CASCADE          |
+| `target_type` | `enum('post','comment')`  | NOT NULL                                       |
+| `target_id`   | `uuid`                    | NOT NULL                                       |
+| `value`       | `integer`                 | NOT NULL, CHECK (`-1` or `1`)                  |
+| `created_at`  | `timestamptz`             | NOT NULL, default `now()`                      |
+|               |                           | UNIQUE(`voter_id`, `target_type`, `target_id`) |
 
----
+#### `user_roles`
 
-### Table: `votes`
+Tracks admin privileges. Checked by the `is_admin()` SQL function used in RLS policies.
 
-Each user can cast one vote per target (post or comment). The `value` is either `+1` (upvote) or `-1` (downvote).
+| Column    | Type   | Constraints / Default                       |
+| --------- | ------ | ------------------------------------------- |
+| `user_id` | `uuid` | PK, FK → `profiles(id)` ON DELETE CASCADE   |
+| `role`    | `text` | NOT NULL, CHECK (`'user'` or `'admin'`)     |
 
-| Column | Type | Default | Nullable | Description |
-|---|---|---|---|---|
-| `id` | `uuid` | `gen_random_uuid()` | **NO** | Primary key |
-| `voter_id` | `uuid` | — | **NO** | FK → `profiles(id)` ON DELETE CASCADE |
-| `target_type` | `vote_target` (enum) | — | **NO** | `'post'` or `'comment'` |
-| `target_id` | `uuid` | — | **NO** | ID of the post or comment being voted on |
-| `value` | `integer` | — | **NO** | `1` (upvote) or `-1` (downvote) |
-| `created_at` | `timestamptz` | `now()` | **NO** | Vote timestamp |
+### Database Functions & Triggers
 
-**Constraints:** `votes_value_check (value IN (-1, 1))`, `unique_vote (voter_id, target_type, target_id)`
+| Function                             | Trigger fires on             | Purpose                                                            |
+| ------------------------------------ | ---------------------------- | ------------------------------------------------------------------ |
+| `handle_new_user()`                  | `auth.users` INSERT          | Auto-creates a `profiles` row for every new sign-up               |
+| `apply_vote_to_score()`             | `votes` INSERT/UPDATE/DELETE | Keeps `posts.score` in sync with vote totals                      |
+| `update_author_reputation()`        | `votes` INSERT/UPDATE/DELETE | Recalculates `profiles.reputation` from all the author's votes    |
+| `update_reputation_on_post_delete()`| `posts` DELETE               | Recalculates author reputation when a post is removed             |
+| `comments_count_sync()`             | `comments` INSERT/DELETE     | Keeps `posts.comment_count` in sync                               |
+| `prevent_manual_score_change()`     | `posts` UPDATE               | Blocks direct client-side edits to `score` and `comment_count`    |
+| `prevent_username_change()`         | `profiles` UPDATE            | Makes `username` immutable after initial creation                 |
+| `set_updated_at()`                  | `profiles`/`posts`/`comments` UPDATE | Auto-sets `updated_at` to `now()`                        |
+| `is_admin(uid)`                     | — (SQL function)             | Returns `true` if the user has an admin role; used in RLS policies |
 
-**Triggers:** `votes_apply_score` — on INSERT/UPDATE/DELETE, automatically adjusts the `score` on the target post/comment and the author's `reputation` on their profile.
+### Row-Level Security (RLS)
 
----
+All tables have RLS enabled. Summary of key policies:
 
-### Table: `user_roles`
+| Table               | SELECT        | INSERT                          | UPDATE              | DELETE              |
+| ------------------- | ------------- | ------------------------------- | ------------------- | ------------------- |
+| `profiles`          | public        | auto via trigger                | own or admin        | own                 |
+| `communities`       | public        | authenticated                   | creator             | creator             |
+| `community_members` | public        | authenticated (self)            | —                   | own membership      |
+| `posts`             | public        | authenticated + not blocked     | own or admin        | own or admin        |
+| `comments`          | public        | authenticated + not blocked     | own or admin        | own or admin        |
+| `votes`             | public        | authenticated (own `voter_id`)  | own                 | own                 |
+| `user_roles`        | admin only    | admin only                      | admin only          | admin only          |
 
-Maps users to roles. Used by the `is_admin()` SQL function to gate admin-only operations in RLS policies.
+## Project Structure
 
-| Column | Type | Default | Nullable | Description |
-|---|---|---|---|---|
-| `user_id` | `uuid` | — | **NO** | Primary key. FK → `profiles(id)` ON DELETE CASCADE |
-| `role` | `text` | — | **NO** | `'user'` or `'admin'` |
-
-**Constraints:** `user_roles_role_check (role IN ('user', 'admin'))`
-
----
-
-### Custom Enum
-
-| Name | Values |
-|---|---|
-| `vote_target` | `'post'`, `'comment'` |
-
-### Key Database Functions
-
-| Function | Purpose |
-|---|---|
-| `handle_new_user()` | Trigger function: creates a `profiles` row when a new `auth.users` record is inserted |
-| `is_admin(uid)` | Returns `true` if the user has an `'admin'` role in `user_roles` |
-| `apply_vote_effect(...)` | Adjusts score on the target and reputation on the author's profile |
-| `apply_vote_to_score()` | Trigger function for the `votes` table — delegates to `apply_vote_effect` |
-| `comments_count_sync()` | Trigger function: increments/decrements `posts.comment_count` on comment insert/delete |
-| `prevent_manual_score_change()` | Trigger function: blocks direct client updates to `posts.score` and `posts.comment_count` |
-| `prevent_username_change()` | Trigger function: blocks changes to `profiles.username` after initial assignment |
-| `set_updated_at()` | Trigger function: sets `updated_at = now()` before every update |
-
-### Row-Level Security (RLS) Summary
-
-| Table | SELECT | INSERT | UPDATE | DELETE |
-|---|---|---|---|---|
-| `profiles` | Public (all rows readable) | Own row only (authenticated) | Own row only | Own row or service role |
-| `posts` | Public | Authenticated + not blocked | Own or admin | Own or admin |
-| `comments` | Public | Authenticated + not blocked | Own or admin | Own or admin |
-| `votes` | Public | Own votes only | Own votes only | Own votes only |
-| `user_roles` | Admin only | Admin only | Admin only | Admin / service role |
-
-### Supabase Storage
-
-| Bucket | Purpose |
-|---|---|
-| `avatars` | Stores user profile pictures. Files are organized under `<user_id>/` folders. |
-
-### Edge Function
-
-| Function | Path | Purpose |
-|---|---|---|
-| `delete-user` | `supabase/functions/delete-user/index.ts` | Securely deletes a user account: removes avatar files from storage, deletes the profile row, and removes the auth user. Requires the caller's JWT for authorization and uses the service role key internally. |
+```
+src/
+├── api/                          # Supabase API layer
+│   ├── supabaseClient.js         # Supabase client initialisation
+│   ├── posts.js                  # Post CRUD + queries
+│   ├── comments.js               # Comment CRUD
+│   ├── votes.js                  # Vote upsert / delete / get
+│   ├── communities.js            # Community CRUD, membership, search
+│   └── admin.js                  # Admin user / post / community management
+│
+├── components/
+│   ├── admin/                    # Admin dashboard, stats, user & post management
+│   ├── auth/                     # Login, Register, shared auth components
+│   ├── communities/              # Community list, page, members, global search
+│   ├── footer/                   # Footer, FAQ, Terms, Privacy, Contact Us
+│   ├── home/                     # Landing page, stat cards, feature list
+│   ├── navigation/               # Navbar, desktop nav, mobile sidebar, avatar
+│   ├── posting/                  # Posts, comments, votes, filters, search
+│   ├── shared/                   # Reusable modals and components
+│   ├── theme/                    # Dark / light theme context and toggle
+│   └── userProfile/              # Profile view / edit, avatar upload, delete account
+│
+├── App.jsx                       # Root routing + layout
+├── main.jsx                      # Entry point with providers
+└── index.css                     # Global theme, dark mode, component styles
+```

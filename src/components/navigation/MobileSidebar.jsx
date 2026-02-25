@@ -3,6 +3,7 @@ import Nav from "react-bootstrap/Nav";
 import Button from "react-bootstrap/Button";
 import { NavLink, useNavigate } from "react-router-dom";
 import { navItemStyles } from "./styles/navItemStyles";
+import ThemeToggle from "../theme/ThemeToggle";
 
 const MobileSidebar = ({ show, onClose, user, isAdmin }) => {
   const navigate = useNavigate();
@@ -18,7 +19,7 @@ const MobileSidebar = ({ show, onClose, user, isAdmin }) => {
       <Offcanvas.Header closeButton closeVariant="white">
         <Offcanvas.Title>
           <i className="fa-solid fa-comments me-2" style={{ fontSize: 16 }} />
-          Forum
+          Threadline
         </Offcanvas.Title>
       </Offcanvas.Header>
 
@@ -37,13 +38,37 @@ const MobileSidebar = ({ show, onClose, user, isAdmin }) => {
 
           <Nav.Link
             as={NavLink}
-            to="/posts"
+            to="/feed"
             style={navItemStyles}
             onClick={onClose}
           >
-            <i className="fa-solid fa-newspaper me-2" style={{ fontSize: 13 }} />
-            Posts
+            <i className="fa-solid fa-rss me-2" style={{ fontSize: 13 }} />
+            Feed
           </Nav.Link>
+
+          {user && (
+            <Nav.Link
+              as={NavLink}
+              to="/communities"
+              style={navItemStyles}
+              onClick={onClose}
+            >
+              <i className="fa-solid fa-users me-2" style={{ fontSize: 13 }} />
+              Communities
+            </Nav.Link>
+          )}
+
+          {user && (
+            <Nav.Link
+              as={NavLink}
+              to="/my-communities"
+              style={navItemStyles}
+              onClick={onClose}
+            >
+              <i className="fa-solid fa-hammer me-2" style={{ fontSize: 13 }} />
+              My Communities
+            </Nav.Link>
+          )}
 
           {user && (
             <Nav.Link
@@ -64,7 +89,10 @@ const MobileSidebar = ({ show, onClose, user, isAdmin }) => {
               style={navItemStyles}
               onClick={onClose}
             >
-              <i className="fa-solid fa-shield-halved me-2" style={{ fontSize: 13 }} />
+              <i
+                className="fa-solid fa-shield-halved me-2"
+                style={{ fontSize: 13 }}
+              />
               Admin
             </Nav.Link>
           )}
@@ -72,30 +100,40 @@ const MobileSidebar = ({ show, onClose, user, isAdmin }) => {
 
         <div className="flex-grow-1" />
 
-        {!user && (
-          <div className="d-flex flex-column gap-2">
-            <Button
-              variant="outline-light"
-              size="sm"
-              onClick={() => {
-                onClose();
-                navigate("/login");
-              }}
-            >
-              Login
-            </Button>
-            <Button
-              variant="light"
-              size="sm"
-              onClick={() => {
-                onClose();
-                navigate("/register");
-              }}
-            >
-              Register
-            </Button>
+        <div className="d-flex flex-column gap-2">
+          {!user && (
+            <>
+              <Button
+                variant="outline-light"
+                size="sm"
+                onClick={() => {
+                  onClose();
+                  navigate("/login");
+                }}
+              >
+                Login
+              </Button>
+              <Button
+                variant="light"
+                size="sm"
+                onClick={() => {
+                  onClose();
+                  navigate("/register");
+                }}
+              >
+                Register
+              </Button>
+            </>
+          )}
+
+          <div className={`d-flex align-items-center gap-2 ${!user ? "mt-1" : ""}`}>
+            <span style={{ fontSize: "0.8125rem", color: "rgba(255,255,255,0.5)" }}>
+              <i className="fa-solid fa-circle-half-stroke me-1" style={{ fontSize: 11 }} />
+              Theme
+            </span>
+            <ThemeToggle />
           </div>
-        )}
+        </div>
       </Offcanvas.Body>
     </Offcanvas>
   );

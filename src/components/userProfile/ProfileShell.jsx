@@ -3,7 +3,13 @@ import Alert from "react-bootstrap/Alert";
 import Button from "react-bootstrap/Button";
 import Spinner from "react-bootstrap/Spinner";
 
-const ProfileShell = ({ loadingUser, user, authError, onGoLogin, children }) => {
+const ProfileShell = ({
+  loadingUser,
+  user,
+  authError,
+  onGoLogin,
+  children,
+}) => {
   if (loadingUser) {
     return (
       <Container className="py-4" style={{ maxWidth: 720 }}>

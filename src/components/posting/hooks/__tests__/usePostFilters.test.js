@@ -38,7 +38,7 @@ const makePosts = () => [
 describe("usePostFilters", () => {
   it("defaults to newest-first sorting", () => {
     const { result } = renderHook(() =>
-      usePostFilters({ posts: makePosts(), userId: "u1" })
+      usePostFilters({ posts: makePosts(), userId: "u1" }),
     );
     const ids = result.current.displayedPosts.map((p) => p.id);
     // p1 is Jan 3, p3 is Jan 2, p2 is Jan 1
@@ -47,7 +47,7 @@ describe("usePostFilters", () => {
 
   it("sorts by oldest", () => {
     const { result } = renderHook(() =>
-      usePostFilters({ posts: makePosts(), userId: "u1" })
+      usePostFilters({ posts: makePosts(), userId: "u1" }),
     );
     act(() => result.current.setSortBy("oldest"));
     const ids = result.current.displayedPosts.map((p) => p.id);
@@ -56,7 +56,7 @@ describe("usePostFilters", () => {
 
   it("sorts by score descending", () => {
     const { result } = renderHook(() =>
-      usePostFilters({ posts: makePosts(), userId: "u1" })
+      usePostFilters({ posts: makePosts(), userId: "u1" }),
     );
     act(() => result.current.setSortBy("score"));
     const ids = result.current.displayedPosts.map((p) => p.id);
@@ -66,7 +66,7 @@ describe("usePostFilters", () => {
 
   it("sorts by comments count descending", () => {
     const { result } = renderHook(() =>
-      usePostFilters({ posts: makePosts(), userId: "u1" })
+      usePostFilters({ posts: makePosts(), userId: "u1" }),
     );
     act(() => result.current.setSortBy("comments"));
     expect(result.current.displayedPosts[0].id).toBe("p1"); // 2 comments
@@ -74,7 +74,7 @@ describe("usePostFilters", () => {
 
   it("filters by search query in title", () => {
     const { result } = renderHook(() =>
-      usePostFilters({ posts: makePosts(), userId: "u1" })
+      usePostFilters({ posts: makePosts(), userId: "u1" }),
     );
     act(() => result.current.setSearchQuery("Alpha"));
     expect(result.current.displayedPosts).toHaveLength(1);
@@ -83,7 +83,7 @@ describe("usePostFilters", () => {
 
   it("filters by search query in author username", () => {
     const { result } = renderHook(() =>
-      usePostFilters({ posts: makePosts(), userId: "u1" })
+      usePostFilters({ posts: makePosts(), userId: "u1" }),
     );
     act(() => result.current.setSearchQuery("bob"));
     expect(result.current.displayedPosts).toHaveLength(1);
@@ -92,7 +92,7 @@ describe("usePostFilters", () => {
 
   it("filters by author = mine", () => {
     const { result } = renderHook(() =>
-      usePostFilters({ posts: makePosts(), userId: "u1" })
+      usePostFilters({ posts: makePosts(), userId: "u1" }),
     );
     act(() => result.current.setAuthorFilter("mine"));
     const ids = result.current.displayedPosts.map((p) => p.id);
@@ -104,7 +104,7 @@ describe("usePostFilters", () => {
 
   it("filters by score >= 10", () => {
     const { result } = renderHook(() =>
-      usePostFilters({ posts: makePosts(), userId: "u1" })
+      usePostFilters({ posts: makePosts(), userId: "u1" }),
     );
     act(() => result.current.setScoreFilter("gte10"));
     const ids = result.current.displayedPosts.map((p) => p.id);
@@ -115,7 +115,7 @@ describe("usePostFilters", () => {
 
   it("filters by score >= 100 leaves no results", () => {
     const { result } = renderHook(() =>
-      usePostFilters({ posts: makePosts(), userId: "u1" })
+      usePostFilters({ posts: makePosts(), userId: "u1" }),
     );
     act(() => result.current.setScoreFilter("gte100"));
     expect(result.current.displayedPosts).toHaveLength(0);
@@ -123,7 +123,7 @@ describe("usePostFilters", () => {
 
   it("clearControls resets all filters", () => {
     const { result } = renderHook(() =>
-      usePostFilters({ posts: makePosts(), userId: "u1" })
+      usePostFilters({ posts: makePosts(), userId: "u1" }),
     );
 
     act(() => {
@@ -143,7 +143,7 @@ describe("usePostFilters", () => {
 
   it("hasActiveSearch is true when searchQuery is not empty", () => {
     const { result } = renderHook(() =>
-      usePostFilters({ posts: makePosts(), userId: "u1" })
+      usePostFilters({ posts: makePosts(), userId: "u1" }),
     );
     expect(result.current.hasActiveSearch).toBe(false);
     act(() => result.current.setSearchQuery("hello"));
@@ -152,7 +152,7 @@ describe("usePostFilters", () => {
 
   it("hasActiveFilters is true when sortBy is not newest", () => {
     const { result } = renderHook(() =>
-      usePostFilters({ posts: makePosts(), userId: "u1" })
+      usePostFilters({ posts: makePosts(), userId: "u1" }),
     );
     expect(result.current.hasActiveFilters).toBe(false);
     act(() => result.current.setSortBy("oldest"));

@@ -32,9 +32,7 @@ const CommentItem = ({
             to={`/profile/${comment.author_id}`}
             className="text-decoration-none"
           >
-            <AvatarFromStorage
-              pathOrUrl={comment.comment_author?.avatar_url}
-            />
+            <AvatarFromStorage pathOrUrl={comment.comment_author?.avatar_url} />
           </Link>
           <div>
             <Link
@@ -63,10 +61,7 @@ const CommentItem = ({
                   </div>
                 )}
                 <div className="d-flex gap-2 mt-2">
-                  <Button
-                    size="sm"
-                    onClick={() => onSaveEdit(comment.id)}
-                  >
+                  <Button size="sm" onClick={() => onSaveEdit(comment.id)}>
                     Save
                   </Button>
                   <Button

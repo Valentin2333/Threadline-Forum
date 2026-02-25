@@ -44,10 +44,13 @@ const DesktopNav = ({ user, avatarUrl, isAdmin }) => {
 
       <Nav className="ms-auto align-items-lg-center gap-2 d-none d-lg-flex">
         {user && (
-          <Nav.Link as={NavLink} to="/profile" style={navItemStylesWithAvatar}>
-            <Avatar url={avatarUrl} size="sm" />
-            <span className="ms-1">Your Profile</span>
-          </Nav.Link>
+          <>
+            <NotificationsBell userId={user.id} />
+            <Nav.Link as={NavLink} to="/profile" style={navItemStylesWithAvatar}>
+              <Avatar url={avatarUrl} size="sm" />
+              <span className="ms-1">Profile</span>
+            </Nav.Link>
+          </>
         )}
 
         {!user && (

@@ -222,6 +222,9 @@ export async function getCommunityPosts(communityId) {
     .select(
       `
       id, author_id, title, content, created_at, score, comment_count, community_id,
+      post_media (
+        id, media_type, storage_path, created_at
+      ),
       post_author:profiles!posts_author_id_fkey ( username, avatar_url ),
       comments (
         id, post_id, author_id, content, created_at, score,
@@ -253,6 +256,9 @@ export async function getPostsForJoinedCommunities(userId) {
     .select(
       `
       id, author_id, title, content, created_at, score, comment_count, community_id,
+      post_media (
+        id, media_type, storage_path, created_at
+      ),
       post_author:profiles!posts_author_id_fkey ( username, avatar_url ),
       community:communities!posts_community_id_fkey ( id, name ),
       comments (

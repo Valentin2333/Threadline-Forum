@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { createPost } from "../../api/posts";
+import { uploadPostMedia } from "../../api/postMedia";
 
 import Alert from "react-bootstrap/Alert";
 import Button from "react-bootstrap/Button";
@@ -17,6 +18,9 @@ const CommunityCreatePostForm = ({
   const [showForm, setShowForm] = useState(false);
   const [serverError, setServerError] = useState("");
 
+  // v1: single optional attachment
+  const [mediaFile, setMediaFile] = useState(null);
+
   const {
     register,
     handleSubmit,
@@ -26,14 +30,35 @@ const CommunityCreatePostForm = ({
 
   const onSubmit = async (data) => {
     setServerError("");
+
     try {
-      await createPost({
+      const newPost = await createPost({
         userId,
         title: data.title.trim(),
         content: data.content.trim(),
         communityId,
       });
+
+      // optional attachment upload
+      if (mediaFile) {
+        const isVideo = mediaFile.type?.startsWith("video/");
+        const maxBytes = isVideo ? 25 * 1024 * 1024 : 5 * 1024 * 1024;
+
+        if (mediaFile.size > maxBytes) {
+          throw new Error(
+            isVideo ? "Video too large (max 25MB)." : "Image too large (max 5MB)."
+          );
+        }
+
+        await uploadPostMedia({
+          postId: newPost.id,
+          userId,
+          file: mediaFile,
+        });
+      }
+
       reset();
+      setMediaFile(null);
       setShowForm(false);
       onPostCreated?.();
     } catch (err) {
@@ -105,9 +130,7 @@ const CommunityCreatePostForm = ({
                   <Form.Control.Feedback type="invalid">
                     {formErrors.title?.message}
                   </Form.Control.Feedback>
-                  <Form.Text className="text-muted">
-                    16–64 characters.
-                  </Form.Text>
+                  <Form.Text className="text-muted">16–64 characters.</Form.Text>
                 </Form.Group>
 
                 <Form.Group className="mb-3">
@@ -132,6 +155,21 @@ const CommunityCreatePostForm = ({
                   </Form.Text>
                 </Form.Group>
 
+                <Form.Group className="mb-3">
+                  <Form.Label>Attach image/video (optional)</Form.Label>
+                  <Form.Control
+                    type="file"
+                    accept="image/*,video/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0] ?? null;
+                      setMediaFile(file);
+                    }}
+                  />
+                  <Form.Text className="text-muted">
+                    Images up to 5MB, videos up to 25MB.
+                  </Form.Text>
+                </Form.Group>
+
                 <div className="d-flex justify-content-end gap-2">
                   <Button
                     type="button"
@@ -139,6 +177,7 @@ const CommunityCreatePostForm = ({
                     onClick={() => {
                       reset();
                       setServerError("");
+                      setMediaFile(null);
                       setShowForm(false);
                     }}
                     disabled={isSubmitting}

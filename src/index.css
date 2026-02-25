@@ -162,6 +162,41 @@
   color: var(--fs-text-muted);
 }
 
+/* Dark: File input (Choose file button) */
+[data-theme="dark"] .form-control[type="file"] {
+  background: #0f172a;
+  color: var(--fs-text);
+  border-color: var(--fs-border);
+}
+
+/* Modern browsers */
+[data-theme="dark"] .form-control[type="file"]::file-selector-button {
+  background: #334155;
+  color: var(--fs-text);
+  border: 1px solid var(--fs-border);
+  margin-right: 0.75rem;
+}
+
+[data-theme="dark"] .form-control[type="file"]::file-selector-button:hover {
+  background: #475569;
+}
+
+/* Older Chrome/Safari fallback */
+[data-theme="dark"] .form-control[type="file"]::-webkit-file-upload-button {
+  background: #334155;
+  color: var(--fs-text);
+  border: 1px solid var(--fs-border);
+  margin-right: 0.75rem;
+}
+
+[data-theme="dark"] .form-control[type="file"]::-webkit-file-upload-button:hover {
+  background: #475569;
+}
+
+[data-theme="dark"] input.form-control[type="file"]::file-selector-button:hover {
+  background: #475569 !important;
+}
+
 /* Dark: Buttons */
 [data-theme="dark"] .btn-outline-secondary {
   color: var(--fs-text-secondary);

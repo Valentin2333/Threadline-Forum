@@ -6,6 +6,10 @@ export async function getNewestPosts() {
     .select(`
       id, author_id, title, content, created_at, score, comment_count, community_id,
 
+      post_media (
+        id, media_type, storage_path, created_at
+      ),
+
       post_author:profiles!posts_author_id_fkey (
         username,
         avatar_url
@@ -34,6 +38,10 @@ export async function getPostById(postId) {
     .from("posts")
     .select(`
       id, author_id, title, content, created_at, score, comment_count, community_id,
+
+      post_media (
+        id, media_type, storage_path, created_at
+      ),
 
       post_author:profiles!posts_author_id_fkey (
         username,

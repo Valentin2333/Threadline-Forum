@@ -11,6 +11,8 @@ import PostVotes from "./PostVotes";
 import CreateComment from "../comments/CreateComment";
 import CommentList from "../comments/CommentList";
 
+import { getPostMediaPublicUrl } from "../../../api/postMedia";
+
 const PostCard = ({
   post,
   isOwn,
@@ -54,6 +56,14 @@ const PostCard = ({
     sortedComments.length > 2 && !isExpanded
       ? sortedComments.slice(0, 2)
       : sortedComments;
+
+  // Media preview (v1: show first attachment only)
+  const firstMedia = post.post_media?.[0] ?? null;
+  const mediaUrl = firstMedia
+    ? getPostMediaPublicUrl(firstMedia.storage_path)
+    : "";
+
+  const openPostDetails = () => navigate(`/posts/${post.id}`);
 
   return (
     <Card className="mb-3 fs-post-card">
@@ -149,7 +159,7 @@ const PostCard = ({
           <Button
             variant="link"
             className="p-0 fs-post-title"
-            onClick={() => navigate(`/posts/${post.id}`)}
+            onClick={openPostDetails}
             title="Open post details"
           >
             <span className="h5 mb-0">{post.title}</span>
@@ -172,6 +182,66 @@ const PostCard = ({
           >
             {post.content}
           </p>
+        )}
+
+        {/* Media preview */}
+        {!!firstMedia && !!mediaUrl && (
+          <div className="mt-3">
+            {firstMedia.media_type === "video" ? (
+              <div
+                role="button"
+                tabIndex={0}
+                onClick={openPostDetails}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") openPostDetails();
+                }}
+                style={{ cursor: "pointer" }}
+                title="Open post details"
+              >
+                <video
+                  controls
+                  preload="metadata"
+                  style={{
+                    width: "100%",
+                    maxHeight: 320,
+                    borderRadius: 10,
+                    display: "block",
+                  }}
+                  onClick={(e) => {
+                    // prevent the video click from double-triggering navigation unintentionally
+                    // (users can still click title/area to open)
+                    e.stopPropagation();
+                  }}
+                >
+                  <source src={mediaUrl} />
+                </video>
+              </div>
+            ) : (
+              <div
+                role="button"
+                tabIndex={0}
+                onClick={openPostDetails}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") openPostDetails();
+                }}
+                style={{ cursor: "pointer" }}
+                title="Open post details"
+              >
+                <img
+                  src={mediaUrl}
+                  alt="Post attachment preview"
+                  style={{
+                    width: "100%",
+                    maxHeight: 520,
+                    objectFit: "contain",          // no crop
+                    borderRadius: 12,
+                    display: "block",
+                    background: "rgba(0,0,0,0.04)",
+                  }}
+                />
+              </div>
+            )}
+          </div>
         )}
 
         <div className="mt-3">
@@ -199,10 +269,7 @@ const PostCard = ({
 
         <div className="mt-4">
           <div className="d-flex align-items-center justify-content-between mb-2">
-            <h4
-              className="h6 mb-0"
-              style={{ color: "var(--fs-text-secondary)" }}
-            >
+            <h4 className="h6 mb-0" style={{ color: "var(--fs-text-secondary)" }}>
               <i
                 className="fa-regular fa-comments me-2"
                 style={{ fontSize: 14 }}

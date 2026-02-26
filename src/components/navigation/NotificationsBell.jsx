@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Badge from "react-bootstrap/Badge";
 import Button from "react-bootstrap/Button";
@@ -12,6 +12,8 @@ import {
   subscribeToMyNotificationInserts,
 } from "../../api/notifications";
 
+const POLL_INTERVAL = 5000; // 5 seconds
+
 const formatTime = (iso) => {
   try {
     return new Date(iso).toLocaleString();
@@ -24,6 +26,7 @@ const labelFor = (n) => {
   const who = n?.actor?.username || "Someone";
   if (n?.type === "comment") return `${who} commented on your post`;
   if (n?.type === "upvote") return `${who} upvoted your post`;
+  if (n?.type === "downvote") return `${who} downvoted your post`;
   return "New notification";
 };
 
@@ -34,13 +37,23 @@ const NotificationsBell = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [items, setItems] = useState([]);
+  const pollRef = useRef(null);
 
   const unreadCount = useMemo(
     () => items.reduce((acc, n) => acc + (n.is_read ? 0 : 1), 0),
     [items]
   );
 
-  const load = async () => {
+  const load = useCallback(async () => {
+    try {
+      const data = await getMyNotifications({ limit: 30 });
+      setItems(data);
+    } catch (e) {
+      console.error("Failed to load notifications:", e);
+    }
+  }, []);
+
+  const loadWithUI = async () => {
     setLoading(true);
     setError("");
     try {
@@ -57,7 +70,6 @@ const NotificationsBell = () => {
     let channel;
 
     const run = async () => {
-      // ✅ Always use the real Supabase auth uid (prevents id mismatch bugs)
       const { data, error: authErr } = await supabase.auth.getUser();
       if (authErr) {
         console.error("auth.getUser error:", authErr);
@@ -67,18 +79,15 @@ const NotificationsBell = () => {
       const uid = data?.user?.id;
       if (!uid) return;
 
-      // initial fetch
-      load();
+      loadWithUI();
 
-      // subscribe to inserts for *this* user
+      // Realtime for instant new notifications
       channel = subscribeToMyNotificationInserts(uid, async (newNotif) => {
-        // Instantly show it
         setItems((prev) => {
           if (prev.some((x) => x.id === newNotif.id)) return prev;
           return [{ ...newNotif, actor: null }, ...prev];
         });
 
-        // Optional: fetch actor username/avatar (realtime payload doesn't include joins)
         if (newNotif.actor_id) {
           try {
             const { data: actor } = await supabase
@@ -89,7 +98,9 @@ const NotificationsBell = () => {
 
             if (actor) {
               setItems((prev) =>
-                prev.map((n) => (n.id === newNotif.id ? { ...n, actor } : n))
+                prev.map((n) =>
+                  n.id === newNotif.id ? { ...n, actor } : n
+                )
               );
             }
           } catch {
@@ -97,15 +108,19 @@ const NotificationsBell = () => {
           }
         }
       });
+
+      // Poll to catch vote removals (realtime DELETE blocked by RLS)
+      pollRef.current = setInterval(load, POLL_INTERVAL);
     };
 
     run();
 
     return () => {
       if (channel) supabase.removeChannel(channel);
+      if (pollRef.current) clearInterval(pollRef.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [load]);
 
   const handleClickNotification = async (n) => {
     try {
@@ -138,7 +153,7 @@ const NotificationsBell = () => {
       show={open}
       onToggle={(next) => {
         setOpen(next);
-        if (next) load(); // refresh list when opening dropdown
+        if (next) loadWithUI();
       }}
     >
       <Dropdown.Toggle
@@ -214,7 +229,9 @@ const NotificationsBell = () => {
                       width: 8,
                       height: 8,
                       borderRadius: 999,
-                      background: n.is_read ? "transparent" : "var(--bs-danger)",
+                      background: n.is_read
+                        ? "transparent"
+                        : "var(--bs-danger)",
                       flex: "0 0 auto",
                     }}
                   />

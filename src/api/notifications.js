@@ -35,8 +35,7 @@ export async function markAllNotificationsRead() {
   if (error) throw error;
 }
 
-// Realtime: listen only to INSERTs for this user.
-
+// Realtime INSERT subscription for instant new notifications.
 export const subscribeToMyNotificationInserts = (userId, onInsert) => {
   if (!userId) return null;
 

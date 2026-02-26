@@ -7,6 +7,7 @@ import useAvatar from "./hooks/useAvatar";
 import useAdminStatus from "../admin/hooks/useAdminStatus";
 import DesktopNav from "./DesktopNav";
 import MobileSidebar from "./MobileSidebar";
+import NotificationsBell from "./NotificationsBell";
 
 const AppNavigation = () => {
   const user = useAuthUser();
@@ -25,9 +26,21 @@ const AppNavigation = () => {
           onClick={() => setShowSidebar(true)}
         />
 
-        <Navbar.Brand as={NavLink} to="/" end onClick={closeSidebar}>
+        <Navbar.Brand
+          as={NavLink}
+          to="/"
+          end
+          onClick={closeSidebar}
+          className="ms-auto"
+        >
           Threadline
         </Navbar.Brand>
+
+        {user && (
+          <div className="d-lg-none ms-2">
+            <NotificationsBell />
+          </div>
+        )}
 
         <DesktopNav user={user} avatarUrl={avatarUrl} isAdmin={isAdmin} />
 

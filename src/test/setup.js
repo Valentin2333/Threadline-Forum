@@ -60,12 +60,10 @@ vi.mock("../api/supabaseClient", () => {
 
 // ---------- Mock: Supabase-backed API modules ----------
 vi.mock("../api/posts", () => ({
-  getNewestPosts: vi.fn(() => Promise.resolve([])),
   getPostById: vi.fn(() => Promise.resolve(null)),
   createPost: vi.fn(() => Promise.resolve({})),
   updatePost: vi.fn(() => Promise.resolve({})),
   deletePost: vi.fn(() => Promise.resolve(true)),
-  getTopPosts: vi.fn(() => Promise.resolve([])),
   getMostCommentedPosts: vi.fn(() => Promise.resolve([])),
   getRecentPostsSummary: vi.fn(() => Promise.resolve([])),
 }));

@@ -1,12 +1,15 @@
 import Offcanvas from "react-bootstrap/Offcanvas";
 import Nav from "react-bootstrap/Nav";
+import Badge from "react-bootstrap/Badge";
 import Button from "react-bootstrap/Button";
 import { NavLink, useNavigate } from "react-router-dom";
 import { navItemStyles } from "./styles/navItemStyles";
 import ThemeToggle from "../theme/ThemeToggle";
+import useUnreviewedReportCount from "../admin/hooks/useUnreviewedReportCount";
 
 const MobileSidebar = ({ show, onClose, user, isAdmin }) => {
   const navigate = useNavigate();
+  const { count: reportCount } = useUnreviewedReportCount(isAdmin);
 
   return (
     <Offcanvas
@@ -94,6 +97,15 @@ const MobileSidebar = ({ show, onClose, user, isAdmin }) => {
                 style={{ fontSize: 13 }}
               />
               Admin
+              {reportCount > 0 && (
+                <Badge
+                  pill
+                  bg="danger"
+                  style={{ fontSize: 10, marginLeft: 8 }}
+                >
+                  {reportCount > 99 ? "99+" : reportCount}
+                </Badge>
+              )}
             </Nav.Link>
           )}
         </Nav>

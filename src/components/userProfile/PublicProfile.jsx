@@ -7,7 +7,7 @@ import Alert from "react-bootstrap/Alert";
 import Button from "react-bootstrap/Button";
 import { supabase } from "../../api/supabaseClient";
 import { setUserBlocked } from "../../api/admin";
-import useAuthUser from "../navigation/hooks/useAuthUser";
+import useAuthUser from "../../hooks/useAuthUser";
 import useAdminStatus from "../admin/hooks/useAdminStatus";
 import PublicProfileHeader from "./PublicProfileHeader";
 import RecentPostsList from "./RecentPostsList";
@@ -15,7 +15,7 @@ import RecentPostsList from "./RecentPostsList";
 const PublicProfile = () => {
   const { userId } = useParams();
   const navigate = useNavigate();
-  const currentUser = useAuthUser();
+  const { user: currentUser } = useAuthUser();
   const { isAdmin } = useAdminStatus(currentUser?.id);
 
   const [profile, setProfile] = useState(null);

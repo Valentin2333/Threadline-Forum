@@ -10,7 +10,7 @@ import AdminDashboard from "./components/admin/AdminDashboard";
 import CommunityList from "./components/communities/CommunityList";
 import CommunityPage from "./components/communities/CommunityPage";
 import MyCommunities from "./components/communities/MyCommunities";
-import useAuthUser from "./components/navigation/hooks/useAuthUser";
+import useAuthUser from "./hooks/useAuthUser";
 import useAdminStatus from "./components/admin/hooks/useAdminStatus";
 
 import HomePage from "./components/home/HomePage";
@@ -21,7 +21,7 @@ import PrivacyPolicy from "./components/footer/PrivacyPolicy";
 import ContactUs from "./components/footer/ContactUs";
 
 function App() {
-  const user = useAuthUser();
+  const { user } = useAuthUser();
   const { isAdmin } = useAdminStatus(user?.id);
 
   return (

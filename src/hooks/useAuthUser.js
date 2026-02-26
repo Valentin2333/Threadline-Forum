@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { supabase } from "../../../api/supabaseClient";
+import { supabase } from "../api/supabaseClient";
 
 const useAuthUser = () => {
   const [user, setUser] = useState(null);
@@ -29,7 +29,7 @@ const useAuthUser = () => {
     const { data: listener } = supabase.auth.onAuthStateChange(
       (_event, session) => {
         setUser(session?.user ?? null);
-      },
+      }
     );
 
     return () => {

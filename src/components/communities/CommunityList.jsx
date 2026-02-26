@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { getTopCommunities, getUserCommunities } from "../../api/communities";
-import useAuthUser from "../navigation/hooks/useAuthUser";
+import useAuthUser from "../../hooks/useAuthUser";
 import CommunityCard from "./CommunityCard";
 import CreateCommunityForm from "./CreateCommunityForm";
 import GlobalSearchBar from "./GlobalSearchBar";
@@ -11,7 +11,7 @@ import Spinner from "react-bootstrap/Spinner";
 import Alert from "react-bootstrap/Alert";
 
 const CommunityList = () => {
-  const user = useAuthUser();
+  const { user } = useAuthUser();
   const [topCommunities, setTopCommunities] = useState([]);
   const [myCommunities, setMyCommunities] = useState([]);
   const [loading, setLoading] = useState(true);

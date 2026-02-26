@@ -2,7 +2,7 @@ import { useState } from "react";
 import { NavLink } from "react-router-dom";
 import Navbar from "react-bootstrap/Navbar";
 import Container from "react-bootstrap/Container";
-import useAuthUser from "./hooks/useAuthUser";
+import useAuthUser from "../../hooks/useAuthUser";
 import useAvatar from "./hooks/useAvatar";
 import useAdminStatus from "../admin/hooks/useAdminStatus";
 import DesktopNav from "./DesktopNav";
@@ -10,7 +10,7 @@ import MobileSidebar from "./MobileSidebar";
 import NotificationsBell from "./NotificationsBell";
 
 const AppNavigation = () => {
-  const user = useAuthUser();
+  const { user } = useAuthUser();
   const { avatarUrl } = useAvatar(user?.id);
   const { isAdmin } = useAdminStatus(user?.id);
 
@@ -24,6 +24,7 @@ const AppNavigation = () => {
         <Navbar.Toggle
           aria-controls="main-offcanvas"
           onClick={() => setShowSidebar(true)}
+          className="d-lg-none"
         />
 
         <Navbar.Brand
@@ -31,7 +32,7 @@ const AppNavigation = () => {
           to="/"
           end
           onClick={closeSidebar}
-          className="ms-auto"
+          className="ms-auto ms-lg-0"
         >
           Threadline
         </Navbar.Brand>

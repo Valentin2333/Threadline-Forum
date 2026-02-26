@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, useCallback } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { getPostById } from "../../../api/posts";
 import { isMember as checkMembership } from "../../../api/communities";
-import useAuthUser from "../../navigation/hooks/useAuthUser";
+import useAuthUser from "../../../hooks/useAuthUser";
 import useAdminStatus from "../../admin/hooks/useAdminStatus";
 import usePostEditing from "../hooks/usePostEditing";
 import useCommentEditing from "../hooks/useCommentEditing";
@@ -13,19 +13,20 @@ import PostEditForm from "./PostEditForm";
 import CommentList from "../comments/CommentList";
 import PostVotes from "../posts/PostVotes";
 import DeleteConfirmModal from "../../shared/DeleteConfirmModal";
+import ReportModal from "../../shared/ReportModal";
 import { getPostMediaPublicUrl } from "../../../api/postMedia";
+import ContentActionMenu from "../../shared/ContentActionMenu";
 
 import Alert from "react-bootstrap/Alert";
 import Badge from "react-bootstrap/Badge";
 import Button from "react-bootstrap/Button";
 import Card from "react-bootstrap/Card";
 import Container from "react-bootstrap/Container";
-import Dropdown from "react-bootstrap/Dropdown";
 
 const PostDetails = () => {
   const { postId } = useParams();
   const navigate = useNavigate();
-  const user = useAuthUser();
+  const { user } = useAuthUser();
   const { isAdmin } = useAdminStatus(user?.id);
 
   const [post, setPost] = useState(null);
@@ -34,9 +35,11 @@ const PostDetails = () => {
   const [openMenuForCommentId, setOpenMenuForCommentId] = useState(null);
   const [serverError, setServerError] = useState("");
   const [memberStatus, setMemberStatus] = useState(false);
+  const [reportTarget, setReportTarget] = useState(null);
 
   const userId = useMemo(() => user?.id ?? null, [user]);
-  const isOwn = (authorId) => Boolean(userId && authorId && userId === authorId);
+  const isOwn = (authorId) =>
+    Boolean(userId && authorId && userId === authorId);
   const canManage = (authorId) => isOwn(authorId) || isAdmin;
 
   const load = useCallback(
@@ -137,13 +140,13 @@ const PostDetails = () => {
     );
   }
 
-  const showPostMenu = canManage(post.author_id);
+  const showPostMenu = Boolean(user);
   const sortedComments = (post.comments ?? [])
     .slice()
     .sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
 
   return (
-    <Container className="py-3" style={{ maxWidth: 800 }}>
+    <Container className="py-3">
       <div className="mb-3 d-flex align-items-center gap-3">
         <Button
           variant="outline-secondary"
@@ -204,48 +207,22 @@ const PostDetails = () => {
             </div>
 
             {showPostMenu && (
-              <Dropdown
-                align="end"
+              <ContentActionMenu
                 show={openPostMenu}
                 onToggle={(nextShow) => {
                   if (nextShow) setOpenMenuForCommentId(null);
                   setOpenPostMenu(nextShow);
                 }}
-              >
-                <Dropdown.Toggle
-                  variant="outline-secondary"
-                  size="sm"
-                  bsPrefix="btn"
-                  className="fs-menu-toggle"
-                >
-                  <i
-                    className="fa-solid fa-ellipsis-vertical"
-                    style={{ fontSize: 13 }}
-                  />
-                </Dropdown.Toggle>
-
-                <Dropdown.Menu>
-                  {isOwn(post.author_id) && (
-                    <Dropdown.Item onClick={handleStartEditPost}>
-                      <i
-                        className="fa-solid fa-pen me-2"
-                        style={{ fontSize: 12 }}
-                      />
-                      Edit
-                    </Dropdown.Item>
-                  )}
-                  <Dropdown.Item
-                    className="text-danger"
-                    onClick={handleOpenDeletePost}
-                  >
-                    <i
-                      className="fa-solid fa-trash me-2"
-                      style={{ fontSize: 12 }}
-                    />
-                    Delete
-                  </Dropdown.Item>
-                </Dropdown.Menu>
-              </Dropdown>
+                showEdit={isOwn(post.author_id)}
+                showDelete={canManage(post.author_id)}
+                showReport={!isOwn(post.author_id)}
+                onEdit={handleStartEditPost}
+                onDelete={handleOpenDeletePost}
+                onReport={() => {
+                  setOpenPostMenu(false);
+                  setReportTarget({ postId: post.id });
+                }}
+              />
             )}
           </div>
 
@@ -324,7 +301,10 @@ const PostDetails = () => {
 
           <div className="mt-3 d-flex align-items-center justify-content-between">
             <Badge className="fs-score-badge">
-              <i className="fa-solid fa-arrow-up me-1" style={{ fontSize: 10 }} />
+              <i
+                className="fa-solid fa-arrow-up me-1"
+                style={{ fontSize: 10 }}
+              />
               {Number(post.score ?? 0)} points
             </Badge>
             <span className="text-muted" style={{ fontSize: "0.8125rem" }}>
@@ -336,8 +316,14 @@ const PostDetails = () => {
           <hr className="my-4" />
 
           <div>
-            <h3 className="h6 mb-3" style={{ color: "var(--fs-text-secondary)" }}>
-              <i className="fa-regular fa-comments me-2" style={{ fontSize: 14 }} />
+            <h3
+              className="h6 mb-3"
+              style={{ color: "var(--fs-text-secondary)" }}
+            >
+              <i
+                className="fa-regular fa-comments me-2"
+                style={{ fontSize: 14 }}
+              />
               Comments
             </h3>
 
@@ -350,6 +336,7 @@ const PostDetails = () => {
             <div className="mt-2">
               <CommentList
                 comments={sortedComments}
+                userId={userId}
                 isOwn={isOwn}
                 canManage={canManage}
                 editingCommentId={commentEditing.editingCommentId}
@@ -364,6 +351,7 @@ const PostDetails = () => {
                 openMenuForCommentId={openMenuForCommentId}
                 onToggleMenu={setOpenMenuForCommentId}
                 onMenuOpening={() => setOpenPostMenu(false)}
+                onReport={(commentId) => setReportTarget({ commentId })}
               />
             </div>
           </div>
@@ -375,12 +363,23 @@ const PostDetails = () => {
         onHide={deleteModalHook.closeDeleteModal}
         onDelete={deleteModalHook.executeDelete}
         deleting={deleteModalHook.deleting}
-        title={deleteModalHook.deleteModal.type === "post" ? "Delete post" : "Delete comment"}
+        title={
+          deleteModalHook.deleteModal.type === "post"
+            ? "Delete post"
+            : "Delete comment"
+        }
         warning={
           deleteModalHook.deleteModal.type === "post"
             ? "Are you sure you want to delete this post forever?"
             : "Are you sure you want to delete this comment forever?"
         }
+      />
+
+      <ReportModal
+        show={!!reportTarget}
+        onHide={() => setReportTarget(null)}
+        postId={reportTarget?.postId}
+        commentId={reportTarget?.commentId}
       />
     </Container>
   );

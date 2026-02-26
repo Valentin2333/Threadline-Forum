@@ -5,7 +5,7 @@ import {
   getTopCommunities,
   getUserCommunities,
 } from "../../../api/communities";
-import useAuthUser from "../../navigation/hooks/useAuthUser";
+import useAuthUser from "../../../hooks/useAuthUser";
 import useAdminStatus from "../../admin/hooks/useAdminStatus";
 import usePostEditing from "../hooks/usePostEditing";
 import useCommentEditing from "../hooks/useCommentEditing";
@@ -17,6 +17,7 @@ import DeleteConfirmModal from "../../shared/DeleteConfirmModal";
 import CommunityCard from "../../communities/CommunityCard";
 import GlobalSearchBar from "../../communities/GlobalSearchBar";
 import useRealtimePosts from "../../../api/useRealtimePosts";
+import useContentPermissions from "../../../hooks/useContentPermissions";
 
 import Alert from "react-bootstrap/Alert";
 import Button from "react-bootstrap/Button";
@@ -24,7 +25,7 @@ import Spinner from "react-bootstrap/Spinner";
 import { Container } from "react-bootstrap";
 
 const Feed = () => {
-  const user = useAuthUser();
+  const { user } = useAuthUser();
   const { isAdmin } = useAdminStatus(user?.id);
 
   const [posts, setPosts] = useState([]);
@@ -37,9 +38,7 @@ const Feed = () => {
   const [initialLoading, setInitialLoading] = useState(true);
 
   const userId = useMemo(() => user?.id ?? null, [user]);
-  const isOwn = (authorId) =>
-    Boolean(userId && authorId && userId === authorId);
-  const canManage = (authorId) => isOwn(authorId) || isAdmin;
+  const { isOwn, canManage } = useContentPermissions({ userId, isAdmin });
 
   const loadPosts = useCallback(
     async ({ silent = false } = {}) => {
@@ -228,6 +227,7 @@ const Feed = () => {
                 )}
                 <PostCard
                   post={post}
+                  userId={userId}
                   isOwn={isOwn}
                   canManage={canManage}
                   isMember={true}

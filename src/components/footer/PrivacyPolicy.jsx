@@ -8,7 +8,7 @@ const PrivacyPolicy = () => {
   const navigate = useNavigate();
 
   return (
-    <Container className="py-4" style={{ maxWidth: 800 }}>
+    <Container className="py-4">
       <div className="mb-3">
         <Button
           variant="outline-secondary"

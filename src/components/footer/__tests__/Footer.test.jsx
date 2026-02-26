@@ -53,7 +53,7 @@ describe("Footer", () => {
 
   it("renders the contact email link pointing to /contact", () => {
     renderFooter();
-    const link = screen.getByText("threadlineforum.info@gmail.com");
+    const link = screen.getByText("Email Us");
     expect(link.closest("a")).toHaveAttribute("href", "/contact");
   });
 

@@ -5,7 +5,7 @@ import {
   getCommunityPosts,
   deleteCommunity,
 } from "../../api/communities";
-import useAuthUser from "../navigation/hooks/useAuthUser";
+import useAuthUser from "../../hooks/useAuthUser";
 import useAdminStatus from "../admin/hooks/useAdminStatus";
 import useCommunityMembership from "./hooks/useCommunityMembership";
 
@@ -15,6 +15,7 @@ import CommunityCreatePostForm from "./CommunityCreatePostForm";
 import CommunityPostList from "./CommunityPostList";
 import DeleteConfirmModal from "../shared/DeleteConfirmModal";
 import useRealtimePosts from "../../api/useRealtimePosts";
+import useContentPermissions from "../../hooks/useContentPermissions";
 
 import Container from "react-bootstrap/Container";
 import Alert from "react-bootstrap/Alert";
@@ -26,7 +27,7 @@ const CommunityPage = () => {
   const decodedName = decodeURIComponent(communityName || "");
   const navigate = useNavigate();
 
-  const user = useAuthUser();
+  const { user } = useAuthUser();
   const { isAdmin } = useAdminStatus(user?.id);
   const userId = useMemo(() => user?.id ?? null, [user]);
 
@@ -40,21 +41,15 @@ const CommunityPage = () => {
   const [communityDeleting, setCommunityDeleting] = useState(false);
 
   const isCreator = Boolean(userId && community?.creator_id === userId);
+  const { isOwn, canManage: canManagePost } = useContentPermissions({
+    userId,
+    isAdmin,
+    isCreator,
+  });
   const membership = useCommunityMembership({
     communityId: community?.id,
     userId,
   });
-
-  const isOwn = (authorId) =>
-    Boolean(userId && authorId && userId === authorId);
-
-  const canManagePost = (authorId) => {
-    if (!userId) return false;
-    if (userId === authorId) return true;
-    if (isAdmin) return true;
-    if (isCreator) return true;
-    return false;
-  };
 
   const loadCommunity = useCallback(async () => {
     if (!decodedName) return;
@@ -77,7 +72,11 @@ const CommunityPage = () => {
     }
   }, [community?.id]);
 
-  useRealtimePosts({ channelName: `community-${community?.id}`, communityId: community?.id, onUpdate: loadPosts });
+  useRealtimePosts({
+    channelName: `community-${community?.id}`,
+    communityId: community?.id,
+    onUpdate: loadPosts,
+  });
 
   useEffect(() => {
     let cancelled = false;

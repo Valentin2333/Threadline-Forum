@@ -97,6 +97,24 @@ vi.mock("../api/admin", () => ({
   ),
 }));
 
+vi.mock("../api/reports", () => ({
+  createReport: vi.fn(() => Promise.resolve()),
+  getReports: vi.fn(() => Promise.resolve([])),
+  getUnreviewedReportCount: vi.fn(() => Promise.resolve(0)),
+  markReportReviewed: vi.fn(() => Promise.resolve()),
+  subscribeToReportChanges: vi.fn(() => ({
+    on: vi.fn().mockReturnThis(),
+    subscribe: vi.fn(),
+  })),
+}));
+
+vi.mock("../api/notifications", () => ({
+  getMyNotifications: vi.fn(() => Promise.resolve([])),
+  markNotificationRead: vi.fn(() => Promise.resolve()),
+  markAllNotificationsRead: vi.fn(() => Promise.resolve()),
+  subscribeToMyNotificationInserts: vi.fn(() => null),
+}));
+
 vi.mock("../api/communities", () => ({
   getCommunityByName: vi.fn(() => Promise.resolve(null)),
   getCommunityPosts: vi.fn(() => Promise.resolve([])),

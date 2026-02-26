@@ -121,6 +121,7 @@ const CommunityPostList = ({
         <PostCard
           key={post.id}
           post={post}
+          userId={userId}
           isOwn={isOwn}
           canManage={canManage}
           isMember={isMember}

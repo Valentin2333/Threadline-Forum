@@ -187,7 +187,9 @@ export async function removeMember({ communityId, userId }) {
 
 // ── Community Posts ─────────────────────────────────────────
 
-export async function getCommunityPosts(communityId) {
+const PAGE_SIZE = 10;
+
+export async function getCommunityPosts(communityId, { from = 0, to = PAGE_SIZE - 1 } = {}) {
   const { data, error } = await supabase
     .from("posts")
     .select(
@@ -204,13 +206,14 @@ export async function getCommunityPosts(communityId) {
     `,
     )
     .eq("community_id", communityId)
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .range(from, to);
 
   if (error) throw error;
   return data ?? [];
 }
 
-export async function getPostsForJoinedCommunities(userId) {
+export async function getPostsForJoinedCommunities(userId, { from = 0, to = PAGE_SIZE - 1 } = {}) {
   // get all community IDs the user has joined
   const { data: memberships, error: memErr } = await supabase
     .from("community_members")
@@ -240,7 +243,7 @@ export async function getPostsForJoinedCommunities(userId) {
     )
     .in("community_id", communityIds)
     .order("created_at", { ascending: false })
-    .limit(50);
+    .range(from, to);
 
   if (error) throw error;
   return data ?? [];

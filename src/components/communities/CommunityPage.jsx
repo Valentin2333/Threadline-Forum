@@ -22,6 +22,8 @@ import Alert from "react-bootstrap/Alert";
 import Button from "react-bootstrap/Button";
 import Spinner from "react-bootstrap/Spinner";
 
+const PAGE_SIZE = 10;
+
 const CommunityPage = () => {
   const { communityName } = useParams();
   const decodedName = decodeURIComponent(communityName || "");
@@ -39,6 +41,10 @@ const CommunityPage = () => {
 
   const [communityDeleteModal, setCommunityDeleteModal] = useState(false);
   const [communityDeleting, setCommunityDeleting] = useState(false);
+
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   const isCreator = Boolean(userId && community?.creator_id === userId);
   const { isOwn, canManage: canManagePost } = useContentPermissions({
@@ -62,20 +68,69 @@ const CommunityPage = () => {
     }
   }, [decodedName]);
 
-  const loadPosts = useCallback(async () => {
-    if (!community?.id) return;
+  const loadPosts = useCallback(
+    async ({ reset = false } = {}) => {
+      if (!community?.id) return;
+      try {
+        if (reset) {
+          // Reload all currently loaded pages (for silent refresh after edits)
+          const currentCount = Math.max((page + 1) * PAGE_SIZE, PAGE_SIZE);
+          const data = await getCommunityPosts(community.id, {
+            from: 0,
+            to: currentCount - 1,
+          });
+          setPosts(data ?? []);
+          setHasMore((data ?? []).length >= currentCount);
+        } else {
+          // Initial load — first page
+          const data = await getCommunityPosts(community.id, {
+            from: 0,
+            to: PAGE_SIZE - 1,
+          });
+          setPosts(data ?? []);
+          setHasMore((data ?? []).length >= PAGE_SIZE);
+          setPage(0);
+        }
+      } catch (e) {
+        setServerError(e?.message || "Failed to load posts.");
+      }
+    },
+    [community?.id, page],
+  );
+
+  const loadMorePosts = useCallback(async () => {
+    if (!community?.id || loadingMore || !hasMore) return;
+    setLoadingMore(true);
     try {
-      const data = await getCommunityPosts(community.id);
-      setPosts(data ?? []);
+      const nextPage = page + 1;
+      const from = nextPage * PAGE_SIZE;
+      const to = from + PAGE_SIZE - 1;
+      const data = await getCommunityPosts(community.id, { from, to });
+      const newPosts = data ?? [];
+      setPosts((prev) => {
+        const existingIds = new Set(prev.map((p) => p.id));
+        const unique = newPosts.filter((p) => !existingIds.has(p.id));
+        return [...prev, ...unique];
+      });
+      setHasMore(newPosts.length >= PAGE_SIZE);
+      setPage(nextPage);
     } catch (e) {
-      setServerError(e?.message || "Failed to load posts.");
+      console.error("Failed loading more posts:", e.message);
+      setServerError(e?.message || "Failed loading more posts.");
+    } finally {
+      setLoadingMore(false);
     }
-  }, [community?.id]);
+  }, [community?.id, page, loadingMore, hasMore]);
+
+  const silentReload = useCallback(
+    () => loadPosts({ reset: true }),
+    [loadPosts],
+  );
 
   useRealtimePosts({
     channelName: `community-${community?.id}`,
     communityId: community?.id,
-    onUpdate: loadPosts,
+    onUpdate: silentReload,
   });
 
   useEffect(() => {
@@ -87,8 +142,15 @@ const CommunityPage = () => {
         const cData = await getCommunityByName(decodedName);
         if (!cancelled) setCommunity(cData);
         if (cData?.id) {
-          const pData = await getCommunityPosts(cData.id);
-          if (!cancelled) setPosts(pData ?? []);
+          const pData = await getCommunityPosts(cData.id, {
+            from: 0,
+            to: PAGE_SIZE - 1,
+          });
+          if (!cancelled) {
+            setPosts(pData ?? []);
+            setHasMore((pData ?? []).length >= PAGE_SIZE);
+            setPage(0);
+          }
         }
       } catch (e) {
         if (!cancelled) {
@@ -201,7 +263,7 @@ const CommunityPage = () => {
           communityId={community.id}
           communityName={community.name}
           userId={userId}
-          onPostCreated={loadPosts}
+          onPostCreated={silentReload}
         />
       )}
 
@@ -211,8 +273,11 @@ const CommunityPage = () => {
         isMember={membership.member}
         isOwn={isOwn}
         canManage={canManagePost}
-        onReload={loadPosts}
+        onReload={silentReload}
         setServerError={setServerError}
+        hasMore={hasMore}
+        loadingMore={loadingMore}
+        onLoadMore={loadMorePosts}
       />
 
       <DeleteConfirmModal

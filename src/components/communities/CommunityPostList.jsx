@@ -3,6 +3,7 @@ import usePostEditing from "../posting/hooks/usePostEditing";
 import useCommentEditing from "../posting/hooks/useCommentEditing";
 import useDeleteModal from "../posting/hooks/useDeleteModal";
 import usePostFilters from "../posting/hooks/usePostFilters";
+import useInfiniteScroll from "../../hooks/useInfiniteScroll";
 
 import PostCard from "../posting/posts/PostCard";
 import PostSearchBar from "../posting/posts/PostSearchBar";
@@ -11,6 +12,7 @@ import DeleteConfirmModal from "../shared/DeleteConfirmModal";
 
 import Alert from "react-bootstrap/Alert";
 import Button from "react-bootstrap/Button";
+import Spinner from "react-bootstrap/Spinner";
 
 const CommunityPostList = ({
   posts,
@@ -20,6 +22,9 @@ const CommunityPostList = ({
   canManage,
   onReload,
   setServerError,
+  hasMore = false,
+  loadingMore = false,
+  onLoadMore = () => {},
 }) => {
   const [expandedCommentsByPostId, setExpandedCommentsByPostId] = useState({});
   const [openMenuForPostId, setOpenMenuForPostId] = useState(null);
@@ -40,6 +45,12 @@ const CommunityPostList = ({
   });
 
   const filters = usePostFilters({ posts, userId });
+
+  const sentinelRef = useInfiniteScroll({
+    hasMore,
+    loading: loadingMore,
+    onLoadMore,
+  });
 
   const handleStartEditPost = (post) => {
     setOpenMenuForPostId(null);
@@ -158,6 +169,20 @@ const CommunityPostList = ({
           }
         />
       ))}
+
+      {/* Infinite scroll sentinel */}
+      <div ref={sentinelRef} style={{ height: 1 }} />
+      {loadingMore && (
+        <div className="d-flex align-items-center justify-content-center gap-2 text-muted py-3">
+          <Spinner size="sm" />
+          <span>Loading more posts…</span>
+        </div>
+      )}
+      {!hasMore && posts.length > 0 && (
+        <p className="text-center text-muted py-3 mb-0" style={{ fontSize: "0.85rem" }}>
+          No more posts to load.
+        </p>
+      )}
 
       <DeleteConfirmModal
         show={deleteModalHook.deleteModal.show}

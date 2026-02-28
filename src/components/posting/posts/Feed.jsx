@@ -11,6 +11,7 @@ import usePostEditing from "../hooks/usePostEditing";
 import useCommentEditing from "../hooks/useCommentEditing";
 import useDeleteModal from "../hooks/useDeleteModal";
 import usePostFilters from "../hooks/usePostFilters";
+import useInfiniteScroll from "../../../hooks/useInfiniteScroll";
 import PostCard from "./PostCard";
 import PostFilterBar from "./PostFilterBar";
 import DeleteConfirmModal from "../../shared/DeleteConfirmModal";
@@ -24,6 +25,8 @@ import Button from "react-bootstrap/Button";
 import Spinner from "react-bootstrap/Spinner";
 import { Container } from "react-bootstrap";
 
+const PAGE_SIZE = 10;
+
 const Feed = () => {
   const { user } = useAuthUser();
   const { isAdmin } = useAdminStatus(user?.id);
@@ -36,23 +39,44 @@ const Feed = () => {
   const [openMenuForCommentId, setOpenMenuForCommentId] = useState(null);
   const [serverError, setServerError] = useState("");
   const [initialLoading, setInitialLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [page, setPage] = useState(0);
 
   const userId = useMemo(() => user?.id ?? null, [user]);
   const { isOwn, canManage } = useContentPermissions({ userId, isAdmin });
 
   const loadPosts = useCallback(
-    async ({ silent = false } = {}) => {
+    async ({ silent = false, reset = false } = {}) => {
       if (!userId) return;
-      if (!silent) setInitialLoading(true);
+      if (!silent && !reset) setInitialLoading(true);
       try {
         const myCommunities = await getUserCommunities(userId);
         setHasJoinedCommunities(myCommunities.length > 0);
 
         if (myCommunities.length > 0) {
-          const data = await getPostsForJoinedCommunities(userId);
-          setPosts(data ?? []);
+          if (reset) {
+            // Reload all currently loaded pages (for silent refresh after edits)
+            const currentCount = Math.max((page + 1) * PAGE_SIZE, PAGE_SIZE);
+            const data = await getPostsForJoinedCommunities(userId, {
+              from: 0,
+              to: currentCount - 1,
+            });
+            setPosts(data ?? []);
+            setHasMore((data ?? []).length >= currentCount);
+          } else {
+            // Initial load — first page
+            const data = await getPostsForJoinedCommunities(userId, {
+              from: 0,
+              to: PAGE_SIZE - 1,
+            });
+            setPosts(data ?? []);
+            setHasMore((data ?? []).length >= PAGE_SIZE);
+            setPage(0);
+          }
         } else {
           setPosts([]);
+          setHasMore(false);
           const top = await getTopCommunities(10);
           setTopCommunities(top);
         }
@@ -60,18 +84,42 @@ const Feed = () => {
         console.error("Failed loading posts:", err.message);
         setServerError(err?.message || "Failed loading posts.");
       } finally {
-        if (!silent) setInitialLoading(false);
+        if (!silent && !reset) setInitialLoading(false);
       }
     },
-    [userId],
+    [userId, page],
   );
+
+  const loadMorePosts = useCallback(async () => {
+    if (!userId || loadingMore || !hasMore) return;
+    setLoadingMore(true);
+    try {
+      const nextPage = page + 1;
+      const from = nextPage * PAGE_SIZE;
+      const to = from + PAGE_SIZE - 1;
+      const data = await getPostsForJoinedCommunities(userId, { from, to });
+      const newPosts = data ?? [];
+      setPosts((prev) => {
+        const existingIds = new Set(prev.map((p) => p.id));
+        const unique = newPosts.filter((p) => !existingIds.has(p.id));
+        return [...prev, ...unique];
+      });
+      setHasMore(newPosts.length >= PAGE_SIZE);
+      setPage(nextPage);
+    } catch (err) {
+      console.error("Failed loading more posts:", err.message);
+      setServerError(err?.message || "Failed loading more posts.");
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [userId, page, loadingMore, hasMore]);
 
   useEffect(() => {
     loadPosts({ silent: false });
-  }, [loadPosts]);
+  }, [userId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const silentReload = useCallback(
-    () => loadPosts({ silent: true }),
+    () => loadPosts({ silent: true, reset: true }),
     [loadPosts],
   );
 
@@ -95,6 +143,12 @@ const Feed = () => {
   });
 
   const filters = usePostFilters({ posts, userId });
+
+  const sentinelRef = useInfiniteScroll({
+    hasMore,
+    loading: loadingMore,
+    onLoadMore: loadMorePosts,
+  });
 
   const handleStartEditPost = (post) => {
     setOpenMenuForPostId(null);
@@ -265,6 +319,20 @@ const Feed = () => {
                 />
               </div>
             ))
+          )}
+
+          {/* Infinite scroll sentinel */}
+          <div ref={sentinelRef} style={{ height: 1 }} />
+          {loadingMore && (
+            <div className="d-flex align-items-center justify-content-center gap-2 text-muted py-3">
+              <Spinner size="sm" />
+              <span>Loading more posts…</span>
+            </div>
+          )}
+          {!hasMore && posts.length > 0 && (
+            <p className="text-center text-muted py-3 mb-0" style={{ fontSize: "0.85rem" }}>
+              You've reached the end of your feed.
+            </p>
           )}
         </>
       )}

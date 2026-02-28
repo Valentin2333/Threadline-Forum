@@ -2,14 +2,15 @@ import { useState } from "react";
 import { NavLink } from "react-router-dom";
 import Navbar from "react-bootstrap/Navbar";
 import Container from "react-bootstrap/Container";
-import useAuthUser from "./hooks/useAuthUser";
+import useAuthUser from "../../hooks/useAuthUser";
 import useAvatar from "./hooks/useAvatar";
 import useAdminStatus from "../admin/hooks/useAdminStatus";
 import DesktopNav from "./DesktopNav";
 import MobileSidebar from "./MobileSidebar";
+import NotificationsBell from "./NotificationsBell";
 
 const AppNavigation = () => {
-  const user = useAuthUser();
+  const { user } = useAuthUser();
   const { avatarUrl } = useAvatar(user?.id);
   const { isAdmin } = useAdminStatus(user?.id);
 
@@ -23,11 +24,24 @@ const AppNavigation = () => {
         <Navbar.Toggle
           aria-controls="main-offcanvas"
           onClick={() => setShowSidebar(true)}
+          className="d-lg-none"
         />
 
-        <Navbar.Brand as={NavLink} to="/" end onClick={closeSidebar}>
+        <Navbar.Brand
+          as={NavLink}
+          to="/"
+          end
+          onClick={closeSidebar}
+          className="ms-auto ms-lg-0"
+        >
           Threadline
         </Navbar.Brand>
+
+        {user && (
+          <div className="d-lg-none ms-2">
+            <NotificationsBell />
+          </div>
+        )}
 
         <DesktopNav user={user} avatarUrl={avatarUrl} isAdmin={isAdmin} />
 

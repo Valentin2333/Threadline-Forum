@@ -9,7 +9,7 @@ import EditActions from "./EditActions";
 import EditProfileForm from "./EditProfileForm";
 import DeleteAccountSection from "./DeleteAccountSection";
 import DeleteAccountModal from "./DeleteAccountModal";
-import useAuthUser from "./hooks/useAuthUser";
+import useAuthUser from "../../hooks/useAuthUser";
 import useProfileEditForm from "./hooks/useProfileEditForm";
 import useProfileRow from "./hooks/useProfileRow";
 import useAvatarUrl from "./hooks/useAvatarUrl";

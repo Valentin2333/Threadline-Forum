@@ -7,12 +7,12 @@ import Card from "react-bootstrap/Card";
 import Button from "react-bootstrap/Button";
 import Alert from "react-bootstrap/Alert";
 import { supabase } from "../../api/supabaseClient";
-import useAuthUser from "../navigation/hooks/useAuthUser";
+import useAuthUser from "../../hooks/useAuthUser";
 import StatCard from "./StatCard";
 import FeatureList from "./FeatureList";
 
 const HomePage = () => {
-  const user = useAuthUser();
+  const { user } = useAuthUser();
 
   const [stats, setStats] = useState({
     users: null,

@@ -37,41 +37,12 @@ export async function getCommunityByName(name) {
   return data;
 }
 
-export async function getCommunityById(id) {
-  const { data, error } = await supabase
-    .from("communities")
-    .select(
-      `
-      id, name, description, creator_id, member_count, created_at,
-      creator:profiles!communities_creator_id_fkey ( username, avatar_url )
-    `,
-    )
-    .eq("id", id)
-    .single();
-
-  if (error) throw error;
-  return data;
-}
-
 export async function getTopCommunities(limit = 10) {
   const { data, error } = await supabase
     .from("communities")
     .select("id, name, description, creator_id, member_count, created_at")
     .order("member_count", { ascending: false })
     .order("created_at", { ascending: false })
-    .limit(limit);
-
-  if (error) throw error;
-  return data ?? [];
-}
-
-export async function searchCommunities(query, limit = 20) {
-  const q = `%${query.trim()}%`;
-  const { data, error } = await supabase
-    .from("communities")
-    .select("id, name, description, member_count, created_at")
-    .ilike("name", q)
-    .order("member_count", { ascending: false })
     .limit(limit);
 
   if (error) throw error;

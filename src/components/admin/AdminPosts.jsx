@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import Card from "react-bootstrap/Card";
 import Form from "react-bootstrap/Form";
@@ -10,7 +10,10 @@ import InputGroup from "react-bootstrap/InputGroup";
 import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/Col";
 import { getAllPosts, deleteAnyPost } from "../../api/admin";
+import { supabase } from "../../api/supabaseClient";
 import AvatarFromStorage from "../posting/posts/AvatarFromStorage";
+
+const POLL_INTERVAL = 10000;
 
 const AdminPosts = () => {
   const [posts, setPosts] = useState([]);
@@ -20,23 +23,54 @@ const AdminPosts = () => {
   const [error, setError] = useState("");
   const [deletingId, setDeletingId] = useState(null);
 
-  const load = async ({ s = search, sort = sortBy } = {}) => {
-    setLoading(true);
-    setError("");
+  const searchRef = useRef(search);
+  const sortRef = useRef(sortBy);
+  const pollRef = useRef(null);
+
+  searchRef.current = search;
+  sortRef.current = sortBy;
+
+  const load = useCallback(async ({ s, sort, silent = false } = {}) => {
+    const searchVal = s ?? searchRef.current;
+    const sortVal = sort ?? sortRef.current;
+    if (!silent) {
+      setLoading(true);
+      setError("");
+    }
     try {
-      const data = await getAllPosts({ search: s, sortBy: sort });
+      const data = await getAllPosts({ search: searchVal, sortBy: sortVal });
       setPosts(data);
     } catch (e) {
-      setError(e?.message || "Failed to load posts.");
+      if (!silent) setError(e?.message || "Failed to load posts.");
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     load({ s: "", sort: "newest" });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+
+    const channel = supabase
+      .channel(`admin-posts-realtime-${Math.random().toString(16).slice(2)}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "posts" },
+        () => load({ silent: true })
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "comments" },
+        () => load({ silent: true })
+      )
+      .subscribe();
+
+    pollRef.current = setInterval(() => load({ silent: true }), POLL_INTERVAL);
+
+    return () => {
+      supabase.removeChannel(channel);
+      if (pollRef.current) clearInterval(pollRef.current);
+    };
+  }, [load]);
 
   const handleSearch = (e) => {
     e.preventDefault();

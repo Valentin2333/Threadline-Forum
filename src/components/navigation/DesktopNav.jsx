@@ -1,12 +1,16 @@
 import Nav from "react-bootstrap/Nav";
+import Badge from "react-bootstrap/Badge";
 import Button from "react-bootstrap/Button";
 import { NavLink, useNavigate } from "react-router-dom";
 import Avatar from "./Avatar";
 import ThemeToggle from "../theme/ThemeToggle";
 import { navItemStyles, navItemStylesWithAvatar } from "./styles/navItemStyles";
+import NotificationsBell from "./NotificationsBell";
+import useUnreviewedReportCount from "../admin/hooks/useUnreviewedReportCount";
 
 const DesktopNav = ({ user, avatarUrl, isAdmin }) => {
   const navigate = useNavigate();
+  const { count: reportCount } = useUnreviewedReportCount(isAdmin);
 
   return (
     <>
@@ -31,22 +35,39 @@ const DesktopNav = ({ user, avatarUrl, isAdmin }) => {
         )}
 
         {user && isAdmin && (
-          <Nav.Link as={NavLink} to="/admin" style={navItemStyles}>
+          <Nav.Link
+            as={NavLink}
+            to="/admin"
+            style={{ ...navItemStyles, position: "relative" }}
+          >
             <i
               className="fa-solid fa-shield-halved me-2"
               style={{ fontSize: 13 }}
             />
             Admin
+            {reportCount > 0 && (
+              <Badge
+                pill
+                bg="danger"
+                className="position-absolute"
+                style={{ top: 2, right: -4, fontSize: 10 }}
+              >
+                {reportCount > 99 ? "99+" : reportCount}
+              </Badge>
+            )}
           </Nav.Link>
         )}
       </Nav>
 
       <Nav className="ms-auto align-items-lg-center gap-2 d-none d-lg-flex">
         {user && (
-          <Nav.Link as={NavLink} to="/profile" style={navItemStylesWithAvatar}>
-            <Avatar url={avatarUrl} size="sm" />
-            <span className="ms-1">Your Profile</span>
-          </Nav.Link>
+          <>
+            <NotificationsBell userId={user.id} />
+            <Nav.Link as={NavLink} to="/profile" style={navItemStylesWithAvatar}>
+              <Avatar url={avatarUrl} size="sm" />
+              <span className="ms-1">Profile</span>
+            </Nav.Link>
+          </>
         )}
 
         {!user && (

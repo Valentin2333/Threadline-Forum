@@ -1,299 +1,365 @@
 # Threadline
 
-A full-featured community forum platform built with React and Supabase. Users can create and join communities (prefixed with `f/`), publish posts, comment, upvote/downvote, manage profiles, and more — all within a responsive, theme-aware interface.
+A full-featured community forum built with React and Supabase. Users can create and join communities (prefixed with `f/`), publish posts, comment, vote, upload avatars, and receive real-time notifications. Admins have access to a dashboard for managing users, posts, communities, and content reports.
 
-## Hosted Project
+## Live Demo
 
-🔗 **Live demo:** [https://threadline.netlify.app](https://threadline.netlify.app)
+🔗 **Hosted at:** _[Add your deployment URL here]_
+
+---
 
 ## Features
 
-- **Communities** — create, join, leave, and manage communities with the `f/` prefix
-- **Posts & Comments** — full CRUD with inline editing, validation, and author attribution
-- **Voting** — upvote/downvote system that updates post scores and author reputation in real time via database triggers
-- **Global Search** — search across communities and posts from a single search bar
-- **User Profiles** — avatar uploads to Supabase Storage, profile editing, account deletion
-- **Admin Dashboard** — manage users (block/unblock), posts, and communities with platform statistics
-- **Dark / Light Theme** — toggle switch in the navbar, persisted in localStorage, respects OS preference
-- **Responsive Design** — desktop navigation bar + mobile offcanvas sidebar
-- **Authentication** — email/password registration and login via Supabase Auth
-- **Footer Pages** — FAQ, Terms & Conditions, Privacy Policy, and Contact Us form (via Formsubmit.co)
+- **Communities** — Create public communities (`f/name`), join/leave, manage members (creator and admin moderation)
+- **Posts & Comments** — Publish posts within communities, comment on posts, inline editing and deletion
+- **Voting** — Upvote/downvote posts and comments; scores update author reputation
+- **Real-time Notifications** — Instant alerts for upvotes, downvotes, and comments on your posts
+- **Content Reporting** — Report posts/comments for harassment, violence, or hate speech
+- **Admin Dashboard** — Manage users (block/unblock), posts, communities, and review reports with real-time badge counts
+- **User Profiles** — Editable profiles with avatar upload, reputation display, and recent post history
+- **Global Search** — Search across communities and posts from a single search bar
+- **Dark/Light Theme** — Toggle between themes, persisted across sessions
+- **Responsive Design** — Desktop navbar and mobile sidebar with full feature parity
+
+---
 
 ## Tech Stack
 
-| Layer       | Technology                                                      |
-| ----------- | --------------------------------------------------------------- |
-| Frontend    | React 19, Vite 7, React Router 7                               |
-| UI          | Bootstrap 5, React Bootstrap, Font Awesome 7                   |
-| Forms       | React Hook Form                                                 |
-| Backend     | Supabase (Auth, PostgreSQL, Storage, Row-Level Security)        |
-| Testing     | Vitest, Testing Library, happy-dom                              |
+- **Frontend:** React 19, React Router 7, React Bootstrap, Font Awesome
+- **Backend:** Supabase (PostgreSQL, Auth, Storage, Realtime, Edge Functions, Row Level Security)
+- **Build:** Vite 7, SWC
+- **Testing:** Vitest, React Testing Library, happy-dom
+
+---
 
 ## Local Setup
 
 ### Prerequisites
 
-- **Node.js** ≥ 18
-- **npm** ≥ 9
-- A **Supabase** project (free tier works) with the database schema applied (see [Database Schema](#database-schema))
+- Node.js 18+
+- npm 9+
+- A Supabase project (free tier works)
 
-### 1. Clone the repository
+### 1. Clone and install
 
 ```bash
-git clone https://github.com/your-username/forum-system.git
+git clone <your-repo-url>
 cd forum-system
-```
-
-### 2. Install dependencies
-
-```bash
 npm install
 ```
 
-### 3. Configure environment variables
+### 2. Configure environment
 
 Create a `.env` file in the project root:
 
-```env
-VITE_SUPABASE_URL=https://your-project-id.supabase.co
+```
+VITE_SUPABASE_URL=https://your-project.supabase.co
 VITE_SUPABASE_ANON_KEY=your-anon-key
 ```
 
-Both values are available in the Supabase dashboard under **Settings → API**.
+Both values are available in your Supabase project dashboard under **Settings → API**.
 
-### 4. Set up the database
+### 3. Set up the database
 
-Apply the schema from the [Database Schema](#database-schema) section below in the Supabase SQL Editor. This creates all tables, functions, triggers, indexes, and RLS policies.
+Run the SQL from `backup.sql` in your Supabase SQL Editor to create all tables, constraints, indexes, RLS policies, and triggers. Then run any files in `supabase/migrations/` for additional tables (e.g. `reports`).
 
-### 5. Set up Supabase Storage
+Ensure **Realtime** is enabled for the `posts`, `comments`, `notifications`, `votes`, and `reports` tables in the Supabase dashboard under **Database → Replication**.
 
-Create a **public** storage bucket named `avatars` in Supabase Storage for user profile pictures.
+### 4. Set up Storage
 
-### 6. Start the development server
+Create an `avatars` bucket in Supabase Storage (Settings → Storage) with public access enabled.
+
+### 5. Deploy the Edge Function
+
+The project includes a `delete-user` Edge Function in `supabase/functions/delete-user/`. Deploy it with:
+
+```bash
+npx supabase functions deploy delete-user
+```
+
+### 6. Run the app
 
 ```bash
 npm run dev
 ```
 
-The app will be available at `http://localhost:5173`.
+The app starts at `http://localhost:5173`.
 
-### Available Scripts
+### 7. Run tests
 
-| Command                 | Description                |
-| ----------------------- | -------------------------- |
-| `npm run dev`           | Start development server   |
-| `npm run build`         | Production build           |
-| `npm run preview`       | Preview production build   |
-| `npm test`              | Run all tests once         |
-| `npm run test:watch`    | Run tests in watch mode    |
-| `npm run test:coverage` | Run tests with coverage    |
-| `npm run lint`          | Lint the codebase          |
+```bash
+npm test
+```
+
+---
 
 ## Database Schema
 
-The database runs on **Supabase PostgreSQL** with Row-Level Security (RLS) enabled on every table.
+The database consists of **10 tables** and **1 custom enum type**. All primary keys are UUIDs. Foreign keys cascade on delete.
 
 ### Entity Relationship Diagram
 
 ```
-┌──────────────────────┐       ┌──────────────────┐       ┌──────────────────┐
-│       profiles       │       │   communities    │       │    user_roles    │
-├──────────────────────┤       ├──────────────────┤       ├──────────────────┤
-│ id          (PK, FK) │◄──┐   │ id          (PK) │       │ user_id (PK, FK) │
-│ username        (UQ) │   │   │ name        (UQ) │       │ role             │
-│ email                │   │   │ description      │       └────────┬─────────┘
-│ first_name           │   │   │ creator_id  (FK) │───┐            │
-│ last_name            │   │   │ member_count     │   │   references profiles
-│ phone                │   │   │ created_at       │   │
-│ avatar_url           │   │   └────────┬─────────┘   │
-│ avatar_path          │   │            │             │
-│ avatar_updated_at    │   │   ┌────────┴─────────┐   │
-│ is_blocked           │   │   │community_members │   │
-│ is_admin             │   │   ├──────────────────┤   │
-│ reputation           │   │   │ id          (PK) │   │
-│ is_active            │   │   │ community_id(FK) │───┘
-│ created_at           │   │   │ user_id     (FK) │── references profiles
-│ updated_at           │   │   │ joined_at        │
-└──────────────────────┘   │   └──────────────────┘
-         │                 │
-         │                 │
-    ┌────┴─────────────┐   │   ┌──────────────────┐
-    │      posts       │   │   │      votes       │
-    ├──────────────────┤   │   ├──────────────────┤
-    │ id          (PK) │   │   │ id          (PK) │
-    │ author_id   (FK) │───┘   │ voter_id    (FK) │── references profiles
-    │ community_id(FK) │       │ target_type      │   (enum: 'post'|'comment')
-    │ title            │       │ target_id        │
-    │ content          │       │ value            │   (-1 or 1)
-    │ score            │       │ created_at       │
-    │ comment_count    │       └──────────────────┘
-    │ created_at       │         UNIQUE(voter_id, target_type, target_id)
-    │ updated_at       │
-    └────────┬─────────┘
-             │
-    ┌────────┴─────────┐
-    │     comments     │
-    ├──────────────────┤
-    │ id          (PK) │
-    │ post_id     (FK) │── references posts    (CASCADE)
-    │ author_id   (FK) │── references profiles (CASCADE)
-    │ content          │
-    │ score            │
-    │ created_at       │
-    │ updated_at       │
-    └──────────────────┘
+┌──────────────┐       ┌──────────────────┐       ┌──────────────┐
+│  auth.users  │       │     profiles     │       │  user_roles  │
+│──────────────│1─────1│──────────────────│1─────1│──────────────│
+│ id (PK)      │       │ id (PK, FK)      │       │ user_id (PK) │
+│ email        │       │ username (unique)│       │ role         │
+│ ...          │       │ first_name       │       └──────────────┘
+└──────────────┘       │ last_name        │
+                       │ email            │
+                       │ phone            │
+                       │ avatar_url       │
+                       │ avatar_path      │
+                       │ avatar_updated_at│
+                       │ is_admin         │
+                       │ is_blocked       │
+                       │ is_active        │
+                       │ reputation       │
+                       │ created_at       │
+                       │ updated_at       │
+                       └──────┬───────────┘
+                              │
+          ┌───────────────────┼───────────────────┐
+          │                   │                   │
+          ▼                   ▼                   ▼
+┌──────────────────┐ ┌──────────────┐ ┌──────────────────┐
+│   communities    │ │    posts     │ │      votes       │
+│──────────────────│ │──────────────│ │──────────────────│
+│ id (PK)          │ │ id (PK)      │ │ id (PK)          │
+│ name (unique)    │ │ author_id(FK)│ │ voter_id (FK)    │
+│ description      │ │ community_id │ │ target_type      │
+│ creator_id (FK)  │ │ title        │ │ target_id        │
+│ member_count     │ │ content      │ │ value (+1 / -1)  │
+│ created_at       │ │ score        │ │ created_at       │
+│ updated_at       │ │ comment_count│ └──────────────────┘
+└────────┬─────────┘ │ created_at   │
+         │           │ updated_at   │
+         │           └──────┬───────┘
+         │                  │
+         ▼                  ▼
+┌──────────────────┐ ┌──────────────────┐
+│community_members │ │    comments      │
+│──────────────────│ │──────────────────│
+│ id (PK)          │ │ id (PK)          │
+│ community_id(FK) │ │ post_id (FK)     │
+│ user_id (FK)     │ │ author_id (FK)   │
+│ joined_at        │ │ content          │
+└──────────────────┘ │ score            │
+                     │ created_at       │
+                     │ updated_at       │
+                     └──────────────────┘
+
+┌──────────────────┐       ┌──────────────────┐
+│  notifications   │       │     reports      │
+│──────────────────│       │──────────────────│
+│ id (PK)          │       │ id (PK)          │
+│ recipient_id(FK) │       │ reporter_id (FK) │
+│ actor_id (FK)    │       │ post_id (FK)?    │
+│ post_id (FK)     │       │ comment_id (FK)? │
+│ comment_id (FK)  │       │ reason           │
+│ type             │       │ is_reviewed      │
+│ is_read          │       │ created_at       │
+│ created_at       │       └──────────────────┘
+└──────────────────┘
 ```
 
-### Tables
+### Table Details
 
 #### `profiles`
 
-Stores user profile data. A row is automatically created on registration via the `handle_new_user()` trigger on `auth.users`.
+Extends Supabase Auth. One row per registered user, linked by `id` → `auth.users.id`.
 
-| Column              | Type          | Constraints / Default                      |
-| ------------------- | ------------- | ------------------------------------------ |
-| `id`                | `uuid`        | PK, FK → `auth.users(id)` ON DELETE CASCADE |
-| `username`          | `text`        | UNIQUE (case-insensitive), NOT NULL, 4–32 chars |
-| `email`             | `text`        | UNIQUE (case-insensitive)                  |
-| `first_name`        | `text`        | NOT NULL, 4–32 chars                       |
-| `last_name`         | `text`        | NOT NULL, 4–32 chars                       |
-| `phone`             | `text`        | nullable                                   |
-| `avatar_url`        | `text`        | nullable                                   |
-| `avatar_path`       | `text`        | nullable (Supabase Storage path)           |
-| `avatar_updated_at` | `timestamptz` | nullable                                   |
-| `is_blocked`        | `boolean`     | NOT NULL, default `false`                  |
-| `is_admin`          | `boolean`     | NOT NULL, default `false`                  |
-| `reputation`        | `integer`     | NOT NULL, default `0`                      |
-| `is_active`         | `boolean`     | NOT NULL, default `true`                   |
-| `created_at`        | `timestamptz` | NOT NULL, default `now()`                  |
-| `updated_at`        | `timestamptz` | NOT NULL, default `now()`                  |
+| Column | Type | Constraints |
+|--------|------|-------------|
+| id | uuid (PK) | FK → auth.users.id, CASCADE |
+| username | text | Unique (case-insensitive), 4–32 chars |
+| first_name | text | 4–32 chars |
+| last_name | text | 4–32 chars |
+| email | text | Unique (case-insensitive) |
+| phone | text | Nullable |
+| avatar_url | text | Nullable |
+| avatar_path | text | Nullable (storage path) |
+| avatar_updated_at | timestamptz | Nullable |
+| is_admin | boolean | Default false |
+| is_blocked | boolean | Default false |
+| is_active | boolean | Default true |
+| reputation | integer | Default 0 |
+| created_at | timestamptz | Default now() |
+| updated_at | timestamptz | Default now() |
 
 #### `communities`
 
-Each community name is prefixed with `f/` (e.g. `f/react-devs`).
-
-| Column         | Type          | Constraints / Default                       |
-| -------------- | ------------- | ------------------------------------------- |
-| `id`           | `uuid`        | PK, default `gen_random_uuid()`             |
-| `name`         | `text`        | UNIQUE, NOT NULL                            |
-| `description`  | `text`        | nullable                                    |
-| `creator_id`   | `uuid`        | FK → `profiles(id)` ON DELETE CASCADE       |
-| `member_count` | `integer`     | NOT NULL, default `0`                       |
-| `created_at`   | `timestamptz` | NOT NULL, default `now()`                   |
+| Column | Type | Constraints |
+|--------|------|-------------|
+| id | uuid (PK) | Auto-generated |
+| name | text | Unique (case-insensitive), 4–64 chars, must start with `f/` |
+| description | text | Max 500 chars, default empty |
+| creator_id | uuid | FK → profiles.id, CASCADE |
+| member_count | integer | Default 0 |
+| created_at | timestamptz | Default now() |
+| updated_at | timestamptz | Default now() |
 
 #### `community_members`
 
-Join table linking users to communities they have joined.
+| Column | Type | Constraints |
+|--------|------|-------------|
+| id | uuid (PK) | Auto-generated |
+| community_id | uuid | FK → communities.id, CASCADE |
+| user_id | uuid | FK → profiles.id, CASCADE |
+| joined_at | timestamptz | Default now() |
 
-| Column         | Type          | Constraints / Default                       |
-| -------------- | ------------- | ------------------------------------------- |
-| `id`           | `uuid`        | PK, default `gen_random_uuid()`             |
-| `community_id` | `uuid`       | FK → `communities(id)` ON DELETE CASCADE    |
-| `user_id`      | `uuid`        | FK → `profiles(id)` ON DELETE CASCADE       |
-| `joined_at`    | `timestamptz` | NOT NULL, default `now()`                   |
+Unique constraint on `(community_id, user_id)`.
 
 #### `posts`
 
-| Column          | Type          | Constraints / Default                       |
-| --------------- | ------------- | ------------------------------------------- |
-| `id`            | `uuid`        | PK, default `gen_random_uuid()`             |
-| `author_id`     | `uuid`        | FK → `profiles(id)` ON DELETE CASCADE       |
-| `community_id`  | `uuid`        | FK → `communities(id)`, nullable            |
-| `title`         | `text`        | NOT NULL, 16–64 chars                       |
-| `content`       | `text`        | NOT NULL, 32–8 192 chars                    |
-| `score`         | `integer`     | NOT NULL, default `0` (managed by triggers) |
-| `comment_count` | `integer`     | NOT NULL, default `0` (managed by triggers) |
-| `created_at`    | `timestamptz` | NOT NULL, default `now()`                   |
-| `updated_at`    | `timestamptz` | NOT NULL, default `now()`                   |
+| Column | Type | Constraints |
+|--------|------|-------------|
+| id | uuid (PK) | Auto-generated |
+| author_id | uuid | FK → profiles.id, CASCADE |
+| community_id | uuid | FK → communities.id, CASCADE, nullable |
+| title | text | 16–64 chars |
+| content | text | 32–8192 chars |
+| score | integer | Default 0 |
+| comment_count | integer | Default 0 |
+| created_at | timestamptz | Default now() |
+| updated_at | timestamptz | Default now() |
 
 #### `comments`
 
-| Column       | Type          | Constraints / Default                       |
-| ------------ | ------------- | ------------------------------------------- |
-| `id`         | `uuid`        | PK, default `gen_random_uuid()`             |
-| `post_id`    | `uuid`        | FK → `posts(id)` ON DELETE CASCADE          |
-| `author_id`  | `uuid`        | FK → `profiles(id)` ON DELETE CASCADE       |
-| `content`    | `text`        | NOT NULL, 1–8 192 chars                     |
-| `score`      | `integer`     | NOT NULL, default `0`                       |
-| `created_at` | `timestamptz` | NOT NULL, default `now()`                   |
-| `updated_at` | `timestamptz` | NOT NULL, default `now()`                   |
+| Column | Type | Constraints |
+|--------|------|-------------|
+| id | uuid (PK) | Auto-generated |
+| post_id | uuid | FK → posts.id, CASCADE |
+| author_id | uuid | FK → profiles.id, CASCADE |
+| content | text | 1–8192 chars |
+| score | integer | Default 0 |
+| created_at | timestamptz | Default now() |
+| updated_at | timestamptz | Default now() |
 
 #### `votes`
 
-Polymorphic voting — a single table handles votes on both posts and comments.
+| Column | Type | Constraints |
+|--------|------|-------------|
+| id | uuid (PK) | Auto-generated |
+| voter_id | uuid | FK → profiles.id, CASCADE |
+| target_type | vote_target (enum) | `'post'` or `'comment'` |
+| target_id | uuid | References a post or comment |
+| value | integer | `1` (upvote) or `-1` (downvote) |
+| created_at | timestamptz | Default now() |
 
-| Column        | Type                      | Constraints / Default                          |
-| ------------- | ------------------------- | ---------------------------------------------- |
-| `id`          | `uuid`                    | PK, default `gen_random_uuid()`                |
-| `voter_id`    | `uuid`                    | FK → `profiles(id)` ON DELETE CASCADE          |
-| `target_type` | `enum('post','comment')`  | NOT NULL                                       |
-| `target_id`   | `uuid`                    | NOT NULL                                       |
-| `value`       | `integer`                 | NOT NULL, CHECK (`-1` or `1`)                  |
-| `created_at`  | `timestamptz`             | NOT NULL, default `now()`                      |
-|               |                           | UNIQUE(`voter_id`, `target_type`, `target_id`) |
+Unique constraint on `(voter_id, target_type, target_id)`.
+
+#### `notifications`
+
+| Column | Type | Constraints |
+|--------|------|-------------|
+| id | uuid (PK) | Auto-generated |
+| recipient_id | uuid | FK → profiles.id, CASCADE |
+| actor_id | uuid | FK → profiles.id, CASCADE |
+| post_id | uuid | FK → posts.id, CASCADE, nullable |
+| comment_id | uuid | FK → comments.id, CASCADE, nullable |
+| type | text | `'upvote'`, `'downvote'`, or `'comment'` |
+| is_read | boolean | Default false |
+| created_at | timestamptz | Default now() |
+
+#### `reports`
+
+| Column | Type | Constraints |
+|--------|------|-------------|
+| id | uuid (PK) | Auto-generated |
+| reporter_id | uuid | FK → profiles.id, CASCADE |
+| post_id | uuid | FK → posts.id, CASCADE, nullable |
+| comment_id | uuid | FK → comments.id, CASCADE, nullable |
+| reason | text | `'harassment'`, `'violence'`, or `'hate'` |
+| is_reviewed | boolean | Default false |
+| created_at | timestamptz | Default now() |
+
+Check constraint: exactly one of `post_id` or `comment_id` must be set (not both, not neither).
 
 #### `user_roles`
 
-Tracks admin privileges. Checked by the `is_admin()` SQL function used in RLS policies.
+| Column | Type | Constraints |
+|--------|------|-------------|
+| user_id | uuid (PK) | FK → profiles.id, CASCADE |
+| role | text | `'user'` or `'admin'` |
 
-| Column    | Type   | Constraints / Default                       |
-| --------- | ------ | ------------------------------------------- |
-| `user_id` | `uuid` | PK, FK → `profiles(id)` ON DELETE CASCADE   |
-| `role`    | `text` | NOT NULL, CHECK (`'user'` or `'admin'`)     |
+### Custom Types
 
-### Database Functions & Triggers
+#### `vote_target` (enum)
 
-| Function                             | Trigger fires on             | Purpose                                                            |
-| ------------------------------------ | ---------------------------- | ------------------------------------------------------------------ |
-| `handle_new_user()`                  | `auth.users` INSERT          | Auto-creates a `profiles` row for every new sign-up               |
-| `apply_vote_to_score()`             | `votes` INSERT/UPDATE/DELETE | Keeps `posts.score` in sync with vote totals                      |
-| `update_author_reputation()`        | `votes` INSERT/UPDATE/DELETE | Recalculates `profiles.reputation` from all the author's votes    |
-| `update_reputation_on_post_delete()`| `posts` DELETE               | Recalculates author reputation when a post is removed             |
-| `comments_count_sync()`             | `comments` INSERT/DELETE     | Keeps `posts.comment_count` in sync                               |
-| `prevent_manual_score_change()`     | `posts` UPDATE               | Blocks direct client-side edits to `score` and `comment_count`    |
-| `prevent_username_change()`         | `profiles` UPDATE            | Makes `username` immutable after initial creation                 |
-| `set_updated_at()`                  | `profiles`/`posts`/`comments` UPDATE | Auto-sets `updated_at` to `now()`                        |
-| `is_admin(uid)`                     | — (SQL function)             | Returns `true` if the user has an admin role; used in RLS policies |
+```sql
+CREATE TYPE public.vote_target AS ENUM ('post', 'comment');
+```
 
-### Row-Level Security (RLS)
+### Row Level Security
 
-All tables have RLS enabled. Summary of key policies:
+All tables have RLS enabled. Key policies:
 
-| Table               | SELECT        | INSERT                          | UPDATE              | DELETE              |
-| ------------------- | ------------- | ------------------------------- | ------------------- | ------------------- |
-| `profiles`          | public        | auto via trigger                | own or admin        | own                 |
-| `communities`       | public        | authenticated                   | creator             | creator             |
-| `community_members` | public        | authenticated (self)            | —                   | own membership      |
-| `posts`             | public        | authenticated + not blocked     | own or admin        | own or admin        |
-| `comments`          | public        | authenticated + not blocked     | own or admin        | own or admin        |
-| `votes`             | public        | authenticated (own `voter_id`)  | own                 | own                 |
-| `user_roles`        | admin only    | admin only                      | admin only          | admin only          |
+- **profiles** — Users can read all profiles; users can update only their own
+- **posts / comments** — Authenticated users can create; authors can update/delete their own; admins can delete any
+- **votes** — Authenticated users can manage their own votes
+- **communities** — Creators and admins can manage; authenticated users can read
+- **community_members** — Members can manage their own membership
+- **notifications** — Users can only read/update their own notifications
+- **reports** — Any authenticated user can insert; only admins can read and update
+
+### Realtime
+
+Supabase Realtime is enabled on `posts`, `comments`, `notifications`, `votes`, and `reports` for live updates across the UI (feed, notifications bell, admin dashboard).
+
+---
 
 ## Project Structure
 
 ```
-src/
-├── api/                          # Supabase API layer
-│   ├── supabaseClient.js         # Supabase client initialisation
-│   ├── posts.js                  # Post CRUD + queries
-│   ├── comments.js               # Comment CRUD
-│   ├── votes.js                  # Vote upsert / delete / get
-│   ├── communities.js            # Community CRUD, membership, search
-│   └── admin.js                  # Admin user / post / community management
-│
-├── components/
-│   ├── admin/                    # Admin dashboard, stats, user & post management
-│   ├── auth/                     # Login, Register, shared auth components
-│   ├── communities/              # Community list, page, members, global search
-│   ├── footer/                   # Footer, FAQ, Terms, Privacy, Contact Us
-│   ├── home/                     # Landing page, stat cards, feature list
-│   ├── navigation/               # Navbar, desktop nav, mobile sidebar, avatar
-│   ├── posting/                  # Posts, comments, votes, filters, search
-│   ├── shared/                   # Reusable modals and components
-│   ├── theme/                    # Dark / light theme context and toggle
-│   └── userProfile/              # Profile view / edit, avatar upload, delete account
-│
-├── App.jsx                       # Root routing + layout
-├── main.jsx                      # Entry point with providers
-└── index.css                     # Global theme, dark mode, component styles
+forum-system/
+├── public/                    # Static assets
+├── supabase/
+│   ├── functions/             # Edge Functions (delete-user)
+│   └── migrations/            # SQL migrations
+├── src/
+│   ├── api/                   # Supabase API modules
+│   │   ├── admin.js           # Admin CRUD operations
+│   │   ├── comments.js        # Comment CRUD
+│   │   ├── communities.js     # Community CRUD + membership + search
+│   │   ├── notifications.js   # Notification queries + realtime
+│   │   ├── posts.js           # Post CRUD + queries
+│   │   ├── postMedia.js       # Post media helpers
+│   │   ├── reports.js         # Report CRUD + realtime
+│   │   ├── supabaseClient.js  # Supabase client init
+│   │   ├── useRealtimePosts.js# Realtime post subscription hook
+│   │   └── votes.js           # Vote upsert/delete
+│   ├── components/
+│   │   ├── admin/             # Admin dashboard, reports, stats
+│   │   ├── auth/              # Login, Register, shared auth UI
+│   │   ├── communities/       # Community pages, lists, search
+│   │   ├── footer/            # Footer, FAQ, Privacy, Terms, Contact
+│   │   ├── home/              # Landing page, stats, feature list
+│   │   ├── navigation/        # Navbar, sidebar, notifications
+│   │   ├── posting/           # Posts, comments, voting, filters
+│   │   ├── shared/            # Reusable modals (delete, report)
+│   │   ├── theme/             # Dark/light theme context + toggle
+│   │   └── userProfile/       # Profile view, edit, avatar, delete
+│   ├── test/                  # Test setup + helpers
+│   ├── App.jsx                # Route definitions
+│   ├── index.css              # Global styles + theme variables
+│   └── main.jsx               # React entry point
+├── .env                       # Supabase credentials (not committed)
+├── vite.config.js             # Vite + Vitest config
+└── package.json
 ```
+
+---
+
+## Scripts
+
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start dev server (port 5173) |
+| `npm run build` | Production build |
+| `npm run preview` | Preview production build |
+| `npm test` | Run all tests once |
+| `npm run test:watch` | Run tests in watch mode |
+| `npm run test:coverage` | Run tests with coverage report |
+| `npm run lint` | Lint with ESLint |

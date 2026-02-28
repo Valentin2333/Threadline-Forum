@@ -3,6 +3,7 @@ import CommentItem from "./CommentItem";
 
 const CommentList = ({
   comments,
+  userId,
   isOwn,
   canManage,
   editingCommentId,
@@ -17,6 +18,7 @@ const CommentList = ({
   openMenuForCommentId,
   onToggleMenu,
   onMenuOpening,
+  onReport,
 }) => {
   if (comments.length === 0) {
     return (
@@ -32,6 +34,7 @@ const CommentList = ({
         <CommentItem
           key={comment.id}
           comment={comment}
+          userId={userId}
           isOwn={isOwn}
           canManage={canManage}
           editingCommentId={editingCommentId}
@@ -46,6 +49,7 @@ const CommentList = ({
           openMenuForCommentId={openMenuForCommentId}
           onToggleMenu={onToggleMenu}
           onMenuOpening={onMenuOpening}
+          onReport={onReport}
         />
       ))}
     </ListGroup>

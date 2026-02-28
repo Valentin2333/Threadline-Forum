@@ -18,6 +18,7 @@ describe("CommentItem", () => {
 
   const baseProps = {
     comment,
+    userId: null,
     isOwn: () => false,
     canManage: () => false,
     editingCommentId: null,
@@ -32,6 +33,7 @@ describe("CommentItem", () => {
     openMenuForCommentId: null,
     onToggleMenu: vi.fn(),
     onMenuOpening: vi.fn(),
+    onReport: vi.fn(),
   };
 
   it("renders comment content", () => {
@@ -48,18 +50,20 @@ describe("CommentItem", () => {
   it("renders timestamp", () => {
     renderWithRouter(<CommentItem {...baseProps} />);
     expect(
-      screen.getByText(new Date("2025-01-15T12:00:00Z").toLocaleString()),
+      screen.getByText(new Date("2025-01-15T12:00:00Z").toLocaleString())
     ).toBeInTheDocument();
   });
 
-  it("does not show menu when canManage returns false", () => {
-    renderWithRouter(<CommentItem {...baseProps} />);
-    expect(screen.queryByRole("button", { name: "" })).toBeNull();
+  it("does not show menu when userId is null", () => {
+    renderWithRouter(<CommentItem {...baseProps} userId={null} />);
+    const toggles = screen.queryAllByRole("button");
+    expect(toggles.length).toBe(0);
   });
 
-  it("shows menu toggle when canManage returns true", () => {
-    renderWithRouter(<CommentItem {...baseProps} canManage={() => true} />);
-    // The 3-dots toggle button should exist
+  it("shows menu toggle when userId is set", () => {
+    renderWithRouter(
+      <CommentItem {...baseProps} userId="other-user" />
+    );
     const toggles = screen.getAllByRole("button");
     expect(toggles.length).toBeGreaterThan(0);
   });
@@ -68,11 +72,12 @@ describe("CommentItem", () => {
     renderWithRouter(
       <CommentItem
         {...baseProps}
+        userId="u1"
         isOwn={() => true}
         canManage={() => true}
         editingCommentId="c1"
         editingCommentDraft="Editing this"
-      />,
+      />
     );
     expect(screen.getByPlaceholderText("Edit comment")).toBeInTheDocument();
     expect(screen.getByDisplayValue("Editing this")).toBeInTheDocument();
@@ -82,10 +87,11 @@ describe("CommentItem", () => {
     renderWithRouter(
       <CommentItem
         {...baseProps}
+        userId="u1"
         canManage={() => true}
         editingCommentId="c1"
         editingCommentDraft="Editing"
-      />,
+      />
     );
     expect(screen.getByText("Save")).toBeInTheDocument();
     expect(screen.getByText("Cancel")).toBeInTheDocument();
@@ -97,11 +103,12 @@ describe("CommentItem", () => {
     renderWithRouter(
       <CommentItem
         {...baseProps}
+        userId="u1"
         canManage={() => true}
         editingCommentId="c1"
         editingCommentDraft="Updated"
         onSaveEdit={onSaveEdit}
-      />,
+      />
     );
     await user.click(screen.getByText("Save"));
     expect(onSaveEdit).toHaveBeenCalledWith("c1");
@@ -113,11 +120,12 @@ describe("CommentItem", () => {
     renderWithRouter(
       <CommentItem
         {...baseProps}
+        userId="u1"
         canManage={() => true}
         editingCommentId="c1"
         editingCommentDraft="text"
         onCancelEdit={onCancelEdit}
-      />,
+      />
     );
     await user.click(screen.getByText("Cancel"));
     expect(onCancelEdit).toHaveBeenCalledOnce();
@@ -127,11 +135,12 @@ describe("CommentItem", () => {
     renderWithRouter(
       <CommentItem
         {...baseProps}
+        userId="u1"
         canManage={() => true}
         editingCommentId="c1"
         editingCommentDraft=""
         commentFieldError="Content required"
-      />,
+      />
     );
     expect(screen.getByText("Content required")).toBeInTheDocument();
   });
@@ -141,7 +150,7 @@ describe("CommentItem", () => {
       <CommentItem
         {...baseProps}
         comment={{ ...comment, comment_author: { username: null } }}
-      />,
+      />
     );
     expect(screen.getByText("Unknown user")).toBeInTheDocument();
   });

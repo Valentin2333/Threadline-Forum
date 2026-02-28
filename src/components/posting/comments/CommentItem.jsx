@@ -1,12 +1,13 @@
 import { Link } from "react-router-dom";
 import Button from "react-bootstrap/Button";
-import Dropdown from "react-bootstrap/Dropdown";
 import Form from "react-bootstrap/Form";
 import ListGroup from "react-bootstrap/ListGroup";
 import AvatarFromStorage from "../posts/AvatarFromStorage";
+import ContentActionMenu from "../../shared/ContentActionMenu";
 
 const CommentItem = ({
   comment,
+  userId,
   isOwn,
   canManage,
   editingCommentId,
@@ -21,8 +22,9 @@ const CommentItem = ({
   openMenuForCommentId,
   onToggleMenu,
   onMenuOpening,
+  onReport,
 }) => {
-  const showCommentMenu = canManage(comment.author_id);
+  const showCommentMenu = Boolean(userId);
 
   return (
     <ListGroup.Item className="px-0">
@@ -92,48 +94,22 @@ const CommentItem = ({
         </div>
 
         {showCommentMenu && (
-          <Dropdown
-            align="end"
+          <ContentActionMenu
             show={openMenuForCommentId === comment.id}
             onToggle={(nextShow) => {
               if (nextShow) onMenuOpening?.();
               onToggleMenu(nextShow ? comment.id : null);
             }}
-          >
-            <Dropdown.Toggle
-              variant="outline-secondary"
-              size="sm"
-              bsPrefix="btn"
-              className="fs-menu-toggle"
-            >
-              <i
-                className="fa-solid fa-ellipsis-vertical"
-                style={{ fontSize: 13 }}
-              />
-            </Dropdown.Toggle>
-
-            <Dropdown.Menu>
-              {isOwn(comment.author_id) && (
-                <Dropdown.Item onClick={() => onStartEdit(comment)}>
-                  <i
-                    className="fa-solid fa-pen me-2"
-                    style={{ fontSize: 12 }}
-                  />
-                  Edit
-                </Dropdown.Item>
-              )}
-              <Dropdown.Item
-                className="text-danger"
-                onClick={() => onDelete(comment.id)}
-              >
-                <i
-                  className="fa-solid fa-trash me-2"
-                  style={{ fontSize: 12 }}
-                />
-                Delete
-              </Dropdown.Item>
-            </Dropdown.Menu>
-          </Dropdown>
+            showEdit={isOwn(comment.author_id)}
+            showDelete={canManage(comment.author_id)}
+            showReport={!isOwn(comment.author_id)}
+            onEdit={() => onStartEdit(comment)}
+            onDelete={() => onDelete(comment.id)}
+            onReport={() => {
+              onToggleMenu(null);
+              onReport?.(comment.id);
+            }}
+          />
         )}
       </div>
     </ListGroup.Item>

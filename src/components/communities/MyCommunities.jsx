@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { getCreatedCommunities, deleteCommunity } from "../../api/communities";
-import useAuthUser from "../navigation/hooks/useAuthUser";
+import useAuthUser from "../../hooks/useAuthUser";
 import CommunityCard from "./CommunityCard";
 import CreateCommunityForm from "./CreateCommunityForm";
 import DeleteConfirmModal from "../shared/DeleteConfirmModal";
@@ -12,7 +12,7 @@ import Spinner from "react-bootstrap/Spinner";
 import Alert from "react-bootstrap/Alert";
 
 const MyCommunities = () => {
-  const user = useAuthUser();
+  const { user } = useAuthUser();
   const navigate = useNavigate();
   const [communities, setCommunities] = useState([]);
   const [loading, setLoading] = useState(true);

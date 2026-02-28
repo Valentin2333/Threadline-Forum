@@ -17,9 +17,8 @@ const CommunityCreatePostForm = ({
 }) => {
   const [showForm, setShowForm] = useState(false);
   const [serverError, setServerError] = useState("");
-
-  // v1: single optional attachment
   const [mediaFile, setMediaFile] = useState(null);
+  const [showMedia, setShowMedia] = useState(false);
 
   const {
     register,
@@ -39,7 +38,6 @@ const CommunityCreatePostForm = ({
         communityId,
       });
 
-      // optional attachment upload
       if (mediaFile) {
         const isVideo = mediaFile.type?.startsWith("video/");
         const maxBytes = isVideo ? 25 * 1024 * 1024 : 5 * 1024 * 1024;
@@ -59,6 +57,7 @@ const CommunityCreatePostForm = ({
 
       reset();
       setMediaFile(null);
+      setShowMedia(false);
       setShowForm(false);
       onPostCreated?.();
     } catch (err) {
@@ -155,20 +154,49 @@ const CommunityCreatePostForm = ({
                   </Form.Text>
                 </Form.Group>
 
-                <Form.Group className="mb-3">
-                  <Form.Label>Attach image/video (optional)</Form.Label>
-                  <Form.Control
-                    type="file"
-                    accept="image/*,video/*"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0] ?? null;
-                      setMediaFile(file);
-                    }}
-                  />
-                  <Form.Text className="text-muted">
-                    Images up to 5MB, videos up to 25MB.
-                  </Form.Text>
-                </Form.Group>
+                {!showMedia ? (
+                  <div className="mb-3">
+                    <Button
+                      type="button"
+                      variant="outline-secondary"
+                      size="sm"
+                      onClick={() => setShowMedia(true)}
+                    >
+                      <i className="fa-solid fa-paperclip me-2" style={{ fontSize: 13 }} />
+                      Attach image/video
+                    </Button>
+                  </div>
+                ) : (
+                  <Form.Group className="mb-3">
+                    <div className="d-flex align-items-center justify-content-between mb-1">
+                      <Form.Label className="mb-0">Attach image/video</Form.Label>
+                      <Button
+                        type="button"
+                        variant="link"
+                        size="sm"
+                        className="text-muted p-0"
+                        onClick={() => {
+                          setShowMedia(false);
+                          setMediaFile(null);
+                        }}
+                      >
+                        <i className="fa-solid fa-xmark me-1" />
+                        Remove
+                      </Button>
+                    </div>
+                    <Form.Control
+                      type="file"
+                      accept="image/*,video/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0] ?? null;
+                        setMediaFile(file);
+                      }}
+                    />
+                    <Form.Text className="text-muted">
+                      Images up to 5MB, videos up to 25MB.
+                    </Form.Text>
+                  </Form.Group>
+                )}
 
                 <div className="d-flex justify-content-end gap-2">
                   <Button
@@ -178,6 +206,7 @@ const CommunityCreatePostForm = ({
                       reset();
                       setServerError("");
                       setMediaFile(null);
+                      setShowMedia(false);
                       setShowForm(false);
                     }}
                     disabled={isSubmitting}

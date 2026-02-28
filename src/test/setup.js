@@ -60,12 +60,10 @@ vi.mock("../api/supabaseClient", () => {
 
 // ---------- Mock: Supabase-backed API modules ----------
 vi.mock("../api/posts", () => ({
-  getNewestPosts: vi.fn(() => Promise.resolve([])),
   getPostById: vi.fn(() => Promise.resolve(null)),
   createPost: vi.fn(() => Promise.resolve({})),
   updatePost: vi.fn(() => Promise.resolve({})),
   deletePost: vi.fn(() => Promise.resolve(true)),
-  getTopPosts: vi.fn(() => Promise.resolve([])),
   getMostCommentedPosts: vi.fn(() => Promise.resolve([])),
   getRecentPostsSummary: vi.fn(() => Promise.resolve([])),
 }));
@@ -97,6 +95,24 @@ vi.mock("../api/admin", () => ({
       communities: 0,
     }),
   ),
+}));
+
+vi.mock("../api/reports", () => ({
+  createReport: vi.fn(() => Promise.resolve()),
+  getReports: vi.fn(() => Promise.resolve([])),
+  getUnreviewedReportCount: vi.fn(() => Promise.resolve(0)),
+  markReportReviewed: vi.fn(() => Promise.resolve()),
+  subscribeToReportChanges: vi.fn(() => ({
+    on: vi.fn().mockReturnThis(),
+    subscribe: vi.fn(),
+  })),
+}));
+
+vi.mock("../api/notifications", () => ({
+  getMyNotifications: vi.fn(() => Promise.resolve([])),
+  markNotificationRead: vi.fn(() => Promise.resolve()),
+  markAllNotificationsRead: vi.fn(() => Promise.resolve()),
+  subscribeToMyNotificationInserts: vi.fn(() => null),
 }));
 
 vi.mock("../api/communities", () => ({

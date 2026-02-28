@@ -5,9 +5,10 @@ import AdminStats from "./AdminStats";
 import AdminUsers from "./AdminUsers";
 import AdminPosts from "./AdminPosts";
 import AdminCommunities from "./AdminCommunities";
+import AdminReports from "./AdminReports";
 
 const AdminDashboard = () => {
-  const [tab, setTab] = useState("users");
+  const [tab, setTab] = useState("reports");
 
   return (
     <Container className="py-4">
@@ -52,11 +53,21 @@ const AdminDashboard = () => {
             Posts
           </Nav.Link>
         </Nav.Item>
+        <Nav.Item>
+          <Nav.Link eventKey="reports">
+            <i
+              className="fa-solid fa-flag me-2"
+              style={{ fontSize: 13 }}
+            />
+            Reports
+          </Nav.Link>
+        </Nav.Item>
       </Nav>
 
       {tab === "users" && <AdminUsers />}
       {tab === "posts" && <AdminPosts />}
       {tab === "communities" && <AdminCommunities />}
+      {tab === "reports" && <AdminReports />}
     </Container>
   );
 };

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import Card from "react-bootstrap/Card";
 import Form from "react-bootstrap/Form";
@@ -11,8 +11,11 @@ import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/Col";
 import { getAllCommunities } from "../../api/admin";
 import { deleteCommunity } from "../../api/communities";
+import { supabase } from "../../api/supabaseClient";
 import AvatarFromStorage from "../posting/posts/AvatarFromStorage";
 import DeleteConfirmModal from "../shared/DeleteConfirmModal";
+
+const POLL_INTERVAL = 10000;
 
 const AdminCommunities = () => {
   const [communities, setCommunities] = useState([]);
@@ -26,23 +29,54 @@ const AdminCommunities = () => {
   });
   const [deleting, setDeleting] = useState(false);
 
-  const load = async ({ s = search, sort = sortBy } = {}) => {
-    setLoading(true);
-    setError("");
+  const searchRef = useRef(search);
+  const sortRef = useRef(sortBy);
+  const pollRef = useRef(null);
+
+  searchRef.current = search;
+  sortRef.current = sortBy;
+
+  const load = useCallback(async ({ s, sort, silent = false } = {}) => {
+    const searchVal = s ?? searchRef.current;
+    const sortVal = sort ?? sortRef.current;
+    if (!silent) {
+      setLoading(true);
+      setError("");
+    }
     try {
-      const data = await getAllCommunities({ search: s, sortBy: sort });
+      const data = await getAllCommunities({ search: searchVal, sortBy: sortVal });
       setCommunities(data);
     } catch (e) {
-      setError(e?.message || "Failed to load communities.");
+      if (!silent) setError(e?.message || "Failed to load communities.");
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     load({ s: "", sort: "newest" });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+
+    const channel = supabase
+      .channel(`admin-communities-realtime-${Math.random().toString(16).slice(2)}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "communities" },
+        () => load({ silent: true })
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "community_members" },
+        () => load({ silent: true })
+      )
+      .subscribe();
+
+    pollRef.current = setInterval(() => load({ silent: true }), POLL_INTERVAL);
+
+    return () => {
+      supabase.removeChannel(channel);
+      if (pollRef.current) clearInterval(pollRef.current);
+    };
+  }, [load]);
 
   const handleSearch = (e) => {
     e.preventDefault();

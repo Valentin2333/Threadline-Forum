@@ -1,20 +1,23 @@
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 import Badge from "react-bootstrap/Badge";
 import Button from "react-bootstrap/Button";
 import Card from "react-bootstrap/Card";
-import Dropdown from "react-bootstrap/Dropdown";
+import ContentActionMenu from "../../shared/ContentActionMenu";
 
 import AvatarFromStorage from "./AvatarFromStorage";
 import PostEditForm from "./PostEditForm";
 import PostVotes from "./PostVotes";
 import CreateComment from "../comments/CreateComment";
 import CommentList from "../comments/CommentList";
+import ReportModal from "../../shared/ReportModal";
 
 import { getPostMediaPublicUrl } from "../../../api/postMedia";
 
 const PostCard = ({
   post,
+  userId,
   isOwn,
   canManage,
   isMember = false,
@@ -46,7 +49,8 @@ const PostCard = ({
   onToggleExpand,
 }) => {
   const navigate = useNavigate();
-  const showPostMenu = canManage(post.author_id);
+  const showPostMenu = Boolean(userId);
+  const [reportTarget, setReportTarget] = useState(null);
 
   const sortedComments = (post.comments ?? [])
     .slice()
@@ -57,7 +61,6 @@ const PostCard = ({
       ? sortedComments.slice(0, 2)
       : sortedComments;
 
-  // Media preview (v1: show first attachment only)
   const firstMedia = post.post_media?.[0] ?? null;
   const mediaUrl = firstMedia
     ? getPostMediaPublicUrl(firstMedia.storage_path)
@@ -110,48 +113,22 @@ const PostCard = ({
           </div>
 
           {showPostMenu && (
-            <Dropdown
-              align="end"
+            <ContentActionMenu
               show={openMenuForPostId === post.id}
               onToggle={(nextShow) => {
                 if (nextShow) onCloseCommentMenu();
                 onTogglePostMenu(nextShow ? post.id : null);
               }}
-            >
-              <Dropdown.Toggle
-                variant="outline-secondary"
-                size="sm"
-                bsPrefix="btn"
-                className="fs-menu-toggle"
-              >
-                <i
-                  className="fa-solid fa-ellipsis-vertical"
-                  style={{ fontSize: 13 }}
-                />
-              </Dropdown.Toggle>
-
-              <Dropdown.Menu>
-                {isOwn(post.author_id) && (
-                  <Dropdown.Item onClick={() => onStartEditPost(post)}>
-                    <i
-                      className="fa-solid fa-pen me-2"
-                      style={{ fontSize: 12 }}
-                    />
-                    Edit
-                  </Dropdown.Item>
-                )}
-                <Dropdown.Item
-                  className="text-danger"
-                  onClick={() => onDeletePost(post.id)}
-                >
-                  <i
-                    className="fa-solid fa-trash me-2"
-                    style={{ fontSize: 12 }}
-                  />
-                  Delete
-                </Dropdown.Item>
-              </Dropdown.Menu>
-            </Dropdown>
+              showEdit={isOwn(post.author_id)}
+              showDelete={canManage(post.author_id)}
+              showReport={!isOwn(post.author_id)}
+              onEdit={() => onStartEditPost(post)}
+              onDelete={() => onDeletePost(post.id)}
+              onReport={() => {
+                onTogglePostMenu(null);
+                setReportTarget({ postId: post.id });
+              }}
+            />
           )}
         </div>
 
@@ -208,8 +185,6 @@ const PostCard = ({
                     display: "block",
                   }}
                   onClick={(e) => {
-                    // prevent the video click from double-triggering navigation unintentionally
-                    // (users can still click title/area to open)
                     e.stopPropagation();
                   }}
                 >
@@ -233,7 +208,7 @@ const PostCard = ({
                   style={{
                     width: "100%",
                     maxHeight: 520,
-                    objectFit: "contain",          // no crop
+                    objectFit: "contain", // no crop
                     borderRadius: 12,
                     display: "block",
                     background: "rgba(0,0,0,0.04)",
@@ -269,7 +244,10 @@ const PostCard = ({
 
         <div className="mt-4">
           <div className="d-flex align-items-center justify-content-between mb-2">
-            <h4 className="h6 mb-0" style={{ color: "var(--fs-text-secondary)" }}>
+            <h4
+              className="h6 mb-0"
+              style={{ color: "var(--fs-text-secondary)" }}
+            >
               <i
                 className="fa-regular fa-comments me-2"
                 style={{ fontSize: 14 }}
@@ -290,6 +268,7 @@ const PostCard = ({
 
           <CommentList
             comments={visibleComments}
+            userId={userId}
             isOwn={isOwn}
             canManage={canManage}
             editingCommentId={editingCommentId}
@@ -304,9 +283,17 @@ const PostCard = ({
             openMenuForCommentId={openMenuForCommentId}
             onToggleMenu={onToggleCommentMenu}
             onMenuOpening={() => onTogglePostMenu(null)}
+            onReport={(commentId) => setReportTarget({ commentId })}
           />
         </div>
       </Card.Body>
+
+      <ReportModal
+        show={!!reportTarget}
+        onHide={() => setReportTarget(null)}
+        postId={reportTarget?.postId}
+        commentId={reportTarget?.commentId}
+      />
     </Card>
   );
 };

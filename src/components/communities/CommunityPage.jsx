@@ -73,7 +73,6 @@ const CommunityPage = () => {
       if (!community?.id) return;
       try {
         if (reset) {
-          // Reload all currently loaded pages (for silent refresh after edits)
           const currentCount = Math.max((page + 1) * PAGE_SIZE, PAGE_SIZE);
           const data = await getCommunityPosts(community.id, {
             from: 0,
@@ -82,7 +81,6 @@ const CommunityPage = () => {
           setPosts(data ?? []);
           setHasMore((data ?? []).length >= currentCount);
         } else {
-          // Initial load — first page
           const data = await getCommunityPosts(community.id, {
             from: 0,
             to: PAGE_SIZE - 1,

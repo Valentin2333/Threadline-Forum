@@ -70,7 +70,6 @@ export async function getCreatedCommunities(userId) {
 // ── Delete Community (removes all posts & members) ──────────
 
 export async function deleteCommunity(communityId) {
-  // 1. Delete all comments on posts in this community
   const { data: communityPosts } = await supabase
     .from("posts")
     .select("id")
@@ -79,21 +78,16 @@ export async function deleteCommunity(communityId) {
   const postIds = (communityPosts ?? []).map((p) => p.id);
 
   if (postIds.length > 0) {
-    // delete votes on those posts
     await supabase.from("votes").delete().in("post_id", postIds);
-    // delete comments on those posts
     await supabase.from("comments").delete().in("post_id", postIds);
-    // delete the posts themselves
     await supabase.from("posts").delete().eq("community_id", communityId);
   }
 
-  // 2. Remove all members
   await supabase
     .from("community_members")
     .delete()
     .eq("community_id", communityId);
 
-  // 3. Delete the community itself
   const { error } = await supabase
     .from("communities")
     .delete()
@@ -214,7 +208,6 @@ export async function getCommunityPosts(communityId, { from = 0, to = PAGE_SIZE 
 }
 
 export async function getPostsForJoinedCommunities(userId, { from = 0, to = PAGE_SIZE - 1 } = {}) {
-  // get all community IDs the user has joined
   const { data: memberships, error: memErr } = await supabase
     .from("community_members")
     .select("community_id")

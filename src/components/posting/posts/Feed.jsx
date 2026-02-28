@@ -56,7 +56,6 @@ const Feed = () => {
 
         if (myCommunities.length > 0) {
           if (reset) {
-            // Reload all currently loaded pages (for silent refresh after edits)
             const currentCount = Math.max((page + 1) * PAGE_SIZE, PAGE_SIZE);
             const data = await getPostsForJoinedCommunities(userId, {
               from: 0,
@@ -65,7 +64,6 @@ const Feed = () => {
             setPosts(data ?? []);
             setHasMore((data ?? []).length >= currentCount);
           } else {
-            // Initial load — first page
             const data = await getPostsForJoinedCommunities(userId, {
               from: 0,
               to: PAGE_SIZE - 1,
@@ -321,7 +319,6 @@ const Feed = () => {
             ))
           )}
 
-          {/* Infinite scroll sentinel */}
           <div ref={sentinelRef} style={{ height: 1 }} />
           {loadingMore && (
             <div className="d-flex align-items-center justify-content-center gap-2 text-muted py-3">

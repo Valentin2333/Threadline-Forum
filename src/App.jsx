@@ -20,9 +20,25 @@ import TermsAndConditions from "./components/footer/TermsAndConditions";
 import PrivacyPolicy from "./components/footer/PrivacyPolicy";
 import ContactUs from "./components/footer/ContactUs";
 
+import Spinner from "react-bootstrap/Spinner";
+
 function App() {
-  const { user } = useAuthUser();
+  const { user, loadingUser } = useAuthUser();
   const { isAdmin } = useAdminStatus(user?.id);
+
+  if (loadingUser) {
+    return (
+      <div className="d-flex flex-column min-vh-100">
+        <AppNavigation />
+        <div className="d-flex justify-content-center align-items-center flex-grow-1">
+          <Spinner animation="border" role="status" style={{ color: "var(--fs-primary)" }}>
+            <span className="visually-hidden">Loading…</span>
+          </Spinner>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="d-flex flex-column min-vh-100">

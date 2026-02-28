@@ -24,14 +24,18 @@ import Spinner from "react-bootstrap/Spinner";
 
 function App() {
   const { user, loadingUser } = useAuthUser();
-  const { isAdmin } = useAdminStatus(user?.id);
+  const { isAdmin, loading: loadingAdmin } = useAdminStatus(user?.id);
 
   if (loadingUser) {
     return (
       <div className="d-flex flex-column min-vh-100">
         <AppNavigation />
         <div className="d-flex justify-content-center align-items-center flex-grow-1">
-          <Spinner animation="border" role="status" style={{ color: "var(--fs-primary)" }}>
+          <Spinner
+            animation="border"
+            role="status"
+            style={{ color: "var(--fs-primary)" }}
+          >
             <span className="visually-hidden">Loading…</span>
           </Spinner>
         </div>
@@ -104,7 +108,18 @@ function App() {
           <Route
             path="/admin"
             element={
-              user && isAdmin ? <AdminDashboard /> : <Navigate to="/" replace />
+              loadingAdmin ? (
+                <div className="d-flex justify-content-center align-items-center py-5">
+                  <Spinner
+                    animation="border"
+                    style={{ color: "var(--fs-primary)" }}
+                  />
+                </div>
+              ) : user && isAdmin ? (
+                <AdminDashboard />
+              ) : (
+                <Navigate to="/" replace />
+              )
             }
           />
 

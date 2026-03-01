@@ -29,8 +29,12 @@ describe("ContactUs", () => {
     renderContact();
     expect(screen.getByPlaceholderText("Your name")).toBeInTheDocument();
     expect(screen.getByPlaceholderText("you@example.com")).toBeInTheDocument();
-    expect(screen.getByPlaceholderText("What is this about?")).toBeInTheDocument();
-    expect(screen.getByPlaceholderText("Write your message here...")).toBeInTheDocument();
+    expect(
+      screen.getByPlaceholderText("What is this about?"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByPlaceholderText("Write your message here..."),
+    ).toBeInTheDocument();
   });
 
   it("renders Send Message and Clear buttons", () => {
@@ -51,7 +55,9 @@ describe("ContactUs", () => {
   });
 
   it("shows success message after successful submission", async () => {
-    global.fetch = vi.fn().mockResolvedValue({ ok: true, json: async () => ({}) });
+    globalThis.fetch = vi
+      .fn()
+      .mockResolvedValue({ ok: true, json: async () => ({}) });
 
     renderContact();
 
@@ -64,9 +70,12 @@ describe("ContactUs", () => {
     fireEvent.change(screen.getByPlaceholderText("What is this about?"), {
       target: { value: "Test subject" },
     });
-    fireEvent.change(screen.getByPlaceholderText("Write your message here..."), {
-      target: { value: "This is a test message for Threadline." },
-    });
+    fireEvent.change(
+      screen.getByPlaceholderText("Write your message here..."),
+      {
+        target: { value: "This is a test message for Threadline." },
+      },
+    );
 
     fireEvent.click(screen.getByText("Send Message"));
 
@@ -76,7 +85,7 @@ describe("ContactUs", () => {
   });
 
   it("shows error message when submission fails", async () => {
-    global.fetch = vi.fn().mockResolvedValue({ ok: false });
+    globalThis.fetch = vi.fn().mockResolvedValue({ ok: false });
 
     renderContact();
 
@@ -89,9 +98,12 @@ describe("ContactUs", () => {
     fireEvent.change(screen.getByPlaceholderText("What is this about?"), {
       target: { value: "Test subject" },
     });
-    fireEvent.change(screen.getByPlaceholderText("Write your message here..."), {
-      target: { value: "This is a test message for Threadline." },
-    });
+    fireEvent.change(
+      screen.getByPlaceholderText("Write your message here..."),
+      {
+        target: { value: "This is a test message for Threadline." },
+      },
+    );
 
     fireEvent.click(screen.getByText("Send Message"));
 
@@ -101,7 +113,9 @@ describe("ContactUs", () => {
   });
 
   it("shows Send another message button after success", async () => {
-    global.fetch = vi.fn().mockResolvedValue({ ok: true, json: async () => ({}) });
+    globalThis.fetch = vi
+      .fn()
+      .mockResolvedValue({ ok: true, json: async () => ({}) });
 
     renderContact();
 
@@ -114,9 +128,12 @@ describe("ContactUs", () => {
     fireEvent.change(screen.getByPlaceholderText("What is this about?"), {
       target: { value: "Test subject" },
     });
-    fireEvent.change(screen.getByPlaceholderText("Write your message here..."), {
-      target: { value: "This is a test message for Threadline." },
-    });
+    fireEvent.change(
+      screen.getByPlaceholderText("Write your message here..."),
+      {
+        target: { value: "This is a test message for Threadline." },
+      },
+    );
 
     fireEvent.click(screen.getByText("Send Message"));
 

@@ -5,9 +5,7 @@ const ThemeContext = createContext();
 const getInitialTheme = () => {
   const stored = localStorage.getItem("fs-theme");
   if (stored === "dark" || stored === "light") return stored;
-  return window.matchMedia("(prefers-color-scheme: dark)").matches
-    ? "dark"
-    : "light";
+  return "light";
 };
 
 export const ThemeProvider = ({ children }) => {
@@ -34,4 +32,5 @@ const useTheme = () => {
   return ctx;
 };
 
+/* eslint-disable react-refresh/only-export-components */
 export default useTheme;

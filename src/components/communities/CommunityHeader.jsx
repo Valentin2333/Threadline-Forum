@@ -7,6 +7,7 @@ import AvatarFromStorage from "../posting/posts/AvatarFromStorage";
 
 const CommunityHeader = ({
   community,
+  postCount,
   isMember,
   memberLoading,
   isCreator,
@@ -39,6 +40,13 @@ const CommunityHeader = ({
                   style={{ fontSize: 10 }}
                 />
                 {community.member_count ?? 0} members
+              </Badge>
+              <Badge bg="light" text="dark">
+                <i
+                  className="fa-solid fa-message me-1"
+                  style={{ fontSize: 10 }}
+                />
+                {postCount ?? 0} posts
               </Badge>
               <span className="text-muted" style={{ fontSize: "0.8125rem" }}>
                 Created {new Date(community.created_at).toLocaleDateString()}

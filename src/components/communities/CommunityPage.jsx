@@ -3,6 +3,7 @@ import { useParams, Navigate, useNavigate } from "react-router-dom";
 import {
   getCommunityByName,
   getCommunityPosts,
+  getCommunityPostCount,
   deleteCommunity,
 } from "../../api/communities";
 import useAuthUser from "../../hooks/useAuthUser";
@@ -35,6 +36,7 @@ const CommunityPage = () => {
 
   const [community, setCommunity] = useState(null);
   const [posts, setPosts] = useState([]);
+  const [postCount, setPostCount] = useState(0);
   const [initialLoading, setInitialLoading] = useState(true);
   const [serverError, setServerError] = useState("");
   const [showMembers, setShowMembers] = useState(false);
@@ -89,6 +91,8 @@ const CommunityPage = () => {
           setHasMore((data ?? []).length >= PAGE_SIZE);
           setPage(0);
         }
+        const total = await getCommunityPostCount(community.id);
+        setPostCount(total);
       } catch (e) {
         setServerError(e?.message || "Failed to load posts.");
       }
@@ -149,6 +153,8 @@ const CommunityPage = () => {
             setHasMore((pData ?? []).length >= PAGE_SIZE);
             setPage(0);
           }
+          const total = await getCommunityPostCount(cData.id);
+          if (!cancelled) setPostCount(total);
         }
       } catch (e) {
         if (!cancelled) {
@@ -239,6 +245,7 @@ const CommunityPage = () => {
 
       <CommunityHeader
         community={community}
+        postCount={postCount}
         isMember={membership.member}
         memberLoading={membership.loading}
         isCreator={isCreator}

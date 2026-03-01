@@ -5,12 +5,8 @@ import {
   subscribeToReportChanges,
 } from "../../../api/reports";
 
-const POLL_INTERVAL = 10000; // 10 seconds fallback
+const POLL_INTERVAL = 10000; 
 
-/**
- * Returns the current unreviewed report count, updated in realtime.
- * Only fetches if the user is an admin.
- */
 const useUnreviewedReportCount = (isAdmin) => {
   const [count, setCount] = useState(0);
   const pollRef = useRef(null);
@@ -27,7 +23,6 @@ const useUnreviewedReportCount = (isAdmin) => {
 
   useEffect(() => {
     if (!isAdmin) {
-      setCount(0);
       return;
     }
 
@@ -36,12 +31,10 @@ const useUnreviewedReportCount = (isAdmin) => {
     const run = async () => {
       await refresh();
 
-      // Realtime subscription for any change on the reports table
       channel = subscribeToReportChanges(() => {
         refresh();
       });
 
-      // Polling fallback
       pollRef.current = setInterval(refresh, POLL_INTERVAL);
     };
 
@@ -53,7 +46,6 @@ const useUnreviewedReportCount = (isAdmin) => {
     };
   }, [isAdmin, refresh]);
 
-  /** Call this when admin opens/reviews a report to immediately decrement. */
   const decrement = useCallback(() => {
     setCount((prev) => Math.max(0, prev - 1));
   }, []);

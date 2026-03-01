@@ -13,7 +13,6 @@ export async function createCommunity({ userId, name, description = "" }) {
 
   if (error) throw error;
 
-  // auto-join creator
   await supabase
     .from("community_members")
     .insert([{ community_id: data.id, user_id: userId }]);
@@ -240,6 +239,16 @@ export async function getPostsForJoinedCommunities(userId, { from = 0, to = PAGE
 
   if (error) throw error;
   return data ?? [];
+}
+
+export async function getCommunityPostCount(communityId) {
+  const { count, error } = await supabase
+    .from("posts")
+    .select("id", { count: "exact", head: true })
+    .eq("community_id", communityId);
+
+  if (error) throw error;
+  return count ?? 0;
 }
 
 // ── Global search (communities + posts) ─────────────────────

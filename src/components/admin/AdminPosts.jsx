@@ -55,12 +55,12 @@ const AdminPosts = () => {
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "posts" },
-        () => load({ silent: true })
+        () => load({ silent: true }),
       )
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "comments" },
-        () => load({ silent: true })
+        () => load({ silent: true }),
       )
       .subscribe();
 
@@ -225,7 +225,7 @@ const AdminPosts = () => {
                           className="fa-regular fa-comment me-1"
                           style={{ fontSize: 11 }}
                         />
-                        {post.comment_count ?? 0}
+                        {post.actual_comment_count ?? post.comment_count ?? 0}
                       </span>
                     </td>
                     <td>

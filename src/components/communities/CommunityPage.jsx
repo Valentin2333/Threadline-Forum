@@ -27,7 +27,12 @@ const PAGE_SIZE = 10;
 
 const CommunityPage = () => {
   const { communityName } = useParams();
-  const decodedName = decodeURIComponent(communityName || "");
+  let decodedName;
+  try {
+    decodedName = decodeURIComponent(communityName || "");
+  } catch {
+    decodedName = "";
+  }
   const navigate = useNavigate();
 
   const { user } = useAuthUser();
@@ -66,7 +71,12 @@ const CommunityPage = () => {
       setCommunity(data);
     } catch (e) {
       setCommunity(null);
-      setServerError(e?.message || "Community not found.");
+      const msg = e?.message || "";
+      if (msg.includes("JSON object") || msg.includes("invalid input syntax")) {
+        setServerError("Community not found.");
+      } else {
+        setServerError(msg || "Community not found.");
+      }
     }
   }, [decodedName]);
 
@@ -159,7 +169,15 @@ const CommunityPage = () => {
       } catch (e) {
         if (!cancelled) {
           setCommunity(null);
-          setServerError(e?.message || "Community not found.");
+          const msg = e?.message || "";
+          if (
+            msg.includes("JSON object") ||
+            msg.includes("invalid input syntax")
+          ) {
+            setServerError("Community not found.");
+          } else {
+            setServerError(msg || "Community not found.");
+          }
         }
       } finally {
         if (!cancelled) setInitialLoading(false);
@@ -176,7 +194,14 @@ const CommunityPage = () => {
       await membership.join();
       await loadCommunity();
     } catch (e) {
-      setServerError(e?.message || "Failed to join.");
+      const msg = e?.message || "Failed to join.";
+      if (msg.includes("row-level security")) {
+        setServerError(
+          "Your account has been blocked. You cannot join communities.",
+        );
+      } else {
+        setServerError(msg);
+      }
     }
   };
 
@@ -212,7 +237,7 @@ const CommunityPage = () => {
 
   if (initialLoading) {
     return (
-      <Container className="py-4">
+      <Container className="py-3">
         <div className="d-flex align-items-center gap-2 text-muted">
           <Spinner size="sm" />
           <span>Loading community…</span>
@@ -223,8 +248,17 @@ const CommunityPage = () => {
 
   if (!community) {
     return (
-      <Container className="py-4">
+      <Container className="py-3">
         <Alert variant="danger">{serverError || "Community not found."}</Alert>
+        <Button
+          variant="outline-secondary"
+          size="sm"
+          className="d-inline-flex align-items-center gap-2"
+          onClick={() => navigate(-1)}
+        >
+          <i className="fa-solid fa-arrow-left" aria-hidden="true" />
+          <span>Go back</span>
+        </Button>
       </Container>
     );
   }

@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useCallback } from "react";
+import { useSearchParams } from "react-router-dom";
 import Container from "react-bootstrap/Container";
 import Nav from "react-bootstrap/Nav";
 import AdminStats from "./AdminStats";
@@ -7,8 +8,20 @@ import AdminPosts from "./AdminPosts";
 import AdminCommunities from "./AdminCommunities";
 import AdminReports from "./AdminReports";
 
+const VALID_TABS = ["users", "communities", "posts", "reports"];
+
 const AdminDashboard = () => {
-  const [tab, setTab] = useState("reports");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tab = VALID_TABS.includes(searchParams.get("tab"))
+    ? searchParams.get("tab")
+    : "reports";
+
+  const handleSelect = useCallback(
+    (key) => {
+      setSearchParams({ tab: key }, { replace: true });
+    },
+    [setSearchParams],
+  );
 
   return (
     <Container className="py-4">
@@ -25,9 +38,16 @@ const AdminDashboard = () => {
       <Nav
         variant="tabs"
         activeKey={tab}
-        onSelect={setTab}
+        onSelect={handleSelect}
         className="mb-3 mt-4"
       >
+        <Nav.Item>
+          <Nav.Link eventKey="reports">
+            <i className="fa-solid fa-flag me-2" style={{ fontSize: 13 }} />
+            Reports
+          </Nav.Link>
+        </Nav.Item>
+
         <Nav.Item>
           <Nav.Link eventKey="users">
             <i className="fa-solid fa-users me-2" style={{ fontSize: 13 }} />
@@ -44,6 +64,7 @@ const AdminDashboard = () => {
             Communities
           </Nav.Link>
         </Nav.Item>
+
         <Nav.Item>
           <Nav.Link eventKey="posts">
             <i
@@ -53,21 +74,12 @@ const AdminDashboard = () => {
             Posts
           </Nav.Link>
         </Nav.Item>
-        <Nav.Item>
-          <Nav.Link eventKey="reports">
-            <i
-              className="fa-solid fa-flag me-2"
-              style={{ fontSize: 13 }}
-            />
-            Reports
-          </Nav.Link>
-        </Nav.Item>
       </Nav>
 
+      {tab === "reports" && <AdminReports />}
       {tab === "users" && <AdminUsers />}
       {tab === "posts" && <AdminPosts />}
       {tab === "communities" && <AdminCommunities />}
-      {tab === "reports" && <AdminReports />}
     </Container>
   );
 };

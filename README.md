@@ -1,16 +1,16 @@
 # Threadline
 
-A full-featured community forum built with React and Supabase. Users can create and join communities (prefixed with `f/`), publish posts, comment, vote, upload avatars, and receive real-time notifications. Admins have access to a dashboard for managing users, posts, communities, and content reports.
+A full-featured community forum built with React and Supabase. Users can create and join communities (prefixed with `t/`), publish posts, comment, vote, upload avatars, and receive real-time notifications. Admins have access to a dashboard for managing users, posts, communities, and content reports.
 
 ## Live Demo
 
-🔗 **Hosted at:** _[Add your deployment URL here]_
+🔗 **Hosted at:** https://threadl.netlify.app/
 
 ---
 
 ## Features
 
-- **Communities** — Create public communities (`f/name`), join/leave, manage members (creator and admin moderation)
+- **Communities** — Create public communities (`t/name`), join/leave, manage members (creator and admin moderation)
 - **Posts & Comments** — Publish posts within communities, comment on posts, inline editing and deletion
 - **Voting** — Upvote/downvote posts and comments; scores update author reputation
 - **Real-time Notifications** — Instant alerts for upvotes, downvotes, and comments on your posts

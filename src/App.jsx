@@ -85,7 +85,7 @@ function App() {
               user ? <MyCommunities /> : <Navigate to="/login" replace />
             }
           />
-
+          
           <Route
             path="/community/:communityName"
             element={
@@ -130,6 +130,7 @@ function App() {
           <Route path="/terms" element={<TermsAndConditions />} />
           <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="/contact" element={<ContactUs />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>
 

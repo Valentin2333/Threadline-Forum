@@ -59,7 +59,17 @@ const PublicProfile = () => {
           setPosts(postData ?? []);
         }
       } catch (e) {
-        if (!cancelled) setError(e?.message || "Could not load profile.");
+        if (!cancelled) {
+          const msg = e?.message || "";
+          if (
+            msg.includes("invalid input syntax") ||
+            msg.includes("JSON object")
+          ) {
+            setError("User not found.");
+          } else {
+            setError(msg || "Could not load profile.");
+          }
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }

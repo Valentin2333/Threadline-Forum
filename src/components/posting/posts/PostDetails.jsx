@@ -59,7 +59,15 @@ const PostDetails = () => {
           setMemberStatus(yes);
         }
       } catch (e) {
-        setServerError(e?.message || "Failed to load post.");
+        const msg = e?.message || "";
+        if (
+          msg.includes("invalid input syntax") ||
+          msg.includes("JSON object")
+        ) {
+          setServerError("Post not found.");
+        } else {
+          setServerError(msg || "Failed to load post.");
+        }
         setPost(null);
       } finally {
         if (!silent) setInitialLoading(false);
@@ -112,7 +120,7 @@ const PostDetails = () => {
 
   if (initialLoading) {
     return (
-      <Container className="py-4" style={{ maxWidth: 800 }}>
+      <Container className="py-3">
         <div className="d-flex align-items-center gap-2 text-muted">
           <div className="spinner-border spinner-border-sm" />
           <span>Loading…</span>
@@ -123,7 +131,7 @@ const PostDetails = () => {
 
   if (!post) {
     return (
-      <Container className="py-3" style={{ maxWidth: 800 }}>
+      <Container className="py-3">
         <Alert variant="danger" className="py-2">
           {serverError || "Post not found."}
         </Alert>

@@ -110,8 +110,6 @@ const AdminUsers = () => {
                 <tr>
                   <th style={{ fontSize: "0.8125rem" }}>User</th>
                   <th style={{ fontSize: "0.8125rem" }}>Email</th>
-                  <th style={{ fontSize: "0.8125rem" }}>Phone</th>
-                  <th style={{ fontSize: "0.8125rem" }}>Reputation</th>
                   <th style={{ fontSize: "0.8125rem" }}>Status</th>
                   <th style={{ fontSize: "0.8125rem" }}>Actions</th>
                 </tr>
@@ -147,28 +145,6 @@ const AdminUsers = () => {
                       </div>
                     </td>
                     <td style={{ fontSize: "0.875rem" }}>{u.email || "—"}</td>
-                    <td style={{ fontSize: "0.875rem" }}>{u.phone || "—"}</td>
-                    <td>
-                      <span
-                        style={{
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: "0.25rem",
-                          background: "var(--fs-primary-subtle)",
-                          color: "var(--fs-primary)",
-                          fontWeight: 600,
-                          fontSize: "0.8125rem",
-                          padding: "0.2em 0.5em",
-                          borderRadius: "var(--fs-radius-pill)",
-                        }}
-                      >
-                        <i
-                          className="fa-solid fa-star"
-                          style={{ fontSize: 9 }}
-                        />
-                        {u.reputation ?? 0}
-                      </span>
-                    </td>
                     <td>
                       <div className="d-flex align-items-center gap-1">
                         {u.is_admin && (
@@ -190,6 +166,7 @@ const AdminUsers = () => {
                     <td>
                       {!u.is_admin && (
                         <Button
+                          key={u.is_blocked ? "unblock" : "block"}
                           size="sm"
                           variant={
                             u.is_blocked ? "outline-success" : "outline-danger"

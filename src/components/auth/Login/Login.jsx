@@ -6,6 +6,7 @@ import { supabase } from "../../../api/supabaseClient";
 import AuthAlerts from "../shared/AuthAlerts";
 import AuthSubmitRow from "../shared/AuthSubmitRow";
 import useLoginPrefill from "./hooks/useLoginPrefill";
+import PasswordInput from "../shared/PasswordInput";
 
 const Login = ({ onSwitchToRegister }) => {
   const navigate = useNavigate();
@@ -35,6 +36,10 @@ const Login = ({ onSwitchToRegister }) => {
     setInfoMessage,
     prefilledEmail,
     setValue,
+  });
+
+  const { ref: passwordRef, ...passwordRest } = register("password", {
+    required: "Password is required",
   });
 
   const onSubmit = async (data) => {
@@ -89,16 +94,12 @@ const Login = ({ onSwitchToRegister }) => {
 
       <Form.Group className="mb-4">
         <Form.Label>Password</Form.Label>
-        <Form.Control
-          type="password"
+        <PasswordInput
+          ref={passwordRef}
           placeholder="Enter your password"
-          {...register("password", { required: "Password is required" })}
+          isInvalid={!!errors.password}
+          {...passwordRest}
         />
-        {errors.password && (
-          <p className="text-danger small mt-1 mb-0">
-            {errors.password.message}
-          </p>
-        )}
       </Form.Group>
 
       <AuthSubmitRow

@@ -3,6 +3,8 @@ import Form from "react-bootstrap/Form";
 import Modal from "react-bootstrap/Modal";
 import Button from "react-bootstrap/Button";
 import {TERMS_SECTIONS, PRIVACY_SECTIONS} from "../shared/constants"
+import PasswordInput from "../shared/PasswordInput";
+import PasswordRules from "../shared/PasswordRules";
 
 const PolicyModal = ({ show, onHide, title, icon, sections }) => (
   <Modal show={show} onHide={onHide} size="lg" scrollable centered>
@@ -32,9 +34,14 @@ const PolicyModal = ({ show, onHide, title, icon, sections }) => (
   </Modal>
 );
 
-const RegisterFields = ({ register, errors, rules }) => {
+const RegisterFields = ({ register, errors, rules, watch }) => {
   const [showTerms, setShowTerms] = useState(false);
   const [showPrivacy, setShowPrivacy] = useState(false);
+  const [passwordTouched, setPasswordTouched] = useState(false);
+
+  const passwordValue = watch("password");
+
+  const { ref: passwordRef, ...passwordRest } = register("password", rules.password);
 
   return (
     <>
@@ -94,16 +101,18 @@ const RegisterFields = ({ register, errors, rules }) => {
 
       <Form.Group className="mb-3">
         <Form.Label>Password</Form.Label>
-        <Form.Control
-          type="password"
+        <PasswordInput
+          ref={passwordRef}
           placeholder="Enter password"
           isInvalid={!!errors.password}
           autoComplete="new-password"
-          {...register("password", rules.password)}
+          onFocus={() => setPasswordTouched(true)}
+          {...passwordRest}
         />
-        <Form.Control.Feedback type="invalid">
-          {errors.password?.message}
-        </Form.Control.Feedback>
+        <PasswordRules
+          password={passwordValue}
+          show={passwordTouched || !!errors.password}
+        />
       </Form.Group>
 
       <Form.Group className="mb-3">

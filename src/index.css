@@ -1067,6 +1067,76 @@ hr {
   animation: fadeInUp 0.35s ease-out;
 }
 
+/* ── Password Input Toggle ── */
+
+.fs-password-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.fs-password-wrapper .form-control {
+  padding-right: 2.75rem !important;
+}
+
+.fs-password-wrapper .form-control.is-invalid,
+.fs-password-wrapper .form-control.is-valid {
+  background-image: none !important;
+}
+
+.fs-password-toggle {
+  position: absolute;
+  right: 1px;
+  top: 1px;
+  bottom: 1px;
+  width: 2.5rem;
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: var(--fs-text-muted, #6c757d);
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 4;
+  border-radius: 0 var(--bs-border-radius, 0.375rem) var(--bs-border-radius, 0.375rem) 0;
+}
+
+.fs-password-toggle:hover {
+  color: var(--fs-primary);
+}
+
+/* ── Password Rules Checklist ── */
+
+.fs-password-rules {
+  list-style: none;
+  font-size: 0.875rem;
+  margin-top: 0.35rem;
+  padding: 0;
+}
+
+.fs-password-rule {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.1rem 0;
+  transition: color 0.2s ease;
+}
+
+.fs-password-rule .fs-rule-icon {
+  font-size: 0.65rem;
+  flex-shrink: 0;
+}
+
+.fs-password-rule.passed {
+  color: var(--bs-success, #198754);
+}
+
+.fs-password-rule.failed {
+  color: var(--bs-danger, #dc3545);
+}
+
 /* ═══════════════════════════════════════════════════════
    ANIMATIONS
    ═══════════════════════════════════════════════════════ */

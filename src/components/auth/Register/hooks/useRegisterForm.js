@@ -1,7 +1,7 @@
 import { useForm } from "react-hook-form";
 import useEmailPattern from "../../shared/hooks/useEmailPattern";
 import { NAME_MAX, NAME_MIN } from "../../shared/constants";
-import { minTrimmedLength } from "../../shared/validators";
+import { minTrimmedLength, validatePassword } from "../../shared/validators";
 
 const useRegisterForm = () => {
   const emailPattern = useEmailPattern();
@@ -64,10 +64,7 @@ const useRegisterForm = () => {
     },
     password: {
       required: "Password is required",
-      minLength: {
-        value: 8,
-        message: "Password must be at least 8 characters",
-      },
+      validate: validatePassword,
     },
     acceptTerms: {
       required: "You must accept the Terms & Conditions and Privacy Policy",

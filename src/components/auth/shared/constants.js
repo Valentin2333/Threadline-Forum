@@ -1,6 +1,37 @@
 export const NAME_MIN = 4;
 export const NAME_MAX = 32;
 
+export const PASSWORD_MIN = 8;
+export const PASSWORD_MAX = 128;
+
+export const PASSWORD_RULES = [
+  {
+    id: "minLength",
+    label: `At least ${8} characters`,
+    test: (v) => v.length >= 8,
+  },
+  {
+    id: "uppercase",
+    label: "At least one uppercase letter (A-Z)",
+    test: (v) => /[A-Z]/.test(v),
+  },
+  {
+    id: "lowercase",
+    label: "At least one lowercase letter (a-z)",
+    test: (v) => /[a-z]/.test(v),
+  },
+  {
+    id: "digit",
+    label: "At least one number (0-9)",
+    test: (v) => /\d/.test(v),
+  },
+  {
+    id: "special",
+    label: "At least one special character (!@#$%…)",
+    test: (v) => /[^A-Za-z0-9]/.test(v),
+  },
+];
+
 export const TERMS_SECTIONS = [
   {
     title: "1. Acceptance of Terms",

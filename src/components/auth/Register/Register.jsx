@@ -20,6 +20,7 @@ const Register = ({ onSwitchToLogin }) => {
     handleSubmit,
     setError,
     clearErrors,
+    watch,
     formState: { errors },
   } = form;
 
@@ -41,7 +42,7 @@ const Register = ({ onSwitchToLogin }) => {
       </div>
 
       <AuthAlerts infoMessage="" serverError={serverError} />
-      <RegisterFields register={register} errors={errors} rules={rules} />
+      <RegisterFields register={register} errors={errors} rules={rules} watch={watch} />
 
       <AuthSubmitRow
         loading={loading}

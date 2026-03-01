@@ -18,7 +18,13 @@ const useAuthUser = () => {
         if (userError) throw userError;
         if (!cancelled) setUser(data.user ?? null);
       } catch (e) {
-        if (!cancelled) setError(e?.message || "Could not read auth user.");
+        const msg = e?.message || "";
+        if (msg.includes("JWT") || msg.includes("does not exist")) {
+          await supabase.auth.signOut();
+          if (!cancelled) setUser(null);
+        } else {
+          if (!cancelled) setError(msg || "Could not read auth user.");
+        }
       } finally {
         if (!cancelled) setLoadingUser(false);
       }

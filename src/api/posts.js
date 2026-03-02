@@ -72,13 +72,32 @@ export async function deletePost({ postId }) {
 export async function getMostCommentedPosts(limit = 10) {
   const { data, error } = await supabase
     .from("posts")
-    .select("id, title, created_at, score, comment_count")
-    .order("comment_count", { ascending: false })
-    .order("created_at", { ascending: false })
-    .limit(limit);
+    .select(`
+      id,
+      title,
+      created_at,
+      score,
+      comment_count,
+      comments ( id )
+    `)
+    .limit(limit * 5); 
 
   if (error) throw error;
-  return data ?? [];
+
+  const postsWithRealCounts = (data ?? []).map((post) => ({
+    ...post,
+    comment_count: post.comments?.length ?? 0,
+    comments: undefined,
+  }));
+
+  postsWithRealCounts.sort((a, b) => {
+    if (b.comment_count !== a.comment_count) {
+      return b.comment_count - a.comment_count;
+    }
+    return new Date(b.created_at) - new Date(a.created_at);
+  });
+
+  return postsWithRealCounts.slice(0, limit);
 }
 
 export async function getRecentPostsSummary(limit = 10) {

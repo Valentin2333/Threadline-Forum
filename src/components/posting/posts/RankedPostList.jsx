@@ -1,5 +1,4 @@
 import Card from "react-bootstrap/Card";
-import Badge from "react-bootstrap/Badge";
 import ListGroup from "react-bootstrap/ListGroup";
 
 const RankedPostList = ({ title, icon, iconColor, posts, renderMeta }) => (
@@ -43,7 +42,7 @@ const RankedPostList = ({ title, icon, iconColor, posts, renderMeta }) => (
               {i + 1}
             </span>
 
-            <div className="flex-grow-1 min-width-0">
+            <div className="flex-grow-1" style={{ minWidth: 0 }}>
               <div
                 className="fw-semibold text-truncate"
                 style={{ fontSize: "0.9375rem" }}

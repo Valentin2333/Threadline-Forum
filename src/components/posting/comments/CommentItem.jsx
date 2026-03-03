@@ -29,17 +29,18 @@ const CommentItem = ({
   return (
     <ListGroup.Item className="px-0">
       <div className="d-flex align-items-start justify-content-between gap-2">
-        <div className="d-flex align-items-start gap-2">
+        <div className="d-flex align-items-start gap-2" style={{ minWidth: 0 }}>
           <Link
             to={`/profile/${comment.author_id}`}
             className="text-decoration-none"
           >
             <AvatarFromStorage pathOrUrl={comment.comment_author?.avatar_url} />
           </Link>
-          <div>
+          <div style={{ minWidth: 0 }}>
             <Link
               to={`/profile/${comment.author_id}`}
-              className="fs-author-name-link"
+              className="fs-author-name-link d-block text-truncate"
+              title={comment.comment_author?.username || "Unknown user"}
             >
               {comment.comment_author?.username || "Unknown user"}
             </Link>

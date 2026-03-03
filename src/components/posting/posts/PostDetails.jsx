@@ -155,11 +155,15 @@ const PostDetails = () => {
 
   return (
     <Container className="py-3">
-      <div className="mb-3 d-flex align-items-center gap-3">
+      <div
+        className="mb-3 d-flex align-items-center gap-3"
+        style={{ minWidth: 0 }}
+      >
         <Button
           variant="outline-secondary"
           size="sm"
           className="d-inline-flex align-items-center gap-2"
+          style={{ flexShrink: 0 }}
           onClick={() => navigate(-1)}
         >
           <i className="fa-solid fa-arrow-left" aria-hidden="true" />
@@ -169,11 +173,19 @@ const PostDetails = () => {
         {post.community?.name && (
           <Link
             to={`/community/${encodeURIComponent(post.community.name)}`}
-            className="text-decoration-none d-inline-flex align-items-center gap-1"
-            style={{ fontSize: "0.85rem", color: "var(--fs-primary)" }}
+            className="text-decoration-none d-inline-flex align-items-center gap-1 text-truncate"
+            style={{
+              fontSize: "0.85rem",
+              color: "var(--fs-primary)",
+              minWidth: 0,
+            }}
+            title={post.community.name}
           >
-            <i className="fa-solid fa-users" style={{ fontSize: 11 }} />
-            {post.community.name}
+            <i
+              className="fa-solid fa-users"
+              style={{ fontSize: 11, flexShrink: 0 }}
+            />
+            <span className="text-truncate">{post.community.name}</span>
           </Link>
         )}
       </div>
@@ -188,7 +200,7 @@ const PostDetails = () => {
         <Card.Body className="p-4">
           {/* Header row: author/title on left, menu on right */}
           <div className="d-flex align-items-start justify-content-between gap-3">
-            <div className="flex-grow-1">
+            <div className="flex-grow-1" style={{ minWidth: 0 }}>
               <div className="d-flex align-items-center gap-2">
                 <Link
                   to={`/profile/${post.author_id}`}
@@ -196,10 +208,11 @@ const PostDetails = () => {
                 >
                   <AvatarFromStorage pathOrUrl={post.post_author?.avatar_url} />
                 </Link>
-                <div>
+                <div style={{ minWidth: 0 }}>
                   <Link
                     to={`/profile/${post.author_id}`}
-                    className="fs-author-name-link"
+                    className="fs-author-name-link d-block text-truncate"
+                    title={post.post_author?.username || "Unknown user"}
                   >
                     {post.post_author?.username || "Unknown user"}
                   </Link>
@@ -209,8 +222,10 @@ const PostDetails = () => {
                 </div>
               </div>
 
-              <div className="d-flex align-items-center gap-2 mt-3">
-                <h2 className="h4 mb-0">{post.title}</h2>
+              <div className="mt-3" style={{ minWidth: 0 }}>
+                <h2 className="h4 mb-0 text-truncate" title={post.title}>
+                  {post.title}
+                </h2>
               </div>
             </div>
 

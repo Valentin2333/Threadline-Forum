@@ -122,7 +122,7 @@ const MyCommunities = () => {
       ) : (
         communities.map((c) => (
           <div key={c.id} className="d-flex align-items-center gap-2 mb-2">
-            <div className="flex-grow-1">
+            <div className="flex-grow-1" style={{ minWidth: 0 }}>
               <CommunityCard community={c} />
             </div>
             <Button

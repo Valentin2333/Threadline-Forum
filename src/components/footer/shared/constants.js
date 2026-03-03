@@ -5,7 +5,7 @@ export const FAQ_ITEMS = [
     question: "How do I create a community?",
     answer:
       "Once you're logged in, head to the Communities page and click the \"Create Community\" button. " +
-      "Choose a unique name (it will be prefixed with f/), add an optional description, and you're all set. " +
+      "Choose a unique name (it will be prefixed with t/), add an optional description, and you're all set. " +
       "As the creator you can manage members and delete the community at any time.",
   },
   {

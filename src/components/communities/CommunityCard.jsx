@@ -6,11 +6,12 @@ const CommunityCard = ({ community }) => (
   <Card className="mb-2 fs-post-card">
     <Card.Body className="py-3 px-4">
       <div className="d-flex align-items-center justify-content-between">
-        <div>
+        <div style={{ minWidth: 0 }}>
           <Link
             to={`/community/${encodeURIComponent(community.name)}`}
-            className="fw-semibold text-decoration-none"
+            className="fw-semibold text-decoration-none d-block text-truncate fs-community-name-link"
             style={{ color: "var(--fs-primary)", fontSize: "1rem" }}
+            title={community.name}
           >
             {community.name}
           </Link>

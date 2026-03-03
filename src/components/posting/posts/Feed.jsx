@@ -258,7 +258,7 @@ const Feed = () => {
             filters.displayedPosts.map((post) => (
               <div key={post.id}>
                 {post.community?.name && (
-                  <div className="mb-1">
+                  <div className="mb-1 text-truncate">
                     <Link
                       to={`/community/${encodeURIComponent(
                         post.community.name,
@@ -268,6 +268,7 @@ const Feed = () => {
                         fontSize: "0.8rem",
                         color: "var(--fs-primary)",
                       }}
+                      title={post.community.name}
                     >
                       <i
                         className="fa-solid fa-users me-1"
@@ -327,7 +328,10 @@ const Feed = () => {
             </div>
           )}
           {!hasMore && posts.length > 0 && (
-            <p className="text-center text-muted py-3 mb-0" style={{ fontSize: "0.85rem" }}>
+            <p
+              className="text-center text-muted py-3 mb-0"
+              style={{ fontSize: "0.85rem" }}
+            >
               You've reached the end of your feed.
             </p>
           )}

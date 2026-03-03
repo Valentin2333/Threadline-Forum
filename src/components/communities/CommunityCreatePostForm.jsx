@@ -99,12 +99,15 @@ const CommunityCreatePostForm = ({
               <Card.Title
                 as="h2"
                 className="h5 mb-3 d-flex align-items-center gap-2"
+                style={{ minWidth: 0 }}
               >
                 <i
                   className="fa-solid fa-pen-to-square"
-                  style={{ color: "var(--fs-primary)", fontSize: 18 }}
+                  style={{ color: "var(--fs-primary)", fontSize: 18, flexShrink: 0 }}
                 />
-                Post in {communityName}
+                <span className="text-truncate" title={`Post in ${communityName}`}>
+                  Post in {communityName}
+                </span>
               </Card.Title>
 
               {serverError && (

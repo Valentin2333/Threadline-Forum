@@ -72,7 +72,7 @@ const PostCard = ({
     <Card className="mb-3 fs-post-card">
       <Card.Body className="p-4">
         <div className="d-flex align-items-start justify-content-between gap-3">
-          <div className="flex-grow-1">
+          <div className="flex-grow-1" style={{ minWidth: 0 }}>
             <div className="d-flex align-items-center gap-2">
               <Link
                 to={`/profile/${post.author_id}`}
@@ -80,22 +80,29 @@ const PostCard = ({
               >
                 <AvatarFromStorage pathOrUrl={post.post_author?.avatar_url} />
               </Link>
-              <div>
-                <div className="d-flex align-items-center gap-2">
+              <div style={{ minWidth: 0 }}>
+                <div
+                  className="d-flex align-items-center gap-2"
+                  style={{ minWidth: 0 }}
+                >
                   <Link
                     to={`/profile/${post.author_id}`}
-                    className="fs-author-name-link"
+                    className="fs-author-name-link text-truncate"
+                    style={{ flexShrink: 0, maxWidth: "60%" }}
+                    title={post.post_author?.username || "Unknown user"}
                   >
                     {post.post_author?.username || "Unknown user"}
                   </Link>
                   {post.community?.name && (
                     <Link
                       to={`/community/${encodeURIComponent(post.community.name)}`}
-                      className="text-decoration-none"
+                      className="text-decoration-none text-truncate"
                       style={{
                         fontSize: "0.75rem",
                         color: "var(--fs-primary)",
+                        minWidth: 0,
                       }}
+                      title={post.community.name}
                     >
                       <i
                         className="fa-solid fa-users me-1"
@@ -132,14 +139,15 @@ const PostCard = ({
           )}
         </div>
 
-        <div className="mt-3">
+        <div className="mt-3" style={{ overflow: "hidden" }}>
           <Button
             variant="link"
-            className="p-0 fs-post-title"
+            className="p-0 fs-post-title d-block text-truncate text-start h5 mb-0"
+            style={{ maxWidth: "100%" }}
             onClick={openPostDetails}
-            title="Open post details"
+            title={post.title}
           >
-            <span className="h5 mb-0">{post.title}</span>
+            {post.title}
           </Button>
         </div>
 
@@ -161,7 +169,6 @@ const PostCard = ({
           </p>
         )}
 
-        {/* Media preview */}
         {!!firstMedia && !!mediaUrl && (
           <div className="mt-3">
             {firstMedia.media_type === "video" ? (
@@ -208,7 +215,7 @@ const PostCard = ({
                   style={{
                     width: "100%",
                     maxHeight: 520,
-                    objectFit: "contain", // no crop
+                    objectFit: "contain",
                     borderRadius: 12,
                     display: "block",
                     background: "rgba(0,0,0,0.04)",

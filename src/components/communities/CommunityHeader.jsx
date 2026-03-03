@@ -26,8 +26,8 @@ const CommunityHeader = ({
     <Card className="mb-4">
       <Card.Body className="p-4">
         <div className="d-flex align-items-start justify-content-between flex-wrap gap-3">
-          <div>
-            <h2 className="fs-page-title mb-1">{community.name}</h2>
+          <div className="flex-grow-1" style={{ minWidth: 0 }}>
+            <h2 className="fs-page-title mb-1 text-truncate" title={community.name}>{community.name}</h2>
             {community.description && (
               <p className="text-muted mb-2" style={{ fontSize: "0.9rem" }}>
                 {community.description}
@@ -54,18 +54,22 @@ const CommunityHeader = ({
               {community.creator && (
                 <span
                   className="d-flex align-items-center gap-1"
-                  style={{ fontSize: "0.8125rem" }}
+                  style={{ fontSize: "0.8125rem", minWidth: 0 }}
                 >
                   <span className="text-muted">by</span>
                   <Link
                     to={`/profile/${community.creator_id}`}
                     className="d-flex align-items-center gap-1 text-decoration-none"
+                    style={{ minWidth: 0 }}
                   >
                     <AvatarFromStorage
                       pathOrUrl={community.creator?.avatar_url}
                       size="sm"
                     />
-                    <span className="fs-author-name-link">
+                    <span
+                      className="fs-author-name-link d-block text-truncate"
+                      title={community.creator?.username || "Unknown"}
+                    >
                       {community.creator?.username || "Unknown"}
                     </span>
                   </Link>
